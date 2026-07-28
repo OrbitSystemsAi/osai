@@ -19,6 +19,8 @@ If an earlier signup already created the user, a repeated invitation submission 
 
 Set `NEXT_PUBLIC_NEON_AUTH_URL` to the branch-specific Neon Auth URL. The checked-in `.env.example` documents the expected value. When it is absent, the client uses the OSai main-branch Neon Auth endpoint as its default.
 
+The main branch's Neon Auth trusted domains include `https://osai-pink.vercel.app` and `https://osai-orbit-systems-ai.vercel.app`. Add any future production or preview hostname before using browser-based authentication from that origin.
+
 ## Security boundary
 
 This repository is now a Next.js App Router application. The current client session gate improves the user flow but is not sufficient authorization for protected content. Before any confidential member data or media is connected, implement server-side authorization that:
