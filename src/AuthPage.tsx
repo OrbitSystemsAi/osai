@@ -91,10 +91,20 @@ function Invitation() {
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setBusy(true); setError('')
-    const { error: authError } = await emailAuthClient.signUp.email({ email, password, name })
-    setBusy(false)
-    if (authError) return setError(authError.message || 'We could not create your account. Please try again.')
-    navigate(`/auth/verify-email?email=${encodeURIComponent(email)}`)
+    try {
+      const { error: authError } = await emailAuthClient.signUp.email({ email, password, name })
+      if (authError) throw authError
+      navigate(`/auth/verify-email?email=${encodeURIComponent(email)}`)
+    } catch (authError) {
+      const message = authError instanceof Error ? authError.message : 'We could not create your account. Please try again.'
+      if (/user already exists/i.test(message)) {
+        navigate(`/auth/verify-email?email=${encodeURIComponent(email)}`)
+        return
+      }
+      setError(message)
+    } finally {
+      setBusy(false)
+    }
   }
 
   return <>

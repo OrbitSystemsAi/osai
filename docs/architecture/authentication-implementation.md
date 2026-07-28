@@ -5,6 +5,7 @@
 The website now provides an invite-oriented Neon Auth client flow for sign-in, invitation account creation, email verification guidance, password recovery, session checking, and sign-out.
 
 Account creation and email-code verification use Neon Auth's native Better Auth endpoints so signup can succeed before a verified session exists. The remaining client operations use the Supabase-compatible adapter.
+If an earlier signup already created the user, a repeated invitation submission continues to email verification instead of surfacing an SDK exception.
 
 ## Routes
 
