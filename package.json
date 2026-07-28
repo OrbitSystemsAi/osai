@@ -17,15 +17,11 @@
     "typescript": "latest"
   },
   "devDependencies": {
-    "@eslint/js": "latest",
     "@types/node": "26.1.2",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "eslint": "^9.39.5",
-    "eslint-config-next": "latest",
-    "eslint-plugin-react-hooks": "latest",
-    "globals": "latest",
-    "typescript-eslint": "latest"
+    "eslint-config-next": "latest"
   },
   "overrides": {
     "better-auth": "1.6.25"
