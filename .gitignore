@@ -1,13 +1,14 @@
 .DS_Store
 node_modules/
 dist/
+.next/
 
 # Local environment files
 .env
 .env.*
 !.env.example
 
-# TypeScript and Vite build artifacts
+# TypeScript and framework build artifacts
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
