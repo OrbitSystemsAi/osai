@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react'
 import { ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
-import { authClient } from './auth'
+import { authClient, emailAuthClient } from './auth'
 
 type AuthView = 'sign-in' | 'invite' | 'forgot-password' | 'verify-email' | 'member'
 
@@ -91,7 +91,7 @@ function Invitation() {
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setBusy(true); setError('')
-    const { error: authError } = await authClient.signUp({ email, password, options: { data: { name } } })
+    const { error: authError } = await emailAuthClient.signUp.email({ email, password, name })
     setBusy(false)
     if (authError) return setError(authError.message || 'We could not create your account. Please try again.')
     navigate(`/auth/verify-email?email=${encodeURIComponent(email)}`)

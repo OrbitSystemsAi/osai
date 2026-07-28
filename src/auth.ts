@@ -8,3 +8,4 @@ const authUrl = process.env.NEXT_PUBLIC_NEON_AUTH_URL?.trim()
   || 'https://ep-plain-flower-ayy9vych.neonauth.c-5.us-east-2.aws.neon.tech/neondb/auth'
 
 export const authClient = createAuthClient(authUrl, { adapter: SupabaseAuthAdapter() })
+export const emailAuthClient = authClient.getBetterAuthInstance()
