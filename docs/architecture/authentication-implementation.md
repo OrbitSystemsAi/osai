@@ -8,13 +8,13 @@ The website now provides an invite-oriented Neon Auth client flow for sign-in, i
 
 - `/auth/sign-in` — email and password sign-in
 - `/auth/invitation` — account creation for an invited email identity
-- `/auth/verify-email` — verification guidance after account creation
+- `/auth/verify-email` — six-digit email verification code after account creation
 - `/auth/forgot-password` — non-enumerating recovery request
 - `/member/*` — client session gate before the existing member hub is rendered
 
 ## Configuration
 
-Set `NEXT_PUBLIC_NEON_AUTH_URL` to the branch-specific Neon Auth URL. The checked-in `.env.example` documents the expected value. When it is absent, the interface remains reviewable but presents a configuration message and does not simulate a successful login.
+Set `NEXT_PUBLIC_NEON_AUTH_URL` to the branch-specific Neon Auth URL. The checked-in `.env.example` documents the expected value. When it is absent, the client uses the OSai main-branch Neon Auth endpoint as its default.
 
 ## Security boundary
 

@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react'
 import { ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
-import { authClient, isAuthConfigured } from './auth'
+import { authClient } from './auth'
 
 type AuthView = 'sign-in' | 'invite' | 'forgot-password' | 'verify-email' | 'member'
 
@@ -59,7 +59,6 @@ function SignIn() {
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setError('')
-    if (!authClient) return setError('Authentication is not configured for this environment.')
     setBusy(true)
     const { error: authError } = await authClient.signInWithPassword({ email, password })
     setBusy(false)
@@ -74,7 +73,6 @@ function SignIn() {
       <label>Password<span className="password-wrap"><input type={showPassword ? 'text' : 'password'} autoComplete="current-password" required minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" /><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff /> : <Eye />}</button></span></label>
       <button className="text-action forgot-link" type="button" onClick={() => navigate('/auth/forgot-password')}>Forgot password?</button>
       {error && <Message error>{error}</Message>}
-      {!isAuthConfigured && <Message>Connect this app to Neon Auth to enable secure sign-in.</Message>}
       <button className="auth-primary" disabled={busy} type="submit">{busy ? 'Signing in…' : 'Sign in'}</button>
     </form>
     <div className="auth-divider"><span />New here?<span /></div>
@@ -92,7 +90,6 @@ function Invitation() {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (!authClient) return setError('Authentication is not configured for this environment.')
     setBusy(true); setError('')
     const { error: authError } = await authClient.signUp({ email, password, options: { data: { name } } })
     setBusy(false)
@@ -108,7 +105,6 @@ function Invitation() {
       <label>Invited email address<input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></label>
       <label>Create password<input required type="password" autoComplete="new-password" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" /></label>
       {error && <Message error>{error}</Message>}
-      {!isAuthConfigured && <Message>Invitation validation and account creation will activate after Neon Auth is connected.</Message>}
       <button className="auth-primary" disabled={busy}>{busy ? 'Creating account…' : 'Create account'} <ArrowRight size={19} /></button>
     </form>
     <p className="auth-note"><LockKeyhole size={20} />Your verified account remains subject to administrator approval and the current General NDA.</p>
@@ -122,7 +118,6 @@ function ForgotPassword() {
   const [error, setError] = useState('')
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (!authClient) return setError('Authentication is not configured for this environment.')
     setBusy(true); setError('')
     const { error: authError } = await authClient.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/auth/reset-password` })
     setBusy(false)
@@ -138,25 +133,33 @@ function ForgotPassword() {
 
 function VerifyEmail() {
   const email = new URLSearchParams(window.location.search).get('email') || 'your email address'
-  return <div className="auth-success verify"><Mail /><h2>Verify your email</h2><p>We sent a verification link to <strong>{email}</strong>. Verify the address before account setup can continue.</p><button className="auth-primary" onClick={() => navigate('/auth/sign-in')}>I’ve verified my email</button><button className="auth-secondary" onClick={() => navigate('/auth/invitation')}>Use a different email</button></div>
+  const [code, setCode] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
+    if (email === 'your email address') return setError('Return to your invitation and use the email address that received the code.')
+    setBusy(true); setError('')
+    const { error: authError } = await authClient.verifyOtp({ email, token: code, type: 'signup' })
+    setBusy(false)
+    if (authError) return setError(authError.message || 'That verification code is invalid or has expired.')
+    navigate('/member/dashboard')
+  }
+  return <div className="auth-success verify"><Mail /><h2>Verify your email</h2><p>We sent a six-digit verification code to <strong>{email}</strong>. Enter it before account setup can continue.</p><form className="auth-form" onSubmit={submit}><label>Verification code<input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))} placeholder="000000" /></label>{error && <Message error>{error}</Message>}<button className="auth-primary" disabled={busy}>{busy ? 'Verifying…' : 'Verify email'}</button></form><button className="auth-secondary" onClick={() => navigate('/auth/invitation')}>Use a different email</button></div>
 }
 
 function MemberGate() {
   const [loading, setLoading] = useState(true)
   const [userName, setUserName] = useState('')
   useEffect(() => {
-    const client = authClient
-    if (!client) { setLoading(false); return }
-    client.getSession().then(({ data }) => {
+    authClient.getSession().then(({ data }) => {
       if (!data?.session) navigate('/auth/sign-in')
       else setUserName(data.session.user?.user_metadata?.name || data.session.user?.email || 'Member')
       setLoading(false)
     })
   }, [])
   if (loading) return <p>Checking your session…</p>
-  if (!authClient) return <><div className="auth-heading"><h2>Member access is not configured</h2><p>Add the Neon Auth environment URL before this route can validate a session.</p></div><Message>Protected content must also be authorized by a server-side membership and agreement check.</Message></>
-  const client = authClient
-  return <div className="auth-success verify"><CheckCircle2 /><h2>Signed in</h2><p>Welcome, {userName}. Your identity is verified; OSai access still depends on administrator approval and agreement status.</p><button className="auth-primary" onClick={async () => { await client?.signOut(); navigate('/auth/sign-in') }}>Sign out</button></div>
+  return <div className="auth-success verify"><CheckCircle2 /><h2>Signed in</h2><p>Welcome, {userName}. Your identity is verified; OSai access still depends on administrator approval and agreement status.</p><button className="auth-primary" onClick={async () => { await authClient.signOut(); navigate('/auth/sign-in') }}>Sign out</button></div>
 }
 
 export default function AuthPage() {
