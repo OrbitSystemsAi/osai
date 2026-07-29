@@ -5,6 +5,8 @@ import { db } from '../../../../src/server/database'
 export const runtime = 'nodejs'
 const statuses = ['draft', 'published', 'archived']
 const levels = ['public', 'member', 'general_nda', 'project_nda', 'beta', 'internal']
+const projectTitleMax = 80
+const projectDescriptionMax = 350
 
 export async function GET(request: Request) {
   try {
@@ -21,7 +23,7 @@ export async function POST(request: Request) {
   try {
     const actor = await requireAdmin(request)
     const body = await request.json() as Record<string, string>
-    if (!body.name?.trim() || !body.slug?.match(/^[a-z0-9]+(?:-[a-z0-9]+)*$/) || !statuses.includes(body.status) || !levels.includes(body.accessLevel)) return NextResponse.json({ error: 'INVALID_PROJECT' }, { status: 400 })
+    if (!body.name?.trim() || body.name.trim().length > projectTitleMax || (body.description?.trim().length || 0) > projectDescriptionMax || !body.slug?.match(/^[a-z0-9]+(?:-[a-z0-9]+)*$/) || !statuses.includes(body.status) || !levels.includes(body.accessLevel)) return NextResponse.json({ error: 'INVALID_PROJECT' }, { status: 400 })
     const sql = db()
     const rows = await sql`INSERT INTO projects (name, slug, description, status, access_level, created_by, updated_by) VALUES (${body.name.trim()}, ${body.slug}, ${body.description?.trim() || ''}, ${body.status}, ${body.accessLevel}, ${actor.authUserId}, ${actor.authUserId}) RETURNING id, name, slug, description, status, access_level, updated_at`
     await sql`INSERT INTO audit_events (actor_auth_user_id, action, target_type, target_id) VALUES (${actor.authUserId}, 'project.created', 'project', ${String(rows[0].id)})`

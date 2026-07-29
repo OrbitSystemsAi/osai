@@ -7,6 +7,8 @@ const statuses = ['draft', 'published', 'archived']
 const levels = ['public', 'member', 'general_nda', 'project_nda', 'beta', 'internal']
 const milestoneStatuses = ['planned', 'in_progress', 'completed']
 const taskStatuses = ['to_do', 'in_progress', 'completed']
+const projectTitleMax = 80
+const projectDescriptionMax = 350
 
 type DashboardBody = {
   imageUrl?: string
@@ -72,7 +74,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       await sql`INSERT INTO audit_events (actor_auth_user_id, action, target_type, target_id) VALUES (${actor.authUserId}, 'project.dashboard_updated', 'project', ${id})`
       return NextResponse.json({ project: rows[0] })
     }
-    if (!body.name?.trim() || !body.slug?.match(/^[a-z0-9]+(?:-[a-z0-9]+)*$/) || !statuses.includes(body.status) || !levels.includes(body.accessLevel)) return NextResponse.json({ error: 'INVALID_PROJECT' }, { status: 400 })
+    if (!body.name?.trim() || body.name.trim().length > projectTitleMax || (body.description?.trim().length || 0) > projectDescriptionMax || !body.slug?.match(/^[a-z0-9]+(?:-[a-z0-9]+)*$/) || !statuses.includes(body.status) || !levels.includes(body.accessLevel)) return NextResponse.json({ error: 'INVALID_PROJECT' }, { status: 400 })
     const sql = db()
     const rows = await sql`UPDATE projects SET name=${body.name.trim()}, slug=${body.slug}, description=${body.description?.trim() || ''}, status=${body.status}, access_level=${body.accessLevel}, updated_by=${actor.authUserId}, updated_at=now() WHERE id=${id}::uuid RETURNING id, name, slug, description, status, access_level, updated_at`
     if (!rows.length) return NextResponse.json({ error: 'PROJECT_NOT_FOUND' }, { status: 404 })
