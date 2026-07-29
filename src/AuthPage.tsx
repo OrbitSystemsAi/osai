@@ -1,15 +1,14 @@
 'use client'
 
 import { FormEvent, useEffect, useState } from 'react'
-import { ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
 import { authClient, emailAuthClient } from './auth'
 
-type AuthView = 'sign-in' | 'invite' | 'forgot-password' | 'verify-email' | 'member'
+type AuthView = 'sign-in' | 'invite' | 'forgot-password' | 'member'
 
 const viewFromPath = (): AuthView => {
   if (window.location.pathname.startsWith('/auth/invitation')) return 'invite'
   if (window.location.pathname.startsWith('/auth/forgot-password')) return 'forgot-password'
-  if (window.location.pathname.startsWith('/auth/verify-email')) return 'verify-email'
   if (window.location.pathname.startsWith('/member')) return 'member'
   return 'sign-in'
 }
@@ -34,7 +33,7 @@ function AuthShell({ children }: { children: React.ReactNode }) {
       <div className="auth-story-copy">
         <h1>Built for trust.<br /><span>Designed for progress.</span></h1>
         <i />
-        <p>Your account keeps invitations, agreements, and protected project access connected to one verified identity.</p>
+        <p>Your account keeps invitations, agreements, and protected project access connected to one secure identity.</p>
       </div>
     </aside>
     <section className="auth-panel">
@@ -50,7 +49,7 @@ function Message({ error, children }: { error?: boolean; children: React.ReactNo
 }
 
 function SignIn() {
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(new URLSearchParams(window.location.search).get('email') || '')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -63,11 +62,11 @@ function SignIn() {
     const { error: authError } = await authClient.signInWithPassword({ email, password })
     setBusy(false)
     if (authError) return setError(authError.message || 'We could not sign you in. Check your details and try again.')
-    navigate('/member')
+    window.location.assign('/member/dashboard')
   }
 
   return <>
-    <div className="auth-heading"><h2>Welcome back</h2><p>Sign in to continue to your OSai member account.</p></div>
+    <div className="auth-heading"><h2>Welcome</h2><p>Sign in to continue to your OSai member account.</p></div>
     <form onSubmit={submit} className="auth-form">
       <label>Email address<input type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></label>
       <label>Password<span className="password-wrap"><input type={showPassword ? 'text' : 'password'} autoComplete="current-password" required minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" /><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff /> : <Eye />}</button></span></label>
@@ -76,7 +75,13 @@ function SignIn() {
       <button className="auth-primary" disabled={busy} type="submit">{busy ? 'Signing in…' : 'Sign in'}</button>
     </form>
     <div className="auth-divider"><span />New here?<span /></div>
-    <button className="auth-secondary" onClick={() => navigate('/auth/invitation')}>Accept an invitation</button>
+    <div className="invitation-section" aria-label="Invitation options">
+      <p>Invitation</p>
+      <div className="invitation-actions">
+        <button className="auth-secondary" onClick={() => navigate('/auth/invitation')}>Accept</button>
+        <a className="auth-secondary" href="mailto:hello@osai.com?subject=OSai%20access%20request">Request</a>
+      </div>
+    </div>
     <p className="auth-note"><LockKeyhole size={20} />Access is invitation-only. Creating an account does not grant access to protected materials.</p>
   </>
 }
@@ -94,11 +99,13 @@ function Invitation() {
     try {
       const { error: authError } = await emailAuthClient.signUp.email({ email, password, name })
       if (authError) throw authError
-      navigate(`/auth/verify-email?email=${encodeURIComponent(email)}`)
+      const { error: signInError } = await authClient.signInWithPassword({ email, password })
+      if (signInError) throw signInError
+      navigate('/member/dashboard')
     } catch (authError) {
       const message = authError instanceof Error ? authError.message : 'We could not create your account. Please try again.'
       if (/user already exists/i.test(message)) {
-        navigate(`/auth/verify-email?email=${encodeURIComponent(email)}`)
+        navigate(`/auth/sign-in?email=${encodeURIComponent(email)}`)
         return
       }
       setError(message)
@@ -109,7 +116,7 @@ function Invitation() {
 
   return <>
     <button className="text-action auth-return" onClick={() => navigate('/auth/sign-in')}><ArrowLeft size={18} /> Return to sign in</button>
-    <div className="auth-heading"><h2>Accept your invitation</h2><p>Create the verified identity connected to your OSai invitation.</p></div>
+    <div className="auth-heading"><h2>Accept your invitation</h2><p>Create the secure identity connected to your OSai invitation.</p></div>
     <form onSubmit={submit} className="auth-form">
       <label>Full name<input required autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Your full name" /></label>
       <label>Invited email address<input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></label>
@@ -117,7 +124,7 @@ function Invitation() {
       {error && <Message error>{error}</Message>}
       <button className="auth-primary" disabled={busy}>{busy ? 'Creating account…' : 'Create account'} <ArrowRight size={19} /></button>
     </form>
-    <p className="auth-note"><LockKeyhole size={20} />Your verified account remains subject to administrator approval and the current General NDA.</p>
+    <p className="auth-note"><LockKeyhole size={20} />Your account remains subject to administrator approval and the current General NDA.</p>
   </>
 }
 
@@ -136,44 +143,23 @@ function ForgotPassword() {
   }
   return <>
     <button className="text-action auth-return" onClick={() => navigate('/auth/sign-in')}><ArrowLeft size={18} /> Return to sign in</button>
-    <div className="auth-heading"><h2>Recover your account</h2><p>We’ll send recovery instructions to your verified email address.</p></div>
+    <div className="auth-heading"><h2>Recover your account</h2><p>We’ll send recovery instructions to your account email address.</p></div>
     {sent ? <div className="auth-success"><Mail /><h3>Check your email</h3><p>If an account exists for {email}, recovery instructions are on the way.</p><button className="auth-secondary" onClick={() => navigate('/auth/sign-in')}>Return to sign in</button></div> : <form onSubmit={submit} className="auth-form"><label>Email address<input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></label>{error && <Message error>{error}</Message>}<button className="auth-primary" disabled={busy}>{busy ? 'Sending…' : 'Send recovery email'}</button></form>}
   </>
 }
 
-function VerifyEmail() {
-  const email = new URLSearchParams(window.location.search).get('email') || 'your email address'
-  const [code, setCode] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-  const submit = async (event: FormEvent) => {
-    event.preventDefault()
-    if (email === 'your email address') return setError('Return to your invitation and use the email address that received the code.')
-    setBusy(true); setError('')
-    const { error: authError } = await authClient.verifyOtp({ email, token: code, type: 'signup' })
-    setBusy(false)
-    if (authError) return setError(authError.message || 'That verification code is invalid or has expired.')
-    navigate('/member/dashboard')
-  }
-  return <div className="auth-success verify"><Mail /><h2>Verify your email</h2><p>We sent a six-digit verification code to <strong>{email}</strong>. Enter it before account setup can continue.</p><form className="auth-form" onSubmit={submit}><label>Verification code<input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))} placeholder="000000" /></label>{error && <Message error>{error}</Message>}<button className="auth-primary" disabled={busy}>{busy ? 'Verifying…' : 'Verify email'}</button></form><button className="auth-secondary" onClick={() => navigate('/auth/invitation')}>Use a different email</button></div>
-}
-
 function MemberGate() {
-  const [loading, setLoading] = useState(true)
-  const [userName, setUserName] = useState('')
   useEffect(() => {
     authClient.getSession().then(({ data }) => {
       if (!data?.session) navigate('/auth/sign-in')
-      else setUserName(data.session.user?.user_metadata?.name || data.session.user?.email || 'Member')
-      setLoading(false)
+      else window.location.replace('/member/dashboard')
     })
   }, [])
-  if (loading) return <p>Checking your session…</p>
-  return <div className="auth-success verify"><CheckCircle2 /><h2>Signed in</h2><p>Welcome, {userName}. Your identity is verified; OSai access still depends on administrator approval and agreement status.</p><button className="auth-primary" onClick={async () => { await authClient.signOut(); navigate('/auth/sign-in') }}>Sign out</button></div>
+  return <p>Opening your OSai hub…</p>
 }
 
 export default function AuthPage() {
   const [view, setView] = useState(viewFromPath)
   useEffect(() => { const update = () => setView(viewFromPath()); window.addEventListener('popstate', update); return () => window.removeEventListener('popstate', update) }, [])
-  return <AuthShell>{view === 'invite' ? <Invitation /> : view === 'forgot-password' ? <ForgotPassword /> : view === 'verify-email' ? <VerifyEmail /> : view === 'member' ? <MemberGate /> : <SignIn />}</AuthShell>
+  return <AuthShell>{view === 'invite' ? <Invitation /> : view === 'forgot-password' ? <ForgotPassword /> : view === 'member' ? <MemberGate /> : <SignIn />}</AuthShell>
 }

@@ -8,6 +8,8 @@ This directory is the canonical reference for the Orbit Systems / OSai website e
 |---|---|
 | [Website information architecture](architecture/website-information-architecture.md) | Pages, navigation menus, CTAs, and movement between public, member, project, beta, and admin areas |
 | [Authentication implementation](architecture/authentication-implementation.md) | Current Neon Auth client routes, configuration, verification, and required server authorization boundary |
+| [Administrator authorization](architecture/admin-authorization.md) | Application roles, first-admin bootstrap, role management, and admin-only project mutations |
+| [DocuSign integration](architecture/docusign-integration.md) | General NDA template setup, embedded signing, envelope status, credentials, and production security boundary |
 | [Access request and approval flow](access/access-request-and-approval.md) | Neon-backed identity setup, email validation, pending approval, administrative decisions, and confirmation messages |
 | [Lifecycle tracking and nudges](operations/lifecycle-tracking-and-nudges.md) | Admin lifecycle tracking, stalled-state detection, reminders, escalation, and audit requirements |
 | [Canonical lifecycle statuses](reference/lifecycle-statuses.md) | Shared state names, meanings, allowed transitions, responsible parties, and terminal states |
@@ -25,6 +27,13 @@ This directory is the canonical reference for the Orbit Systems / OSai website e
 1. Access request and approval flow
 2. Canonical lifecycle statuses
 3. Foundation roadmap sections 4–5 and 9
+
+### Agreements or DocuSign integration
+
+1. DocuSign integration
+2. Authentication implementation
+3. Canonical lifecycle statuses
+4. Foundation roadmap sections 4–6 and 9
 
 ### Admin dashboard work
 

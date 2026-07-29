@@ -2,16 +2,18 @@
 
 ## Outcome
 
-The website now provides an invite-oriented Neon Auth client flow for sign-in, invitation account creation, email verification guidance, password recovery, session checking, and sign-out.
+The public website now exposes an **Account** navigation control with separate **Sign in** and **Create Account** actions. Each action opens a compact modal without leaving the landing page. Sign-in includes username/email, password, and password-recovery access. Account creation includes full name, email, password, and password confirmation.
 
-Account creation and email-code verification use Neon Auth's native Better Auth endpoints so signup can succeed before a verified session exists. The remaining client operations use the Supabase-compatible adapter.
-If an earlier signup already created the user, a repeated invitation submission continues to email verification instead of surfacing an SDK exception.
+As a temporary operating configuration, Neon Auth's **Verify at Sign-up** setting is disabled. Account creation uses Neon Auth's native Better Auth endpoint and then establishes a password session without an email-code step. If an earlier signup already created the user, the invitation flow returns the user to sign-in with their email prefilled.
+
+Successful sign-in or account creation routes to `/member/dashboard`, the current OSai account home. Password confirmation is validated in the browser before the Neon account-creation request is sent.
+
+This is an implementation deviation from the approved access-request flow in `docs/access/access-request-and-approval.md`. Administrator approval remains mandatory, and email verification should be restored before the protected hub is used for confidential materials.
 
 ## Routes
 
 - `/auth/sign-in` — email and password sign-in
 - `/auth/invitation` — account creation for an invited email identity
-- `/auth/verify-email` — six-digit email verification code after account creation
 - `/auth/forgot-password` — non-enumerating recovery request
 - `/member/*` — client session gate before the existing member hub is rendered
 
@@ -40,3 +42,11 @@ Authentication proves identity. It does not itself grant OSai membership or proj
 - Responsive invitation route inspection at the mobile breakpoint
 - Route and accessible-name inspection for all primary controls
 - Missing-configuration and unauthenticated member-route behavior
+
+## Application roles and project administration
+
+Application authorization is stored in `user_profiles`, keyed by the immutable Neon Auth user ID. Roles are `member` or `admin`; the role is never read from client-editable profile metadata. Admin-only API routes revalidate the Neon session and role on every request.
+
+To initialize the first administrator, set `DATABASE_URL`, apply the SQL files in `db/migrations` in numeric order, and put that person's immutable Neon Auth user ID in `OSAI_BOOTSTRAP_ADMIN_USER_IDS`. After the profile signs in, the bootstrap rule creates or promotes its application profile. That administrator can then use **Users** to grant or remove administrator rights for other application profiles.
+
+Administrators can use **Manage Projects** to add, edit, publish, archive, and remove projects. Project and role mutations are recorded in `audit_events`. A user cannot remove their own administrator role through the UI/API, reducing accidental lockout risk.

@@ -1,14 +1,14 @@
 'use client'
 
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import {
   ArrowLeft, ArrowRight, Bell, BellRing, BookOpen, CalendarDays, Check,
-  ChevronRight, CircleUserRound, Clock3, FileCheck2, FileText, FlaskConical,
-  FolderKanban, KeyRound, LayoutDashboard, LockKeyhole, Menu, MessageSquareText,
-  Orbit, Search, ShieldCheck, X,
+  ChevronRight, Clock3, FileCheck2, FileText, FlaskConical,
+  FolderKanban, Hourglass, KeyRound, LayoutDashboard, LockKeyhole, Mail, Menu,
+  MessageSquareText, Orbit, Pencil, Plus, Search, ShieldCheck, Trash2, UserCog, X,
 } from 'lucide-react'
 import AuthPage from './AuthPage'
-import { authClient } from './auth'
+import { authClient, emailAuthClient } from './auth'
 
 const services = [
   { name: 'OSai Ventures', text: 'We co-build and back ventures with exceptional founders. From first conviction to scaling growth, we provide capital, hands-on partnership, and a network that accelerates what’s next.', icon: Orbit },
@@ -25,6 +25,10 @@ const memberNav = [
   { slug: 'updates', label: 'Updates', icon: BookOpen },
   { slug: 'notifications', label: 'Notifications', icon: Bell, count: 3 },
   { slug: 'profile', label: 'Profile & Security', icon: ShieldCheck },
+]
+const adminNav = [
+  { slug: 'admin-users', label: 'Users', icon: UserCog, count: 0 },
+  { slug: 'admin-projects', label: 'Manage Projects', icon: FolderKanban, count: 0 },
 ]
 
 const projects = [
@@ -50,15 +54,51 @@ function Brand({ light = true }: { light?: boolean }) {
 function PublicSite() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeStage, setActiveStage] = useState(0)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const [accountDialog, setAccountDialog] = useState<'sign-in' | 'create' | null>(null)
+  const [accountEmail, setAccountEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [verifyPassword, setVerifyPassword] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [authBusy, setAuthBusy] = useState(false)
+  const [authError, setAuthError] = useState('')
   useEffect(() => {
     const timer = window.setInterval(() => setActiveStage((stage) => (stage + 1) % stages.length), 1800)
     return () => window.clearInterval(timer)
   }, [])
-  const closeMenu = () => setMenuOpen(false)
+  useEffect(() => {
+    if (!accountDialog) return
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setAccountDialog(null) }
+    document.body.classList.add('modal-open')
+    window.addEventListener('keydown', closeOnEscape)
+    return () => { document.body.classList.remove('modal-open'); window.removeEventListener('keydown', closeOnEscape) }
+  }, [accountDialog])
+  const closeMenu = () => { setMenuOpen(false); setAccountOpen(false) }
+  const openDialog = (dialog: 'sign-in' | 'create') => {
+    setAccountDialog(dialog); setAccountOpen(false); setMenuOpen(false); setAuthError(''); setPassword(''); setVerifyPassword('')
+  }
+  const signIn = async (event: FormEvent) => {
+    event.preventDefault(); setAuthBusy(true); setAuthError('')
+    const { error } = await authClient.signInWithPassword({ email: accountEmail, password })
+    setAuthBusy(false)
+    if (error) return setAuthError(error.message || 'We could not sign you in. Check your details and try again.')
+    window.location.href = '/member/dashboard'
+  }
+  const createAccount = async (event: FormEvent) => {
+    event.preventDefault(); setAuthError('')
+    if (password !== verifyPassword) return setAuthError('The passwords do not match.')
+    setAuthBusy(true)
+    const { error } = await emailAuthClient.signUp.email({ email: accountEmail, password, name: fullName })
+    if (error) { setAuthBusy(false); return setAuthError(error.message || 'We could not create your account. Please try again.') }
+    const { error: signInError } = await authClient.signInWithPassword({ email: accountEmail, password })
+    setAuthBusy(false)
+    if (signInError) return setAuthError(signInError.message || 'Your account was created, but we could not sign you in.')
+    window.location.href = '/member/dashboard'
+  }
   return <div id="top">
     <section className="hero">
       <header className="site-header page-wrap"><Brand /><nav className={menuOpen ? 'open' : ''} aria-label="Primary navigation">
-        <a href="#top" onClick={closeMenu}>Home</a><a href="#ventures" onClick={closeMenu}>Ventures</a><a href="#innovation" onClick={closeMenu}>Innovation</a><a href="#consulting" onClick={closeMenu}>Consulting</a><a href="/insights">Insights</a><a href="#contact" onClick={closeMenu}>Contact</a><a className="nav-sign-in" href="/auth/sign-in" onClick={closeMenu}>Sign in</a>
+        <a href="#top" onClick={closeMenu}>Home</a><a href="#ventures" onClick={closeMenu}>Ventures</a><a href="#innovation" onClick={closeMenu}>Innovation</a><a href="#consulting" onClick={closeMenu}>Consulting</a><a href="/insights">Insights</a><a href="#contact" onClick={closeMenu}>Contact</a><span className="account-entry"><button className="nav-sign-in" type="button" aria-expanded={accountOpen} onClick={() => setAccountOpen(!accountOpen)}>Account</button>{accountOpen && <span className="account-menu"><button onClick={() => openDialog('sign-in')}>Sign in</button><button onClick={() => openDialog('create')}>Create Account</button></span>}</span>
       </nav><div className="header-actions"><button className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'}>{menuOpen ? <X /> : <Menu />}</button></div></header>
       <div className="hero-art" aria-hidden="true" /><div className="hero-content page-wrap"><div className="hero-copy"><h1>We turn ideas into market-ready businesses and products.</h1><p>OSai brings strategy, product development, technology, and commercialization together—so promising ideas can move from possibility to progress.</p><div className="hero-actions"><a className="button button-orange" href="mailto:hello@osai.com">Start a conversation</a><a className="button button-outline" href="#what-we-do">Explore what we do</a></div></div></div>
     </section>
@@ -67,39 +107,279 @@ function PublicSite() {
       <section className="integration page-wrap" id="about"><div className="integration-copy"><h2>One team across<br />the work that matters.</h2><p>Strategy, product creation, technical execution, and go-to-market planning work together—reducing handoffs and keeping the idea connected to the outcome.</p></div><div className="principles"><span>Clarity</span><span>Practical innovation</span><span>Disciplined execution</span><span>Market focus</span></div></section>
       <section className="cta" id="contact"><div className="page-wrap cta-inner"><div><h2>Have an idea worth<br />moving forward?</h2><p>Tell us what you’re building, where you’re stuck, or what opportunity you want to explore.</p></div><div className="cta-actions"><a className="button button-orange" href="mailto:hello@osai.com">Start a conversation</a><a href="#about">Learn about OSai <ArrowRight size={18} /></a></div></div></section></main>
     <footer><div className="page-wrap footer-inner"><div><Brand /><p>Creating, building, and taking<br />ideas to market.</p></div><nav><a href="#top">Home</a><a href="#ventures">Ventures</a><a href="#innovation">Innovation</a><a href="#consulting">Consulting</a><a href="#contact">Contact</a></nav></div></footer>
+    {accountDialog && <div className="account-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAccountDialog(null) }}><section className="account-modal" role="dialog" aria-modal="true" aria-labelledby="account-dialog-title"><button className="account-modal-close" type="button" onClick={() => setAccountDialog(null)} aria-label="Close account dialog"><X /></button>{accountDialog === 'sign-in' ? <><h2 id="account-dialog-title">Sign in</h2><p>Continue to your OSai account.</p><form onSubmit={signIn}><label>Username (email)<input type="email" required autoComplete="email" value={accountEmail} onChange={(event) => setAccountEmail(event.target.value)} /></label><label>Password<input type="password" required minLength={8} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} /></label><a className="account-forgot" href="/auth/forgot-password">Forgot password?</a>{authError && <div className="account-error" role="alert">{authError}</div>}<button className="account-submit" disabled={authBusy}>{authBusy ? 'Signing in…' : 'Sign in'}</button></form><button className="account-switch" type="button" onClick={() => openDialog('create')}>Create an account</button></> : <><h2 id="account-dialog-title">Create Account</h2><p>Create your OSai sign-in credentials.</p><form onSubmit={createAccount}><label>Full Name<input required autoComplete="name" value={fullName} onChange={(event) => setFullName(event.target.value)} /></label><label>Email<input type="email" required autoComplete="email" value={accountEmail} onChange={(event) => setAccountEmail(event.target.value)} /></label><label>Password<input type="password" required minLength={8} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} /></label><label>Verify Password<input type="password" required minLength={8} autoComplete="new-password" value={verifyPassword} onChange={(event) => setVerifyPassword(event.target.value)} /></label>{authError && <div className="account-error" role="alert">{authError}</div>}<button className="account-submit" disabled={authBusy}>{authBusy ? 'Creating account…' : 'Create Account'}</button></form><button className="account-switch" type="button" onClick={() => openDialog('sign-in')}>Already have an account? Sign in</button></>}</section></div>}
   </div>
 }
 
 function Status({ children, tone = 'teal' }: { children: ReactNode, tone?: string }) { return <span className={`status status-${tone}`}>{children}</span> }
 function SectionHead({ title, action, to }: { title: string, action?: string, to?: string }) { return <div className="section-head"><h2>{title}</h2>{action && <a href={to}>{action}<ChevronRight size={18} /></a>}</div> }
 
-function Dashboard() { return <>
-  <header className="member-page-head"><h1>Welcome back, Earl</h1><p>Here’s what’s happening across your OSai access.</p></header>
-  <section><SectionHead title="Your access" /><a className="access-row" href="/member/agreements"><span className="round-icon teal"><FileCheck2 /></span><span><strong>General NDA</strong><Status>Signed</Status><small>Completed July 18, 2026 · Version 1.0</small></span><span className="row-action">View agreement <ChevronRight /></span></a></section>
-  <div className="dashboard-columns"><section><SectionHead title="Available projects" action="View all projects" to="/member/projects" /><div className="lined-list">{projects.map((project) => <a className="project-row" href="/member/projects" key={project.name}><span className={`project-avatar ${project.tone}`}>{project.initials}</span><span className="row-copy"><strong>{project.name}</strong><small>{project.description}</small></span><Status tone={project.tone}>{project.status}</Status><ChevronRight /></a>)}</div></section>
-  <div><section><SectionHead title="Beta programs" /><a className="beta-card" href="/member/beta-programs"><span className="round-icon orange"><FlaskConical /></span><span><strong>Career Pivot research preview</strong><small>Help test a guided career clarity experience.</small><em>Invitation expires Aug 11</em></span><button>View invitation</button></a></section><section className="updates-block"><SectionHead title="Latest updates" action="View all updates" to="/member/updates" /><UpdateList limit={3} /></section></div></div>
-  </> }
+const urgentDashboardItems: Array<{ title: string, detail: string, href: string }> = []
+const pendingDashboardItems: Array<{ title: string, detail: string, href: string }> = []
+
+function ProjectSnapshot({ project, available = false }: { project: typeof projects[number], available?: boolean }) {
+  return <a className="snapshot-tile" href="/member/projects">
+    <span className={`snapshot-mark ${project.tone}`}>{project.initials}</span>
+    <span className="snapshot-copy"><small>{available ? 'Available to you' : 'Current project'}</small><strong>{project.name}</strong><span>{project.description}</span></span>
+    <span className="snapshot-foot"><Status tone={project.tone}>{project.status}</Status><ChevronRight /></span>
+  </a>
+}
+
+function Dashboard() {
+  const currentProjects = projects.filter(project => project.status !== 'Request access')
+  const availableProjects = projects.filter(project => project.status === 'Request access')
+  return <div className="modular-dashboard">
+    <section className="dashboard-module analytics-module" aria-label="Financial forecasts">
+      <div className="analytics-grid">
+        <article className="analytic analytic-line">
+          <header><h2>Projected portfolio value</h2><strong>$1.24M</strong><span>+18.6% forecast</span></header>
+          <svg viewBox="0 0 340 132" role="img" aria-label="Projected portfolio value rises from 760 thousand dollars to 1.24 million dollars over five quarters">
+            <g className="chart-grid"><path d="M12 18H328M12 64H328M12 110H328" /></g>
+            <path className="area-fill" d="M12 104L75 90L138 96L201 62L264 50L328 22V120H12Z" />
+            <path className="line-stroke" d="M12 104L75 90L138 96L201 62L264 50L328 22" />
+            <g className="line-dots"><circle cx="12" cy="104" r="3" /><circle cx="75" cy="90" r="3" /><circle cx="138" cy="96" r="3" /><circle cx="201" cy="62" r="3" /><circle cx="264" cy="50" r="3" /><circle cx="328" cy="22" r="4" /></g>
+          </svg>
+          <div className="chart-axis" aria-hidden="true"><span>Q3</span><span>Q4</span><span>Q1</span><span>Q2</span><span>Q3</span><span>Q4</span></div>
+        </article>
+
+        <article className="analytic analytic-bars">
+          <header><h2>Expected ROI by project</h2><strong>24.8%</strong><span>Blended forecast</span></header>
+          <div className="vertical-bars" role="img" aria-label="Expected return on investment: APD 31 percent, Career Pivot 24 percent, Social Encounter 15 percent">
+            <span><i style={{ height: '88%' }} /><small>APD</small><b>31%</b></span>
+            <span><i style={{ height: '68%' }} /><small>CP</small><b>24%</b></span>
+            <span><i style={{ height: '43%' }} /><small>SE</small><b>15%</b></span>
+          </div>
+        </article>
+
+        <article className="analytic analytic-donut">
+          <header><h2>My projects</h2><strong>{currentProjects.length}</strong><span>Active forecasts</span></header>
+          <div className="donut-wrap">
+            <div className="donut-chart" role="img" aria-label="Active project forecast mix: 63 percent Advanced Predictive Data and 37 percent Career Pivot"><span><strong>{currentProjects.length}</strong><small>Projects</small></span></div>
+            <ul><li><i className="teal" />APD <b>63%</b></li><li><i className="blue" />Career Pivot <b>37%</b></li></ul>
+          </div>
+        </article>
+
+        <article className="analytic analytic-allocation">
+          <header><h2>12-month capital forecast</h2><strong>$420K</strong><span>Planned allocation</span></header>
+          <div className="allocation-list">
+            <span><small>Product development</small><b>$189K</b><i><em style={{ width: '45%' }} /></i></span>
+            <span><small>Go-to-market</small><b>$126K</b><i><em style={{ width: '30%' }} /></i></span>
+            <span><small>Operations</small><b>$105K</b><i><em style={{ width: '25%' }} /></i></span>
+          </div>
+        </article>
+      </div>
+      <p className="forecast-note">Illustrative forecasts for planning purposes; not verified performance or an investment offer.</p>
+    </section>
+
+    {urgentDashboardItems.length > 0 && <section className="dashboard-module action-module urgent-module"><SectionHead title="Urgent" />{urgentDashboardItems.map(item => <a href={item.href} key={item.title}><span><strong>{item.title}</strong><small>{item.detail}</small></span><ChevronRight /></a>)}</section>}
+
+    <section className="dashboard-module invitation-module" aria-labelledby="invitations-title">
+      <div className="module-heading compact"><span className="module-icon orange"><Mail /></span><div><h2 id="invitations-title">Invitations</h2><p>Opportunities waiting for your response.</p></div></div>
+      <a className="invitation-row" href="/member/beta-programs"><span className="round-icon orange"><FlaskConical /></span><span><strong>Career Pivot research preview</strong><small>Help test a guided career clarity experience.</small><em>Expires Aug 11</em></span><button>View invitation</button></a>
+    </section>
+
+    {pendingDashboardItems.length > 0 && <section className="dashboard-module action-module pending-module"><div className="module-heading compact"><span className="module-icon blue"><Hourglass /></span><div><h2>Pending</h2><p>Items currently awaiting completion or approval.</p></div></div>{pendingDashboardItems.map(item => <a href={item.href} key={item.title}><span><strong>{item.title}</strong><small>{item.detail}</small></span><ChevronRight /></a>)}</section>}
+
+    <section className="dashboard-module projects-module"><SectionHead title="Current Projects" action="View all projects" to="/member/projects" /><div className="snapshot-grid">{currentProjects.map(project => <ProjectSnapshot project={project} key={project.name} />)}</div></section>
+    <section className="dashboard-module projects-module"><SectionHead title="Available Projects" action="Explore projects" to="/member/projects" /><div className="snapshot-grid">{availableProjects.map(project => <ProjectSnapshot project={project} available key={project.name} />)}</div></section>
+  </div>
+}
 
 function ProjectsPage() { const [filter, setFilter] = useState('All projects'); return <><PageHead title="Projects" intro="Explore the projects available at your current access level." /><div className="toolbar"><div className="filter-tabs">{['All projects','Available','Requested'].map(x=><button className={filter===x?'active':''} onClick={()=>setFilter(x)} key={x}>{x}</button>)}</div><label className="search"><Search size={18}/><input aria-label="Search projects" placeholder="Search projects" /></label></div><div className="project-catalog">{projects.map((p,i)=><article className="catalog-row" key={p.name}><div className={`catalog-visual ${p.tone}`}><span>{p.initials}</span></div><div><Status tone={p.tone}>{p.status}</Status><h2>{p.name}</h2><p>{p.description}</p><div className="meta-line"><span><Clock3/> {i===0?'Updated 2 days ago':'Updated this month'}</span><span><ShieldCheck/> {i===2?'General NDA required':'Member access'}</span></div></div><button className={i===2?'secondary-button':'text-button'}>{i===2?'Request access':'Open project'} <ArrowRight size={17}/></button></article>)}</div></> }
 
-function AgreementsPage() { return <><PageHead title="Agreements" intro="Review the agreements connected to your OSai access." /><div className="info-banner"><ShieldCheck/><span><strong>Your access is current</strong><small>OSai verifies agreement status before protected content is shown.</small></span></div><div className="data-list"><div className="data-head"><span>Agreement</span><span>Status</span><span>Completed</span><span></span></div><div className="data-row"><span className="title-cell"><FileCheck2/><span><strong>General NDA</strong><small>Version 1.0</small></span></span><Status>Signed</Status><span>July 18, 2026</span><button className="text-button">View details <ChevronRight/></button></div><div className="data-row"><span className="title-cell"><FileText/><span><strong>Advanced Predictive Data acknowledgement</strong><small>Project agreement</small></span></span><Status tone="blue">Not required</Status><span>—</span><button className="text-button">About access <ChevronRight/></button></div></div></> }
+type AgreementState = { configured: boolean; environment?: 'demo' | 'production'; status: string; completedAt?: string | null; error?: string }
+
+async function memberAuthHeaders() {
+  const { data, error } = await authClient.getSession()
+  if (error || !data.session?.access_token) throw new Error('Your OSai session could not be verified. Please sign in again.')
+  return { authorization: `Bearer ${data.session.access_token}` }
+}
+
+function AgreementsPage() {
+  const [agreement, setAgreement] = useState<AgreementState | null>(null)
+  const [busy, setBusy] = useState(false)
+  const loadAgreement = async () => {
+    try {
+      const headers = await memberAuthHeaders()
+      const response = await fetch('/api/agreements', { cache: 'no-store', headers })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error === 'UNAUTHENTICATED' ? 'Your OSai session could not be verified. Please sign in again.' : data.error || 'We could not verify your agreement status.')
+      setAgreement(data)
+    } catch (error) {
+      setAgreement({ configured: true, status: 'error', error: error instanceof Error ? error.message : 'We could not verify your agreement status.' })
+    }
+  }
+  useEffect(() => { void loadAgreement() }, [])
+  const signAgreement = async () => {
+    setBusy(true)
+    try {
+      const headers = await memberAuthHeaders()
+      const response = await fetch('/api/agreements/sign', { method: 'POST', headers })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error === 'DOCUSIGN_CONSENT_REQUIRED' ? 'DocuSign administrator consent is required before signing can begin.' : data.error || 'We could not open DocuSign.')
+      window.location.assign(data.url)
+    } catch (error) {
+      setAgreement(current => ({ configured: current?.configured ?? true, status: 'error', error: error instanceof Error ? error.message : 'We could not open DocuSign.' }))
+      setBusy(false)
+    }
+  }
+  const signed = agreement?.status === 'general_nda_signed'
+  const waiting = agreement?.status === 'general_nda_sent'
+  const isDemo = agreement?.environment === 'demo'
+  const completed = agreement?.completedAt ? new Intl.DateTimeFormat('en-US', { dateStyle: 'long' }).format(new Date(agreement.completedAt)) : '—'
+  const bannerTitle = isDemo ? (signed ? 'Test agreement completed' : 'DocuSign sandbox connected') : signed ? 'Your access is current' : agreement?.configured === false ? 'DocuSign setup is required' : waiting ? 'Your signature is being verified' : 'Complete your General NDA'
+  const bannerCopy = isDemo ? (signed ? 'This sandbox result does not grant access to confidential materials.' : 'This non-binding test verifies signing and status updates without granting real access.') : signed ? 'OSai verified this completed envelope with DocuSign.' : agreement?.configured === false ? 'Add the DocuSign developer-account credentials to connect this page.' : waiting ? 'Return to DocuSign if you still need to finish, or refresh this status after signing.' : 'Review and sign the current agreement in DocuSign before protected content is shown.'
+  return <><PageHead title="Agreements" intro="Review the agreements connected to your OSai access." /><div className={`info-banner ${signed && !isDemo ? '' : 'agreement-action-needed'}`}><ShieldCheck/><span><strong>{bannerTitle}</strong><small>{bannerCopy}</small></span></div>{agreement?.error && <p className="agreement-error" role="alert">{agreement.error}</p>}<div className="data-list"><div className="data-head"><span>Agreement</span><span>Status</span><span>Completed</span><span></span></div><div className="data-row"><span className="title-cell"><FileCheck2/><span><strong>{isDemo ? 'General NDA test' : 'General NDA'}</strong><small>Version 1.0 · DocuSign{isDemo ? ' sandbox · TEST ONLY' : ''}</small></span></span>{agreement === null ? <Status tone="slate">Checking…</Status> : signed ? <Status>{isDemo ? 'Test completed' : 'Signed'}</Status> : waiting ? <Status tone="blue">{isDemo ? 'Test sent' : 'Sent'}</Status> : <Status tone="orange">{isDemo ? 'Test required' : 'Required'}</Status>}<span>{signed ? completed : '—'}</span>{signed ? <button className="text-button" onClick={loadAgreement}>Refresh status <ChevronRight/></button> : <button className="agreement-sign-button" onClick={signAgreement} disabled={busy || agreement === null || agreement?.configured === false}>{busy ? 'Opening DocuSign…' : waiting ? 'Continue signing' : isDemo ? 'Run signing test' : 'Review and sign'} <ChevronRight/></button>}</div><div className="data-row"><span className="title-cell"><FileText/><span><strong>Advanced Predictive Data acknowledgement</strong><small>Project agreement</small></span></span><Status tone="blue">Not required</Status><span>—</span><button className="text-button">About access <ChevronRight/></button></div></div></>
+}
 
 function BetaPage() { return <><PageHead title="Beta Programs" intro="Join invited previews and keep track of feedback you’ve shared." /><div className="split-feature"><div className="feature-copy"><Status tone="orange">Invitation</Status><h2>Career Pivot research preview</h2><p>Try an early guided experience and share what helps, what feels unclear, and what you would change.</p><ul><li><CalendarDays/> Invitation expires August 11, 2026</li><li><LockKeyhole/> Access is limited to invited participants</li></ul><div><button className="primary-button">Review invitation</button><button className="plain-button">Not now</button></div></div><div className="feature-panel"><FlaskConical/><strong>Your feedback stays connected</strong><p>Submissions remain linked to their original context and are reviewed by the project team.</p></div></div><section className="lower-section"><SectionHead title="Your participation"/><div className="empty-state"><MessageSquareText/><h3>No feedback submitted yet</h3><p>Your submissions and their review status will appear here.</p></div></section></> }
 
 function UpdateList({limit=updates.length}:{limit?:number}) { return <div className="update-list">{updates.slice(0,limit).map(({title,detail,date,icon:Icon})=><a href="/member/updates" key={title}><span className="mini-icon"><Icon/></span><span><strong>{title}</strong><small>{detail}</small></span><time>{date}</time><ChevronRight/></a>)}</div> }
 function UpdatesPage() { return <><PageHead title="Updates" intro="News and changes from the projects and programs you can access." /><div className="update-layout"><UpdateList/><aside><h3>Following</h3><p>You’re receiving updates for one project.</p><div className="following"><span className="project-avatar teal">AP</span><span><strong>Advanced Predictive Data</strong><small>Email and in-app updates</small></span></div><button className="secondary-button">Manage preferences</button></aside></div></> }
 function NotificationsPage() { const [read,setRead]=useState<number[]>([]); const notes=['Your beta invitation is ready to review','Advanced Predictive Data published an update','Your General NDA was completed']; return <><PageHead title="Notifications" intro="Access, agreement, and project activity that needs your attention." /><div className="notification-actions"><button className="text-button" onClick={()=>setRead([0,1,2])}><Check/> Mark all as read</button></div><div className="notification-list">{notes.map((n,i)=><button onClick={()=>setRead([...read,i])} className={read.includes(i)?'read':''} key={n}><span className="notice-dot"/><span className="mini-icon">{i===0?<FlaskConical/>:i===1?<BookOpen/>:<FileCheck2/>}</span><span><strong>{n}</strong><small>{i===0?'Invitation expires August 11':i===1?'2 days ago':'July 18'}</small></span><ChevronRight/></button>)}</div></> }
-function ProfilePage() { const [saved,setSaved]=useState(false); return <><PageHead title="Profile & Security" intro="Manage your member profile, sign-in details, and notification preferences." /><div className="settings-layout"><section><h2>Profile</h2><div className="avatar-editor"><span>ER</span><div><strong>Earl Reeves</strong><small>Member since July 2026</small></div><button className="plain-button">Change photo</button></div><div className="form-grid"><label>First name<input defaultValue="Earl"/></label><label>Last name<input defaultValue="Reeves"/></label><label className="wide">Email<input defaultValue="earl@example.com" disabled/><small>Your verified sign-in email</small></label></div><button className="primary-button" onClick={()=>setSaved(true)}>{saved?'Saved':'Save changes'}</button></section><aside><h2>Security</h2><a href="#password"><KeyRound/><span><strong>Password</strong><small>Last changed recently</small></span><ChevronRight/></a><a href="#sessions"><CircleUserRound/><span><strong>Active sessions</strong><small>1 signed-in device</small></span><ChevronRight/></a><a href="#notifications"><BellRing/><span><strong>Notifications</strong><small>Email and in-app preferences</small></span><ChevronRight/></a></aside></div></> }
+type AdminProject = { id: string; name: string; slug: string; description: string; status: string; access_level: string }
+type UserProject = { id: string; name: string; role: string; status: string }
+type AdminProfile = { auth_user_id: string; email: string; display_name: string; role: 'member' | 'admin'; status: 'pending_approval' | 'approved' | 'declined' | 'revoked'; project_count: number; projects: UserProject[] }
+const emptyProject = { name: '', slug: '', description: '', status: 'draft', accessLevel: 'member' }
+
+async function adminRequest(path: string, init?: RequestInit) {
+  const headers = await memberAuthHeaders()
+  const response = await fetch(path, { ...init, cache: 'no-store', headers: { ...headers, ...(init?.body ? { 'content-type': 'application/json' } : {}) } })
+  const data = response.status === 204 ? null : await response.json()
+  if (!response.ok) throw new Error(data?.error || 'The administrator action failed.')
+  return data
+}
+
+function AdminUsersPage() {
+  const [profiles, setProfiles] = useState<AdminProfile[]>([])
+  const [message, setMessage] = useState('Loading profiles…')
+  const load = async () => { try { const data = await adminRequest('/api/admin/profiles'); setProfiles(data.profiles); setMessage('') } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not load profiles.') } }
+  useEffect(() => { void load() }, [])
+  const changeRole = async (profile: AdminProfile, role: 'member' | 'admin') => { try { await adminRequest('/api/admin/profiles', { method: 'PATCH', body: JSON.stringify({ authUserId: profile.auth_user_id, role }) }); await load() } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not update the role.') } }
+  return <><PageHead title="Users" intro="Review user access, administrator rights, and project involvement." />{message&&<p className="profile-message" role="status">{message}</p>}<div className="admin-table user-directory"><div className="admin-table-head"><span>User</span><span>Account status</span><span>Projects</span><span>Role</span></div>{profiles.map(profile=><article className="admin-person" key={profile.auth_user_id}><span className="user-identity"><strong>{profile.display_name}{profile.role==='admin'&&<em>Admin</em>}</strong><small>{profile.email}</small><code>{profile.auth_user_id}</code></span><Status tone={profile.status==='approved'?'teal':profile.status==='pending_approval'?'orange':'slate'}>{profile.status.replaceAll('_',' ')}</Status><span className="user-projects"><strong>{profile.project_count} {profile.project_count===1?'project':'projects'}</strong>{profile.projects.length?<ul>{profile.projects.map(project=><li key={project.id}><span><b>{project.name}</b><small>{project.role}</small></span><Status tone={project.status==='project_access_approved'?'teal':project.status.includes('declined')||project.status.includes('revoked')?'slate':'orange'}>{project.status.replace('project_','').replaceAll('_',' ')}</Status></li>)}</ul>:<small>No project involvement</small>}</span><select aria-label={`Role for ${profile.display_name}`} value={profile.role} onChange={event=>void changeRole(profile,event.target.value as 'member'|'admin')}><option value="member">Member</option><option value="admin">Administrator</option></select></article>)}</div></>
+}
+
+function AdminProjectsPage() {
+  const [items, setItems] = useState<AdminProject[]>([])
+  const [editing, setEditing] = useState<string | 'new' | null>(null)
+  const [form, setForm] = useState(emptyProject)
+  const [message, setMessage] = useState('Loading projects…')
+  const load = async () => { try { const data = await adminRequest('/api/admin/projects'); setItems(data.projects); setMessage('') } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not load projects.') } }
+  useEffect(() => { void load() }, [])
+  const beginEdit = (project: AdminProject) => { setEditing(project.id); setForm({ name: project.name, slug: project.slug, description: project.description, status: project.status, accessLevel: project.access_level }) }
+  const save = async (event: FormEvent) => { event.preventDefault(); try { await adminRequest(editing === 'new' ? '/api/admin/projects' : `/api/admin/projects/${editing}`, { method: editing === 'new' ? 'POST' : 'PATCH', body: JSON.stringify(form) }); setEditing(null); setForm(emptyProject); await load() } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not save the project.') } }
+  const remove = async (project: AdminProject) => { if (!window.confirm(`Remove ${project.name}? This cannot be undone.`)) return; try { await adminRequest(`/api/admin/projects/${project.id}`, { method: 'DELETE' }); await load() } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not remove the project.') } }
+  return <><PageHead title="Project Management" intro="Add, edit, publish, archive, or remove portfolio projects." /><div className="admin-actions"><button className="primary-button" onClick={()=>{setEditing('new');setForm(emptyProject)}}><Plus/> Add project</button></div>{message&&<p className="profile-message" role="status">{message}</p>}{editing&&<form className="admin-project-form" onSubmit={save}><label>Name<input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label><label>Slug<input required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" value={form.slug} onChange={e=>setForm({...form,slug:e.target.value.toLowerCase()})}/></label><label className="wide">Description<textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></label><label>Status<select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label><label>Access level<select value={form.accessLevel} onChange={e=>setForm({...form,accessLevel:e.target.value})}><option value="public">Public</option><option value="member">Member</option><option value="general_nda">General NDA</option><option value="project_nda">Project NDA</option><option value="beta">Beta</option><option value="internal">Internal</option></select></label><div className="wide form-actions"><button className="primary-button">Save project</button><button type="button" className="plain-button" onClick={()=>setEditing(null)}>Cancel</button></div></form>}<div className="admin-project-list">{items.map(project=><article key={project.id}><span><strong>{project.name}</strong><small>/{project.slug} · {project.access_level.replace('_',' ')}</small><p>{project.description||'No description added.'}</p></span><Status tone={project.status==='published'?'teal':project.status==='archived'?'slate':'orange'}>{project.status}</Status><button aria-label={`Edit ${project.name}`} onClick={()=>beginEdit(project)}><Pencil/></button><button className="danger-action" aria-label={`Remove ${project.name}`} onClick={()=>void remove(project)}><Trash2/></button></article>)}</div></>
+}
+
+type MemberIdentity = { name: string, email: string, initials: string }
+
+function identityFromUser(user?: { name?: string | null, email?: string | null }): MemberIdentity {
+  const name = user?.name?.trim() || user?.email?.split('@')[0] || 'OSai member'
+  const initials = name.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'OS'
+  return { name, email: user?.email || '', initials }
+}
+
+function ProfilePage({ identity, onSaved }: { identity: MemberIdentity, onSaved: (identity: MemberIdentity) => void }) {
+  const nameParts = identity.name.split(/\s+/)
+  const [firstName, setFirstName] = useState(nameParts[0] || '')
+  const [lastName, setLastName] = useState(nameParts.slice(1).join(' '))
+  const [email, setEmail] = useState(identity.email)
+  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [message, setMessage] = useState('')
+  const [securityPanel, setSecurityPanel] = useState<'password' | 'notifications' | null>(null)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordStatus, setPasswordStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [passwordMessage, setPasswordMessage] = useState('')
+  const [notificationPreferences, setNotificationPreferences] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem('osai.notification-preferences.v1')
+      return stored ? JSON.parse(stored) as { email: boolean, inApp: boolean, projectUpdates: boolean, betaInvitations: boolean } : { email: true, inApp: true, projectUpdates: true, betaInvitations: true }
+    } catch { return { email: true, inApp: true, projectUpdates: true, betaInvitations: true } }
+  })
+  const [preferencesSaved, setPreferencesSaved] = useState(false)
+  useEffect(() => {
+    const nextNameParts = identity.name.split(/\s+/)
+    setFirstName(nextNameParts[0] || '')
+    setLastName(nextNameParts.slice(1).join(' '))
+  }, [identity.name])
+  useEffect(() => setEmail(identity.email), [identity.email])
+  const saveProfile = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const first = firstName.trim()
+    const last = lastName.trim()
+    if (!first || !last) {
+      setStatus('error')
+      setMessage('Enter both your first and last name.')
+      return
+    }
+    setStatus('saving')
+    setMessage('')
+    const nextEmail = email.trim().toLowerCase()
+    if (!nextEmail) {
+      setStatus('error')
+      setMessage('Enter a valid email address.')
+      return
+    }
+    const name = `${first} ${last}`
+    const nameResult = await emailAuthClient.updateUser({ name })
+    if (nameResult.error || !nameResult.data?.status) {
+      setStatus('error')
+      setMessage(nameResult.error?.message || 'We could not save your name. Please try again.')
+      return
+    }
+    const updatedIdentity = identityFromUser({ name, email: identity.email })
+    onSaved(updatedIdentity)
+    if (nextEmail !== identity.email.toLowerCase()) {
+      const emailResult = await emailAuthClient.changeEmail({
+        newEmail: nextEmail,
+        callbackURL: `${window.location.origin}/member/profile`,
+      })
+      if (emailResult.error || !emailResult.data?.status) {
+        setStatus('error')
+        setMessage(`Your name was saved, but we could not start the email change. ${emailResult.error?.message || 'Please try again.'}`)
+        return
+      }
+      setStatus('saved')
+      setMessage(`Your name was saved. Check ${nextEmail} to verify your new sign-in email.`)
+      return
+    }
+    setStatus('saved')
+    setMessage('Your profile changes have been saved.')
+  }
+  const clearStatus = () => { setStatus('idle'); setMessage('') }
+  const changePassword = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (newPassword.length < 8) { setPasswordStatus('error'); setPasswordMessage('Use at least 8 characters for your new password.'); return }
+    if (newPassword !== confirmPassword) { setPasswordStatus('error'); setPasswordMessage('The new passwords do not match.'); return }
+    setPasswordStatus('saving'); setPasswordMessage('')
+    const result = await emailAuthClient.changePassword({ currentPassword, newPassword, revokeOtherSessions: false })
+    if (result.error || !result.data?.user) { setPasswordStatus('error'); setPasswordMessage(result.error?.message || 'We could not update your password.'); return }
+    setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); setPasswordStatus('saved'); setPasswordMessage('Your password has been updated.')
+  }
+  const savePreferences = () => {
+    try { window.localStorage.setItem('osai.notification-preferences.v1', JSON.stringify(notificationPreferences)) } catch { /* Preferences still apply for this session. */ }
+    setPreferencesSaved(true)
+  }
+  const togglePreference = (key: keyof typeof notificationPreferences) => { setNotificationPreferences((current) => ({ ...current, [key]: !current[key] })); setPreferencesSaved(false) }
+  return <><PageHead title="Profile & Security" intro="Manage your member profile, sign-in details, and notification preferences." /><div className="settings-layout"><section><h2>Profile</h2><div className="avatar-editor"><span>{identity.initials}</span><div><strong>{identity.name}</strong><small>OSai member</small></div></div><form onSubmit={saveProfile}><div className="form-grid"><label>First name<input required autoComplete="given-name" value={firstName} onChange={(event)=>{setFirstName(event.target.value);clearStatus()}}/></label><label>Last name<input required autoComplete="family-name" value={lastName} onChange={(event)=>{setLastName(event.target.value);clearStatus()}}/></label><label className="wide">Email<input type="email" required autoComplete="email" value={email} onChange={(event)=>{setEmail(event.target.value);clearStatus()}}/><small>Changing your sign-in email requires verification at the new address.</small></label></div>{message&&<p className={`profile-message ${status==='error'?'error':''}`} role={status==='error'?'alert':'status'}>{message}</p>}<button className="primary-button" disabled={status==='saving'}>{status==='saving'?'Saving…':status==='saved'?'Saved':'Save changes'}</button></form></section><aside><h2>Security</h2><button className="security-row" type="button" aria-expanded={securityPanel==='password'} onClick={()=>setSecurityPanel(securityPanel==='password'?null:'password')}><KeyRound/><span><strong>Password</strong><small>Update your password</small></span><ChevronRight/></button>{securityPanel==='password'&&<form className="security-panel" onSubmit={changePassword}><label>Current password<input type="password" required autoComplete="current-password" value={currentPassword} onChange={(event)=>{setCurrentPassword(event.target.value);setPasswordStatus('idle')}}/></label><label>New password<input type="password" required minLength={8} autoComplete="new-password" value={newPassword} onChange={(event)=>{setNewPassword(event.target.value);setPasswordStatus('idle')}}/></label><label>Confirm new password<input type="password" required minLength={8} autoComplete="new-password" value={confirmPassword} onChange={(event)=>{setConfirmPassword(event.target.value);setPasswordStatus('idle')}}/></label>{passwordMessage&&<p className={`profile-message ${passwordStatus==='error'?'error':''}`} role={passwordStatus==='error'?'alert':'status'}>{passwordMessage}</p>}<button className="primary-button" disabled={passwordStatus==='saving'}>{passwordStatus==='saving'?'Updating…':'Update password'}</button></form>}<button className="security-row" type="button" aria-expanded={securityPanel==='notifications'} onClick={()=>setSecurityPanel(securityPanel==='notifications'?null:'notifications')}><BellRing/><span><strong>Notification preferences</strong><small>Choose what OSai sends you</small></span><ChevronRight/></button>{securityPanel==='notifications'&&<div className="security-panel preference-panel"><label><input type="checkbox" checked={notificationPreferences.email} onChange={()=>togglePreference('email')}/><span><strong>Email notifications</strong><small>Receive enabled updates by email</small></span></label><label><input type="checkbox" checked={notificationPreferences.inApp} onChange={()=>togglePreference('inApp')}/><span><strong>In-app notifications</strong><small>Show enabled updates in the member hub</small></span></label><label><input type="checkbox" checked={notificationPreferences.projectUpdates} onChange={()=>togglePreference('projectUpdates')}/><span><strong>Project updates</strong><small>News from projects you follow</small></span></label><label><input type="checkbox" checked={notificationPreferences.betaInvitations} onChange={()=>togglePreference('betaInvitations')}/><span><strong>Beta invitations</strong><small>Invitations and beta-program reminders</small></span></label>{preferencesSaved&&<p className="profile-message" role="status">Your notification preferences have been saved.</p>}<button className="primary-button" type="button" onClick={savePreferences}>Save preferences</button></div>}</aside></div></> }
 
 function PageHead({title,intro}:{title:string,intro:string}) { return <header className="member-page-head"><h1>{title}</h1><p>{intro}</p></header> }
 function MemberHub() {
   const initial = window.location.pathname.split('/').filter(Boolean)[1] || 'dashboard'
   const [page,setPage]=useState(initial)
   const [navOpen,setNavOpen]=useState(false)
+  const [identity,setIdentity]=useState<MemberIdentity>(()=>identityFromUser())
+  const [role,setRole]=useState<'member'|'admin'>('member')
   useEffect(()=>{ const onPop=()=>setPage(window.location.pathname.split('/').filter(Boolean)[1]||'dashboard'); window.addEventListener('popstate',onPop); return()=>window.removeEventListener('popstate',onPop)},[])
+  useEffect(()=>{ authClient.getSession().then(async({data})=>{ if(data?.session?.user)setIdentity(identityFromUser(data.session.user)); if(data?.session?.access_token){ const response=await fetch('/api/me',{headers:{authorization:`Bearer ${data.session.access_token}`}}); const result=await response.json(); if(response.ok&&result.profile?.role==='admin')setRole('admin') } }) },[])
   const navigate=(slug:string)=>{window.history.pushState({},'',`/member/${slug}`);setPage(slug);setNavOpen(false);window.scrollTo(0,0)}
-  const screens:Record<string,ReactNode>={dashboard:<Dashboard/>,projects:<ProjectsPage/>,agreements:<AgreementsPage/>,'beta-programs':<BetaPage/>,updates:<UpdatesPage/>,notifications:<NotificationsPage/>,profile:<ProfilePage/>}
-  return <div className="member-shell"><aside className={`member-sidebar ${navOpen?'open':''}`}><div className="member-brand"><Brand/></div><nav aria-label="Member navigation">{memberNav.map(({slug,label,icon:Icon,count})=><a href={`/member/${slug}`} className={page===slug?'active':''} onClick={(e)=>{e.preventDefault();navigate(slug)}} key={slug}><Icon/><span>{label}</span>{count&&<b>{count}</b>}</a>)}</nav><a className="signout" href="/"><ArrowLeft/> Sign out</a></aside><div className="member-main"><header className="member-topbar"><button className="member-menu" onClick={()=>setNavOpen(!navOpen)} aria-label="Open navigation"><Menu/></button><span className="topbar-title">Member hub</span><div><button aria-label="Help"><MessageSquareText/></button><a href="/member/notifications" onClick={(e)=>{e.preventDefault();navigate('notifications')}}><Bell/><b>3</b></a><a className="user-chip" href="/member/profile" onClick={(e)=>{e.preventDefault();navigate('profile')}}><span>ER</span><strong>Earl Reeves</strong></a></div></header><main className="member-content">{screens[page]||<Dashboard/>}</main></div>{navOpen&&<button className="nav-scrim" onClick={()=>setNavOpen(false)} aria-label="Close navigation"/>}</div>
+  const screens:Record<string,ReactNode>={dashboard:<Dashboard/>,projects:<ProjectsPage/>,agreements:<AgreementsPage/>,'beta-programs':<BetaPage/>,updates:<UpdatesPage/>,notifications:<NotificationsPage/>,profile:<ProfilePage identity={identity} onSaved={setIdentity}/>,...(role==='admin'?{'admin-users':<AdminUsersPage/>,'admin-projects':<AdminProjectsPage/>}:{})}
+  const signOut=async(event:React.MouseEvent<HTMLAnchorElement>)=>{event.preventDefault();await authClient.signOut();window.location.href='/'}
+  const visibleNav = role === 'admin' ? [...memberNav, ...adminNav] : memberNav
+  return <div className="member-shell"><aside className={`member-sidebar ${navOpen?'open':''}`}><div className="member-brand"><Brand/></div><nav aria-label="Member navigation">{visibleNav.map(({slug,label,icon:Icon,count})=><a href={`/member/${slug}`} className={page===slug?'active':''} onClick={(e)=>{e.preventDefault();navigate(slug)}} key={slug}><Icon/><span>{label}</span>{count?<b>{count}</b>:null}</a>)}</nav><a className="signout" href="/" onClick={signOut}><ArrowLeft/> Sign out</a></aside><div className="member-main"><header className="member-topbar"><button className="member-menu" onClick={()=>setNavOpen(!navOpen)} aria-label="Open navigation"><Menu/></button><span className="topbar-title">{role==='admin'?'Admin Hub':'Member Hub'}</span><div><button aria-label="Help"><MessageSquareText/></button><a href="/member/notifications" onClick={(e)=>{e.preventDefault();navigate('notifications')}}><Bell/><b>3</b></a><a className="user-chip" href="/member/profile" onClick={(e)=>{e.preventDefault();navigate('profile')}}><span>{identity.initials}</span><strong>{identity.name}</strong></a></div></header><main className="member-content">{screens[page]||<Dashboard/>}</main></div>{navOpen&&<button className="nav-scrim" onClick={()=>setNavOpen(false)} aria-label="Close navigation"/>}</div>
 }
 
 function ProtectedMemberHub() {
