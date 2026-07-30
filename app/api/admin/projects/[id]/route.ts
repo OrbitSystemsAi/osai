@@ -38,7 +38,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const rows = await db()`
       SELECT p.id, p.name, p.slug, p.description, p.status, p.access_level, p.image_url,
         p.user_goal, p.cost_budget, p.cost_actual, p.adoption_rate, p.forecast_penetration,
-        p.milestones, p.tasks, p.updated_at, count(pm.auth_user_id)::int AS user_actual
+        p.milestones, p.tasks, p.created_at, p.updated_at, count(pm.auth_user_id)::int AS user_actual
       FROM projects p
       LEFT JOIN project_memberships pm ON pm.project_id = p.id
       WHERE p.id = ${id}::uuid
