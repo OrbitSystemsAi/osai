@@ -90,6 +90,11 @@ def set_table_width(table, widths):
             tc_w.set(qn('w:type'), 'dxa')
             cell_margins(cell)
             cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+    if table.rows:
+        tr_pr = table.rows[0]._tr.get_or_add_trPr()
+        tbl_header = OxmlElement('w:tblHeader')
+        tbl_header.set(qn('w:val'), 'true')
+        tr_pr.append(tbl_header)
 
 
 def add_field(paragraph, field_code):
@@ -169,7 +174,7 @@ for style_name in ['List Bullet', 'List Number']:
 # Footer.
 fp = sec.footer.paragraphs[0]
 fp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-r = fp.add_run('Draft for legal review  •  July 28, 2026  •  Page '); set_font(r, size=8.5, color=SLATE)
+r = fp.add_run('Draft for legal review  •  July 30, 2026  •  Page '); set_font(r, size=8.5, color=SLATE)
 add_field(fp, 'PAGE')
 
 # Masthead.
@@ -183,9 +188,9 @@ meta.alignment = WD_TABLE_ALIGNMENT.LEFT
 set_table_width(meta, [1900, 7460])
 for i, (label, value) in enumerate([
     ('Document status', 'Draft for business-owner and qualified-counsel review'),
-    ('Draft date', 'July 28, 2026'),
+    ('Draft date', 'July 30, 2026'),
     ('Effective date', '[INSERT APPROVED EFFECTIVE DATE]'),
-    ('Operator', '[INSERT LEGAL ENTITY NAME], operating the OSai Work Hub'),
+    ('Operator', 'Orbit Systems Ai, LLC, operating the OSai Work Hub'),
 ]):
     shade(meta.cell(i,0), '0C1B2A'); shade(meta.cell(i,1), PALE)
     p = meta.cell(i,0).paragraphs[0]; p.paragraph_format.space_after = Pt(0)
@@ -197,7 +202,7 @@ doc.add_paragraph().paragraph_format.space_after = Pt(0)
 add_callout(doc, 'Important:', 'These Terms are a tailored working draft, not legal advice. Do not publish them until the bracketed fields and counsel-review items on the final page are resolved.', AMBER_PALE)
 
 doc.add_heading('1. Agreement to these Terms', level=1)
-add_body(doc, 'These Terms of Use (the “Terms”) govern your access to and use of the OSai Work Hub, its public pages, authenticated member areas, protected project rooms, beta programs, feedback tools, communications, files, videos, decks, and related services (collectively, the “Hub”). The Hub is operated by [INSERT LEGAL ENTITY NAME] (“OSai,” “we,” “us,” or “our”).')
+add_body(doc, 'These Terms of Use (the “Terms”) govern your access to and use of the OSai Work Hub, its public pages, authenticated member areas, protected project rooms, beta programs, feedback tools, communications, files, videos, decks, and related services (collectively, the “Hub”). The Hub is operated by Orbit Systems Ai, LLC (“Orbit Systems,” “OSai,” “we,” “us,” or “our”).')
 add_body(doc, 'By accessing or using the Hub, creating an account, accepting an invitation, or selecting an action that indicates acceptance, you agree to these Terms. If you do not agree, do not access or use the Hub. If you use the Hub for an organization, you represent that you have authority to bind that organization, and “you” includes that organization.')
 add_body(doc, 'These Terms apply in addition to any nondisclosure agreement, project-specific agreement, beta agreement, statement of work, or other written agreement between you and OSai. If those documents conflict, the more specific agreement controls for its subject matter.')
 
@@ -258,6 +263,7 @@ add_body(doc, 'Beta participation may require additional terms, confidentiality 
 doc.add_heading('11. Privacy, analytics, and communications', level=1)
 add_body(doc, 'Our Privacy Notice explains how we collect, use, retain, disclose, and protect personal information. The Privacy Notice is incorporated by reference to the extent permitted by law: [INSERT PRIVACY NOTICE URL]. If these Terms conflict with the Privacy Notice about personal-information practices, the Privacy Notice controls for that subject.')
 add_body(doc, 'The Hub may record security, agreement, access, content, beta, feedback, and audit events. Optional screenshots, device data, session context, or similar information should be collected only with appropriate notice and consent. Legal, security, and access notices are operational communications and may be sent regardless of marketing preferences where permitted by law. You may opt out of nonessential marketing or beta reminders using the available controls.')
+add_body(doc, 'After OSai verifies a deletion request and, if necessary, clarifies its scope, OSai will delete or de-identify the covered personal information from active systems within 30 days and will direct applicable service providers to do the same. This commitment does not apply to information OSai must or is permitted to retain for a lawful purpose, including legal compliance, transactions or requested services, security and fraud prevention, agreement and audit records, legal claims, and protection of rights or safety. Any retained information will be used only for the applicable exception and deleted or de-identified when that exception ends. Backup copies may remain protected until overwritten under the ordinary backup cycle and will not be restored to active use except for disaster recovery, security, or legal compliance. The Privacy Notice provides the controlling details and request method.')
 
 doc.add_heading('12. Third-party services and links', level=1)
 add_body(doc, 'The Hub may interoperate with services such as authentication, electronic-signature, hosting, storage, video, analytics, email, and project tools. Third-party services may have their own terms and privacy practices. OSai is not responsible for third-party services it does not control, but this sentence does not limit obligations that cannot legally be excluded. Links do not imply endorsement.')
@@ -273,13 +279,13 @@ add_callout(doc, 'No securities offering.', 'Nothing in the Hub is an offer to s
 
 doc.add_heading('15. Limitation of liability', level=1)
 add_body(doc, 'TO THE MAXIMUM EXTENT PERMITTED BY LAW, OSAI AND ITS AFFILIATES, LICENSORS, SERVICE PROVIDERS, OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS WILL NOT BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES; LOSS OF PROFITS, REVENUE, DATA, GOODWILL, OR BUSINESS OPPORTUNITY; OR UNAUTHORIZED ACCESS TO OR USE OF DATA, ARISING FROM OR RELATED TO THE HUB, EVEN IF ADVISED OF THE POSSIBILITY.')
-add_body(doc, 'TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE AGGREGATE LIABILITY OF THOSE PARTIES FOR ALL CLAIMS ARISING FROM OR RELATED TO THE HUB WILL NOT EXCEED THE GREATER OF (A) THE AMOUNT YOU PAID OSAI SPECIFICALLY FOR USE OF THE HUB IN THE 12 MONTHS BEFORE THE EVENT GIVING RISE TO THE CLAIM OR (B) [INSERT COUNSEL-APPROVED FLOOR]. These limits do not apply where prohibited, including to liability that cannot legally be limited.')
+add_body(doc, 'TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT WILL THE AGGREGATE LIABILITY OF ORBIT SYSTEMS AI, LLC AND ITS AFFILIATES, LICENSORS, SERVICE PROVIDERS, OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS FOR ALL CLAIMS ARISING OUT OF OR RELATING TO THE HUB OR THESE TERMS EXCEED THE TOTAL AMOUNT YOU PAID TO ORBIT SYSTEMS AI, LLC FOR ACCESS TO OR USE OF THE HUB. These exclusions and limitations apply regardless of the legal theory asserted and even if a remedy fails of its essential purpose. They do not exclude or limit liability that cannot lawfully be excluded or limited.')
 
 doc.add_heading('16. Indemnification', level=1)
-add_body(doc, 'To the extent permitted by law, you will defend, indemnify, and hold harmless OSai and its affiliates, licensors, service providers, officers, directors, employees, and agents from third-party claims, damages, judgments, losses, liabilities, costs, and expenses (including reasonable legal fees) arising from your unlawful or unauthorized use of the Hub, your submissions, your breach of these Terms or another applicable agreement, or your infringement or violation of another person’s rights. This obligation does not apply to the extent a claim results from OSai’s own breach, negligence, or willful misconduct.')
+add_body(doc, 'To the maximum extent permitted by law, you agree to defend, indemnify, and hold harmless Orbit Systems Ai, LLC and its affiliates, licensors, service providers, officers, directors, employees, agents, successors, and assigns from and against any third-party claims, demands, actions, proceedings, damages, judgments, settlements, losses, liabilities, penalties, costs, and expenses (including reasonable attorneys’ fees) arising out of or relating to: (a) your access to, use of, or misuse of the Hub; (b) your submissions or other content you provide; (c) your breach of these Terms or another applicable agreement; (d) your violation of applicable law; or (e) your infringement, misappropriation, or violation of another person’s rights. Orbit Systems Ai, LLC will provide reasonable notice of an indemnified claim and may control its defense and settlement. You may not settle a claim in a manner that admits fault by, imposes obligations on, or otherwise adversely affects Orbit Systems Ai, LLC without its prior written consent. This obligation does not apply to the extent a claim is caused by Orbit Systems Ai, LLC’s own negligence, willful misconduct, or breach of these Terms.')
 
 doc.add_heading('17. Governing law and disputes', level=1)
-add_body(doc, 'These Terms are governed by the laws of [INSERT STATE/COUNTRY], without regard to conflict-of-laws principles. The courts located in [INSERT COUNTY, STATE/COUNTRY] will have exclusive jurisdiction and venue, unless applicable law requires otherwise. [COUNSEL: DECIDE WHETHER TO ADD INFORMAL RESOLUTION, ARBITRATION, CLASS-ACTION WAIVER, SMALL-CLAIMS, AND OPT-OUT TERMS.]')
+add_body(doc, 'These Terms and any dispute arising out of or relating to them or the Hub are governed by the laws of [INSERT STATE/COUNTRY], without regard to its conflict-of-laws rules. Subject to any mandatory law that applies to you, the state and federal courts located in [INSERT COUNTY, STATE/COUNTRY] will have exclusive jurisdiction and venue, and you and Orbit Systems Ai, LLC consent to the personal jurisdiction of those courts. [COUNSEL: CONFIRM THE GOVERNING LAW AND VENUE, AND DECIDE WHETHER TO ADD INFORMAL RESOLUTION, ARBITRATION, CLASS-ACTION WAIVER, SMALL-CLAIMS, AND OPT-OUT TERMS.]')
 
 doc.add_heading('18. General terms', level=1)
 add_body(doc, 'You may not assign these Terms or transfer Hub access without OSai’s prior written consent. OSai may assign these Terms in connection with a reorganization, merger, acquisition, sale of assets, or operation of the Hub, subject to applicable law. Failure to enforce a provision is not a waiver. If a provision is unenforceable, it will be limited to the minimum extent necessary and the remainder will remain effective.')
@@ -287,7 +293,7 @@ add_body(doc, 'These Terms, the Privacy Notice, and any applicable separate agre
 
 doc.add_heading('19. Contact and legal notices', level=1)
 add_body(doc, 'Questions about these Terms or legal notices should be sent to:')
-for line in ['[INSERT LEGAL ENTITY NAME]', '[INSERT POSTAL ADDRESS]', '[INSERT LEGAL/TERMS EMAIL ADDRESS]', '[INSERT WEBSITE URL]']:
+for line in ['Orbit Systems Ai, LLC', '[INSERT POSTAL ADDRESS]', '[INSERT LEGAL/TERMS EMAIL ADDRESS]', '[INSERT WEBSITE URL]']:
     add_bullet(doc, line)
 
 # Counsel checklist starts on a clean page.
@@ -295,18 +301,18 @@ p = doc.add_paragraph(); p.add_run().add_break(WD_BREAK.PAGE)
 doc.add_heading('Publication readiness checklist', level=1)
 add_body(doc, 'This page is an internal drafting aid and should be removed from the public-facing version after the decisions below are completed.')
 check_items = [
-    ('Legal identity', 'Confirm the legal entity that operates the Hub, owns relevant projects/content, and signs agreements; confirm how “Orbit Systems” and “OSai” relate legally.'),
+    ('Legal identity', 'Confirm that “Orbit Systems Ai, LLC” is the exact registered legal name and confirm how the OSai brand relates to that entity.'),
     ('Effective date/versioning', 'Approve the effective date, notice method for changes, archive/version policy, and renewed-acceptance triggers.'),
     ('Eligibility', 'Set minimum age, invite/access policy, geographic limits, organizational-use rules, and any parental-consent path.'),
-    ('Privacy and retention', 'Publish the Privacy Notice; approve retention/deletion rules, cookies/analytics, AI-assisted feedback analysis, screenshots, device/session context, and data-subject request handling.'),
+    ('Privacy and retention', 'Publish the Privacy Notice; implement and test the 30-day deletion workflow across active systems and service providers; approve deletion exceptions, backup-cycle handling, retention schedules, cookies/analytics, AI-assisted feedback analysis, screenshots, device/session context, and data-subject request handling.'),
     ('Agreements', 'Confirm precedence among these Terms, the General NDA, project NDAs, beta terms, client agreements, and DocuSign electronic-signature disclosures.'),
     ('IP and feedback', 'Approve the submission license, feedback treatment, AI-training prohibition, confidential-material controls, and client/project-specific ownership rules.'),
-    ('Risk allocation', 'Approve warranty disclaimers, liability cap and floor, indemnity, excluded claims, consumer-law carveouts, and any paid-service treatment.'),
+    ('Risk allocation', 'Approve warranty disclaimers, the amount-paid liability cap, indemnity, excluded claims, consumer-law carveouts, and any paid-service treatment.'),
     ('Disputes', 'Choose governing law, venue, notice details, and whether arbitration, class waiver, informal resolution, or small-claims language is appropriate.'),
     ('Beta and security', 'Approve beta risk notices, security-reporting channel, vulnerability-testing policy, incident notice approach, and export/sanctions language if needed.'),
     ('Investment boundary', 'Confirm counsel-approved language and keep investment transactions disabled until a compliant provider and offering structure are approved.'),
     ('Accessibility/consent', 'Confirm how acceptance is recorded, ensure the Terms remain accessible before and after account creation, and provide a printable/downloadable version.'),
-    ('Contact details', 'Insert legal name, postal address, legal email, privacy contact, security contact, and canonical URLs.'),
+    ('Contact details', 'Confirm the exact legal name and insert the postal address, legal email, privacy contact, security contact, and canonical URLs.'),
 ]
 for idx, (label, detail) in enumerate(check_items, 1):
     p = doc.add_paragraph(style='List Number')

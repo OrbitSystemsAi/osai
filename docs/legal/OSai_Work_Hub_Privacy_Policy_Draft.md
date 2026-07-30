@@ -2,7 +2,7 @@
 
 **Draft for legal and operational review — do not publish yet**
 
-**Last updated:** July 28, 2026
+**Last updated:** July 30, 2026
 **Proposed effective date:** [INSERT PUBLICATION DATE]
 
 This Privacy Policy explains how Orbit Systems and the OSai work hub (“OSai,” “we,” “us,” or “our”) collect, use, disclose, and protect personal information when you visit the OSai website, request or receive access, create or use a member account, sign an agreement, enter a protected project room, participate in a beta program, submit feedback, or otherwise communicate with us (collectively, the “Services”).
@@ -115,9 +115,17 @@ You can control cookies through your browser. Blocking necessary cookies may pre
 
 We retain personal information only as long as reasonably necessary for the purposes described in this Policy, including providing the Services, maintaining access and agreement records, resolving disputes, enforcing agreements, meeting security and audit needs, and complying with legal obligations.
 
+### Deletion requests
+
+After we verify a deletion request and, if necessary, clarify its scope, we will delete or de-identify the personal information covered by the request from our active systems within 30 days. We will also direct our service providers to delete the covered information where required and reasonably applicable.
+
+This 30-day commitment does not apply to information that we must or are permitted to retain for a lawful purpose, including legal compliance; requested transactions or services; security and fraud prevention; required agreement, signature, access-grant, or audit records; legal claims; protection of rights or safety; or another purpose permitted by law. We will limit use of retained information to the applicable exception and delete or de-identify it when that exception ends.
+
+Copies in disaster-recovery or archival backups may remain until overwritten under our ordinary backup cycle. They will remain protected and will not be restored to active use except for disaster recovery, security, or legal compliance. If restored, an applicable deletion request will be reapplied where technically feasible.
+
 Retention depends on the type of record:
 
-- account and profile information is generally retained while the account is active and for an appropriate period afterward;
+- account and profile information is generally retained while the account is active and, following a verified deletion request, is deleted or de-identified from active systems within the 30-day period described above unless an exception applies;
 - access, agreement, signature, access-grant, and audit records may be retained longer when needed to establish authorization, confidentiality obligations, consent, or legal compliance;
 - beta feedback and related technical context are retained according to the applicable project or program schedule; and
 - backups may retain information for a limited period until they are overwritten under the backup cycle.
@@ -141,7 +149,7 @@ You may:
 
 Depending on where you live, applicable law may give you rights to request access, correction, deletion, restriction, objection, portability, or withdrawal of consent, and to appeal a decision about a request. You may also have the right not to receive discriminatory treatment for exercising a privacy right.
 
-To submit a request, email **hello@osai.com** with the subject “Privacy Request.” We may need to verify your identity and authority before completing the request. We may deny or limit a request where permitted by law, including when retention is required for security, fraud prevention, agreement records, legal compliance, or the rights of others. An authorized agent may submit a request where applicable law permits, subject to verification.
+To submit a request, email **hello@osai.com** with the subject “Privacy Request.” We may need to verify your identity and authority and clarify the scope of your request before completing it. For verified deletion requests, the 30-day period described in Section 7 begins when verification and any necessary clarification are complete. We may deny or limit a request where permitted by law, including when retention is necessary for security, fraud prevention, agreement or audit records, legal compliance, legal claims, or the rights of others. If we retain information under an exception, we will explain the basis where required by law. An authorized agent may submit a request where applicable law permits, subject to verification.
 
 OSai does not currently respond to browser “Do Not Track” signals because no common response standard applies. Where legally required, we will honor applicable browser-based opt-out preference signals for covered processing.
 
@@ -187,7 +195,7 @@ If applicable law gives you the right to contact a data-protection authority, yo
 4. Confirm the complete production service-provider list, including Neon, DocuSign, Vercel, storage, email, monitoring, analytics, video, support, and AI providers.
 5. Confirm that the “no sale,” “no cross-context behavioral advertising,” and “no targeted advertising” statements match production behavior and contracts.
 6. Decide whether non-essential analytics will launch; add a cookie notice and consent/opt-out control if required.
-7. Approve account, agreement, audit, access-log, beta-feedback, screenshot, communications, and backup retention schedules.
+7. Implement and test the 30-day deletion workflow across active systems and service providers; approve account, agreement, audit, access-log, beta-feedback, screenshot, communications, and backup retention schedules; and document each deletion exception.
 8. Confirm supported countries and states, legal bases, transfer mechanisms, and region-specific notices or rights processes.
 9. Confirm minimum age, whether minors can join any beta, and the required screening/consent process.
 10. Document the privacy-request verification, authorized-agent, appeal, deletion, and exception workflow.

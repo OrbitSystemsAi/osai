@@ -19,6 +19,7 @@ type DashboardBody = {
   forecastPenetration?: number
   milestones?: Array<{ id: string; name: string; date: string; status: string }>
   tasks?: Array<{ id: string; name: string; description: string; status: string; dueDate: string }>
+  problemContent?: Array<{ id: string; rowId?: string; type: string; text?: string; imageUrl?: string; caption?: string; alt?: string }>
 }
 
 function validDashboard(body: DashboardBody) {
@@ -26,8 +27,10 @@ function validDashboard(body: DashboardBody) {
   if (numbers.some(value => typeof value !== 'number' || !Number.isFinite(value) || value < 0)) return false
   if ((body.adoptionRate ?? 0) > 100 || (body.forecastPenetration ?? 0) > 100) return false
   if (!Array.isArray(body.milestones) || !Array.isArray(body.tasks)) return false
+  if (!Array.isArray(body.problemContent)) return false
   if (body.milestones.some(item => !item.id || !item.name?.trim() || !milestoneStatuses.includes(item.status))) return false
   if (body.tasks.some(item => !item.id || !item.name?.trim() || !taskStatuses.includes(item.status))) return false
+  if (body.problemContent.length > 100 || body.problemContent.some(item => !item.id || (item.rowId?.length || 0) > 120 || !['heading','paragraph','image','quote','list','statistic'].includes(item.type) || (item.text?.length || 0) > 5000 || (item.caption?.length || 0) > 240 || (item.alt?.length || 0) > 160 || (item.imageUrl?.length || 0) > 2_800_000)) return false
   return true
 }
 
@@ -38,7 +41,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const rows = await db()`
       SELECT p.id, p.name, p.slug, p.description, p.status, p.access_level, p.image_url,
         p.user_goal, p.cost_budget, p.cost_actual, p.adoption_rate, p.forecast_penetration,
-        p.milestones, p.tasks, p.created_at, p.updated_at, count(pm.auth_user_id)::int AS user_actual
+        p.milestones, p.tasks, p.problem_content, p.created_at, p.updated_at, count(pm.auth_user_id)::int AS user_actual
       FROM projects p
       LEFT JOIN project_memberships pm ON pm.project_id = p.id
       WHERE p.id = ${id}::uuid
@@ -62,12 +65,14 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       const dashboard = body.dashboard
       const milestones = JSON.stringify(dashboard.milestones)
       const tasks = JSON.stringify(dashboard.tasks)
+      const problemContent = JSON.stringify(dashboard.problemContent)
       const sql = db()
       const rows = await sql`
         UPDATE projects SET image_url=${dashboard.imageUrl?.trim() || ''}, user_goal=${dashboard.userGoal || 0},
           cost_budget=${dashboard.costBudget || 0}, cost_actual=${dashboard.costActual || 0},
           adoption_rate=${dashboard.adoptionRate || 0}, forecast_penetration=${dashboard.forecastPenetration || 0},
-          milestones=${milestones}::jsonb, tasks=${tasks}::jsonb, updated_by=${actor.authUserId}, updated_at=now()
+          milestones=${milestones}::jsonb, tasks=${tasks}::jsonb, problem_content=${problemContent}::jsonb,
+          updated_by=${actor.authUserId}, updated_at=now()
         WHERE id=${id}::uuid RETURNING id
       `
       if (!rows.length) return NextResponse.json({ error: 'PROJECT_NOT_FOUND' }, { status: 404 })

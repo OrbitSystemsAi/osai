@@ -94,7 +94,7 @@ def add_footer(section):
     footer = section.footer
     p = footer.paragraphs[0]
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r = p.add_run("OSai Work Hub Privacy Policy  |  Draft — July 28, 2026")
+    r = p.add_run("OSai Work Hub Privacy Policy  |  Draft — July 30, 2026")
     r.font.name = "Arial"
     r.font.size = Pt(8)
     r.font.color.rgb = MUTED
