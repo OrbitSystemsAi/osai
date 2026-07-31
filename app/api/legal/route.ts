@@ -38,7 +38,7 @@ export async function GET(request: Request) {
           JOIN projects p ON p.id = lpg.project_id
           LEFT JOIN project_memberships pm ON pm.project_id = p.id AND pm.auth_user_id = ${profile.authUserId}
           LEFT JOIN legal_documents ld ON ld.project_group_id = lpg.id
-          WHERE p.status = 'published'
+            AND p.status = 'published'
             AND (p.access_level IN ('public', 'member') OR pm.status IN ('project_agreement_signed', 'project_access_approved'))
           GROUP BY lpg.id, lpg.project_id, lpg.title, p.updated_at
           ORDER BY p.updated_at DESC`
