@@ -441,6 +441,7 @@ type ProblemBlock = { id: string; rowId?: string; type: 'heading' | 'paragraph' 
 type AdminProject = { id: string; name: string; slug: string; description: string; status: string; access_level: string }
 type AdminProjectDetail = AdminProject & { image_url: string; user_goal: number; user_actual: number; cost_budget: number; cost_actual: number; adoption_rate: number; forecast_penetration: number; milestones: Milestone[]; tasks: ProjectTask[]; problem_content: ProblemBlock[]; created_at?: string }
 type UserProject = { id: string; name: string; role: string; status: string }
+type AdminProjectOption = { id: string; name: string }
 type AdminProfile = { auth_user_id: string; email: string; display_name: string; role: 'member' | 'admin'; status: 'pending_approval' | 'approved' | 'declined' | 'revoked'; project_count: number; projects: UserProject[] }
 async function adminRequest(path: string, init?: RequestInit) {
   const headers = await memberAuthHeaders()
@@ -452,11 +453,26 @@ async function adminRequest(path: string, init?: RequestInit) {
 
 function AdminUsersPage() {
   const [profiles, setProfiles] = useState<AdminProfile[]>([])
+  const [projectOptions, setProjectOptions] = useState<AdminProjectOption[]>([])
+  const [savingProjectsFor, setSavingProjectsFor] = useState('')
   const [message, setMessage] = useState('Loading profiles…')
-  const load = async () => { try { const data = await adminRequest('/api/admin/profiles'); setProfiles(data.profiles); setMessage('') } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not load profiles.') } }
+  const load = async () => { try { const data = await adminRequest('/api/admin/profiles'); setProfiles(data.profiles); setProjectOptions(data.projects); setMessage('') } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not load profiles.') } }
   useEffect(() => { void load() }, [])
   const changeRole = async (profile: AdminProfile, role: 'member' | 'admin') => { try { await adminRequest('/api/admin/profiles', { method: 'PATCH', body: JSON.stringify({ authUserId: profile.auth_user_id, role }) }); await load() } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not update the role.') } }
-  return <><PageHead title="Users" intro="Review user access, administrator rights, and project involvement." />{message&&<p className="profile-message" role="status">{message}</p>}<div className="admin-table user-directory"><div className="admin-table-head"><span>User</span><span>Account status</span><span>Projects</span><span>Role</span></div>{profiles.map(profile=><article className="admin-person" key={profile.auth_user_id}><span className="user-identity"><strong>{profile.display_name}{profile.role==='admin'&&<em>Admin</em>}</strong><small>{profile.email}</small><code>{profile.auth_user_id}</code></span><Status tone={profile.status==='approved'?'teal':profile.status==='pending_approval'?'orange':'slate'}>{profile.status.replaceAll('_',' ')}</Status><span className="user-projects"><strong>{profile.project_count} {profile.project_count===1?'project':'projects'}</strong>{profile.projects.length?<ul>{profile.projects.map(project=><li key={project.id}><span><b>{project.name}</b><small>{project.role}</small></span><Status tone={project.status==='project_access_approved'?'teal':project.status.includes('declined')||project.status.includes('revoked')?'slate':'orange'}>{project.status.replace('project_','').replaceAll('_',' ')}</Status></li>)}</ul>:<small>No project involvement</small>}</span><select aria-label={`Role for ${profile.display_name}`} value={profile.role} onChange={event=>void changeRole(profile,event.target.value as 'member'|'admin')}><option value="member">Member</option><option value="admin">Administrator</option></select></article>)}</div></>
+  const toggleProject = async (profile: AdminProfile, projectId: string, checked: boolean) => {
+    const assigned = profile.projects.map(project => project.id)
+    const projectIds = checked ? [...new Set([...assigned, projectId])] : assigned.filter(id => id !== projectId)
+    setSavingProjectsFor(profile.auth_user_id)
+    try {
+      await adminRequest('/api/admin/profiles', { method: 'PATCH', body: JSON.stringify({ authUserId: profile.auth_user_id, projectIds }) })
+      await load()
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not update project assignments.')
+    } finally {
+      setSavingProjectsFor('')
+    }
+  }
+  return <><PageHead title="Users" intro="Review user access, administrator rights, and project involvement." />{message&&<p className="profile-message" role="status">{message}</p>}<div className="admin-table user-directory"><div className="admin-table-head"><span>User</span><span>Account status</span><span>Projects</span><span>Role</span></div>{profiles.map(profile=><article className="admin-person" key={profile.auth_user_id}><span className="user-identity"><strong>{profile.display_name}{profile.role==='admin'&&<em>Admin</em>}</strong><small>{profile.email}</small><code>{profile.auth_user_id}</code></span><Status tone={profile.status==='approved'?'teal':profile.status==='pending_approval'?'orange':'slate'}>{profile.status.replaceAll('_',' ')}</Status><details className="project-assignment"><summary><span><strong>{profile.project_count} {profile.project_count===1?'project':'projects'}</strong><small>{profile.project_count?'Select project assignments':'No project involvement'}</small></span><ChevronRight aria-hidden="true" /></summary><div className="project-assignment-menu">{projectOptions.length?projectOptions.map(project=><label key={project.id}><input type="checkbox" checked={profile.projects.some(assigned=>assigned.id===project.id)} disabled={savingProjectsFor===profile.auth_user_id} onChange={event=>void toggleProject(profile,project.id,event.target.checked)} /><span>{project.name}</span></label>):<small>No projects are available.</small>}{savingProjectsFor===profile.auth_user_id&&<small role="status">Saving assignments…</small>}</div></details><select className="user-role-select" aria-label={`Role for ${profile.display_name}`} value={profile.role} onChange={event=>void changeRole(profile,event.target.value as 'member'|'admin')}><option value="member">Member</option><option value="admin">Administrator</option></select></article>)}</div></>
 }
 
 function projectDetailFromApi(project: AdminProjectDetail): AdminProjectDetail {
