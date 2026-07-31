@@ -36,10 +36,11 @@ export async function GET(request: Request) {
             ) ORDER BY ld.created_at DESC) FILTER (WHERE ld.id IS NOT NULL), '[]'::json) AS documents
           FROM legal_project_groups lpg
           JOIN projects p ON p.id = lpg.project_id
-          LEFT JOIN project_memberships pm ON pm.project_id = p.id AND pm.auth_user_id = ${profile.authUserId}
+          JOIN project_memberships pm ON pm.project_id = p.id
+            AND pm.auth_user_id = ${profile.authUserId}
+            AND pm.status IN ('project_agreement_signed', 'project_access_approved')
           LEFT JOIN legal_documents ld ON ld.project_group_id = lpg.id
-            AND p.status = 'published'
-            AND (p.access_level IN ('public', 'member') OR pm.status IN ('project_agreement_signed', 'project_access_approved'))
+          WHERE p.status <> 'archived'
           GROUP BY lpg.id, lpg.project_id, lpg.title, p.updated_at
           ORDER BY p.updated_at DESC`
     return NextResponse.json({ groups })

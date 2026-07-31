@@ -10,7 +10,7 @@ Only administrators may create, edit, or delete projects. Only administrators se
 
 - `POST /api/admin/legal/documents` validates the Neon session and current `user_profiles.role` through `requireAdmin`.
 - The server requires `projectGroupId` and `confirmedProjectGroupId` to match and verifies that the group exists before storing a document.
-- `GET /api/legal` returns every project-group title to authenticated users so the Legal directory remains consistent. For members, document metadata is included only for published public/member projects or projects with a signed/approved membership.
+- `GET /api/legal` returns every project group to administrators. Members receive only non-archived groups for which their immutable auth user ID has a signed or approved project membership; unassigned project titles and document metadata are not exposed.
 - `GET /api/legal/documents/:id` repeats the same access decision before returning file bytes. Files are never exposed through public URLs.
 - Upload and project mutations write audit events with the immutable Neon Auth user ID.
 
