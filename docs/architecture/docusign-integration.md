@@ -2,7 +2,7 @@
 
 ## Outcome
 
-The member Agreements page now supports a DocuSign developer-account flow for the General NDA. A signed-in member can start an embedded signing ceremony from a DocuSign template and OSai re-queries the envelope after DocuSign returns the member to `/member/agreements`.
+The member Legal page now supports a DocuSign developer-account flow for the General NDA. A signed-in member can start an embedded signing ceremony from a DocuSign template and OSai re-queries the envelope after DocuSign returns the member to `/member/legal`.
 
 The current implementation is a sandbox integration slice. It does **not** create a production access grant. Envelope identity is held in a signed, HTTP-only cookie until the application-owned Neon agreement tables, webhook audit trail, and administrator approval records are implemented.
 
@@ -19,7 +19,7 @@ The current implementation is a sandbox integration slice. It does **not** creat
 
 - `GET /api/agreements` — validates the Neon session and returns the current DocuSign envelope state.
 - `POST /api/agreements/sign` — validates the Neon session, creates a template envelope, creates its recipient view, and returns the DocuSign signing URL.
-- `/member/agreements?docusign=returned` — return location after the signing ceremony; the page refreshes status from DocuSign.
+- `/member/legal?docusign=returned` — return location after the signing ceremony; the page refreshes status from DocuSign.
 
 ## Security and persistence boundary
 

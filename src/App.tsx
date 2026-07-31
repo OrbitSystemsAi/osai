@@ -25,7 +25,7 @@ type MemberNavItem = { slug: string; label: string; icon: typeof LayoutDashboard
 const memberNav: MemberNavItem[] = [
   { slug: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { slug: 'projects', label: 'Projects', icon: FolderKanban },
-  { slug: 'agreements', label: 'Legal', icon: FileCheck2 },
+  { slug: 'legal', label: 'Legal', icon: FileCheck2 },
   { slug: 'beta-programs', label: 'Beta Programs', icon: FlaskConical },
   { slug: 'updates', label: 'Updates', icon: BookOpen },
 ]
@@ -276,6 +276,8 @@ function ProjectsPage({ isAdmin }: { isAdmin: boolean }) {
 }
 
 type AgreementState = { configured: boolean; environment?: 'demo' | 'production'; status: string; completedAt?: string | null; error?: string }
+type LegalDocument = { id: string; fileName: string; documentType: string; mimeType: string; fileSize: number; createdAt: string }
+type LegalProjectGroup = { id: string; project_id: string; title: string; documents: LegalDocument[] }
 
 async function memberAuthHeaders() {
   const { data, error } = await authClient.getSession()
@@ -291,13 +293,27 @@ async function projectCatalogRequest() {
   return data
 }
 
-function AgreementsPage() {
+function AgreementsPage({ isAdmin }: { isAdmin: boolean }) {
   const [agreement, setAgreement] = useState<AgreementState | null>(null)
   const [busy, setBusy] = useState(false)
   const [uploadedDocument, setUploadedDocument] = useState<File | null>(null)
   const [isDraggingDocument, setIsDraggingDocument] = useState(false)
+  const [legalGroups, setLegalGroups] = useState<LegalProjectGroup[]>([])
+  const [selectedGroupId, setSelectedGroupId] = useState('')
+  const [groupConfirmed, setGroupConfirmed] = useState(false)
+  const [uploadMessage, setUploadMessage] = useState('')
   const selectDocument = (file?: File) => {
-    if (file) setUploadedDocument(file)
+    if (!file) return
+    setUploadedDocument(file)
+    setGroupConfirmed(false)
+    setUploadMessage('')
+  }
+  const loadLegalGroups = async () => {
+    const headers = await memberAuthHeaders()
+    const response = await fetch('/api/legal', { cache: 'no-store', headers })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.error || 'Could not load project legal groups.')
+    setLegalGroups(data.groups || [])
   }
   const loadAgreement = async () => {
     try {
@@ -310,7 +326,7 @@ function AgreementsPage() {
       setAgreement({ configured: true, status: 'error', error: error instanceof Error ? error.message : 'We could not verify your agreement status.' })
     }
   }
-  useEffect(() => { void loadAgreement() }, [])
+  useEffect(() => { void loadAgreement(); void loadLegalGroups().catch(error => setUploadMessage(error instanceof Error ? error.message : 'Could not load project legal groups.')) }, [])
   const signAgreement = async () => {
     setBusy(true)
     try {
@@ -330,11 +346,40 @@ function AgreementsPage() {
   const completed = agreement?.completedAt ? new Intl.DateTimeFormat('en-US', { dateStyle: 'long' }).format(new Date(agreement.completedAt)) : '—'
   const bannerTitle = isDemo ? (signed ? 'Test agreement completed' : 'DocuSign sandbox connected') : signed ? 'Your access is current' : agreement?.configured === false ? 'DocuSign setup is required' : waiting ? 'Your signature is being verified' : 'Complete your General NDA'
   const bannerCopy = isDemo ? (signed ? 'This sandbox result does not grant access to confidential materials.' : 'This non-binding test verifies signing and status updates without granting real access.') : signed ? 'OSai verified this completed envelope with DocuSign.' : agreement?.configured === false ? 'Add the DocuSign developer-account credentials to connect this page.' : waiting ? 'Return to DocuSign if you still need to finish, or refresh this status after signing.' : 'Review and sign the current agreement in DocuSign before protected content is shown.'
+  const selectedGroup = legalGroups.find(group => group.id === selectedGroupId)
+  const uploadLegalDocument = async () => {
+    if (!uploadedDocument || !selectedGroup || !groupConfirmed) return
+    setBusy(true); setUploadMessage('Uploading document…')
+    try {
+      const headers = await memberAuthHeaders()
+      const form = new FormData()
+      form.append('document', uploadedDocument)
+      form.append('projectGroupId', selectedGroup.id)
+      form.append('confirmedProjectGroupId', selectedGroup.id)
+      const response = await fetch('/api/admin/legal/documents', { method: 'POST', headers, body: form })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Could not upload the legal document.')
+      await loadLegalGroups()
+      setUploadedDocument(null); setSelectedGroupId(''); setGroupConfirmed(false); setUploadMessage('Document uploaded.')
+    } catch (error) {
+      setUploadMessage(error instanceof Error ? error.message : 'Could not upload the legal document.')
+    } finally { setBusy(false) }
+  }
+  const downloadLegalDocument = async (document: LegalDocument) => {
+    try {
+      const headers = await memberAuthHeaders()
+      const response = await fetch(`/api/legal/documents/${document.id}`, { headers, cache: 'no-store' })
+      if (!response.ok) throw new Error('Could not download this document.')
+      const url = URL.createObjectURL(await response.blob())
+      const link = window.document.createElement('a'); link.href = url; link.download = document.fileName; link.click()
+      URL.revokeObjectURL(url)
+    } catch (error) { setUploadMessage(error instanceof Error ? error.message : 'Could not download this document.') }
+  }
   return <>
     <PageHead title="Legal Documents & Agreements" intro="" />
     <div className="data-head legal-document-head"><span>Document</span><span>Type</span><span>Effective Date</span><span>Status</span><span /></div>
     <div className={`info-banner ${signed && !isDemo ? '' : 'agreement-action-needed'}`}><ShieldCheck/><span><strong>{bannerTitle}</strong><small>{bannerCopy}</small></span></div>
-    <label
+    {isAdmin && <><label
       className={`legal-document-upload${isDraggingDocument ? ' is-dragging' : ''}`}
       onDragEnter={(event) => { event.preventDefault(); setIsDraggingDocument(true) }}
       onDragOver={(event) => event.preventDefault()}
@@ -356,7 +401,14 @@ function AgreementsPage() {
         onChange={(event) => { selectDocument(event.target.files?.[0]); event.target.value = '' }}
         aria-label="Upload a legal document"
       />
-    </label>
+    </label>{uploadedDocument && <section className="legal-upload-confirmation" aria-labelledby="legal-assignment-title">
+      <h2 id="legal-assignment-title">Confirm Project Group Assignment</h2>
+      <p><strong>{uploadedDocument.name}</strong> will be stored in the selected project’s Legal group.</p>
+      <label>Project Group<select value={selectedGroupId} onChange={event => { setSelectedGroupId(event.target.value); setGroupConfirmed(false) }}><option value="">Select a project group</option>{legalGroups.map(group => <option value={group.id} key={group.id}>{group.title}</option>)}</select></label>
+      {selectedGroup && <label className="legal-assignment-check"><input type="checkbox" checked={groupConfirmed} onChange={event => setGroupConfirmed(event.target.checked)} /><span>I confirm this document belongs to <strong>{selectedGroup.title}</strong>.</span></label>}
+      <div><button className="agreement-sign-button" type="button" disabled={!selectedGroup || !groupConfirmed || busy} onClick={() => void uploadLegalDocument()}>{busy ? 'Uploading…' : 'Upload document'}</button><button className="plain-button" type="button" onClick={() => { setUploadedDocument(null); setSelectedGroupId(''); setGroupConfirmed(false); setUploadMessage('') }}>Cancel</button></div>
+    </section>}</>}
+    {uploadMessage && <p className="legal-upload-message" role="status">{uploadMessage}</p>}
     {agreement?.error && <p className="agreement-error" role="alert">{agreement.error}</p>}
     <div className="data-list legal-document-list">
       <h2 className="legal-document-group-title">Orbit Systems</h2>
@@ -367,14 +419,13 @@ function AgreementsPage() {
         {agreement === null ? <Status tone="slate">Checking…</Status> : signed ? <Status>{isDemo ? 'Test completed' : 'Signed'}</Status> : waiting ? <Status tone="blue">{isDemo ? 'Test sent' : 'Sent'}</Status> : <Status tone="orange">{isDemo ? 'Test required' : 'Required'}</Status>}
         {signed ? <button className="text-button" onClick={loadAgreement}>Refresh status <ChevronRight/></button> : <button className="agreement-sign-button" onClick={signAgreement} disabled={busy || agreement === null || agreement?.configured === false}>{busy ? 'Opening DocuSign…' : waiting ? 'Continue signing' : isDemo ? 'Run signing test' : 'Review and sign'} <ChevronRight/></button>}
       </div>
-      <h2 className="legal-document-group-title">Advanced Predictive Data</h2>
-      <div className="data-row legal-document-row">
-        <span className="title-cell"><FileText/><span><strong>Advanced Predictive Data acknowledgement</strong><small>Project agreement</small></span></span>
-        <span className="legal-document-type">Project Agreement</span>
-        <span className="legal-effective-date">—</span>
-        <Status tone="blue">Not required</Status>
-        <button className="text-button">About access <ChevronRight/></button>
-      </div>
+      {legalGroups.map(group => <div className="legal-project-group" key={group.id}><h2 className="legal-document-group-title">{group.title}</h2>{group.documents.length ? group.documents.map(document => <div className="data-row legal-document-row" key={document.id}>
+        <span className="title-cell"><FileText/><span><strong>{document.fileName}</strong><small>{Math.max(1, Math.round(document.fileSize / 1024))} KB</small></span></span>
+        <span className="legal-document-type">{document.documentType}</span>
+        <span className="legal-effective-date">{new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(document.createdAt))}</span>
+        <Status>Available</Status>
+        <button className="text-button" type="button" onClick={() => void downloadLegalDocument(document)}>Download <ChevronRight/></button>
+      </div>) : <div className="legal-group-empty">No legal documents have been uploaded for this project.</div>}</div>)}
     </div>
   </>
 }
@@ -610,7 +661,7 @@ function MemberHub() {
   useEffect(()=>{ authClient.getSession().then(async({data})=>{ if(data?.session?.user)setIdentity(identityFromUser(data.session.user)); if(data?.session?.access_token){ const response=await fetch('/api/me',{headers:{authorization:`Bearer ${data.session.access_token}`}}); const result=await response.json(); if(response.ok&&result.profile?.role==='admin')setRole('admin') } }) },[])
   const navigate=(slug:string)=>{window.history.pushState({},'',`/member/${slug}`);setPage(slug);setNavOpen(false);window.scrollTo(0,0)}
   const signOut=async()=>{await authClient.signOut();window.location.assign('/auth/sign-in')}
-  const screens:Record<string,ReactNode>={dashboard:<Dashboard/>,projects:<ProjectsPage isAdmin={role==='admin'}/>,agreements:<AgreementsPage/>,'beta-programs':<BetaPage/>,updates:<UpdatesPage/>,notifications:<NotificationsPage/>,profile:<ProfilePage identity={identity} onSaved={setIdentity}/>,...(role==='admin'?{'admin-users':<AdminUsersPage/>}:{})}
+  const screens:Record<string,ReactNode>={dashboard:<Dashboard/>,projects:<ProjectsPage isAdmin={role==='admin'}/>,legal:<AgreementsPage isAdmin={role==='admin'}/>,'beta-programs':<BetaPage/>,updates:<UpdatesPage/>,notifications:<NotificationsPage/>,profile:<ProfilePage identity={identity} onSaved={setIdentity}/>,...(role==='admin'?{'admin-users':<AdminUsersPage/>}:{})}
   const visibleNav = role === 'admin' ? [...memberNav, ...adminNav, ...sidebarUtilityNav] : [...memberNav, ...sidebarUtilityNav]
   const isDashboard = page==='dashboard'
   const isStructuredPage = ['beta-programs','updates','admin-users','profile','notifications'].includes(page)
@@ -625,10 +676,10 @@ function MemberHub() {
       </nav>
     </aside>
     <div className="member-main">
-      {isDashboard||isStructuredPage||page==='agreements'||isProjectsCatalog||isProjectEdit
+      {isDashboard||isStructuredPage||page==='legal'||isProjectsCatalog||isProjectEdit
         ? <header className="member-topbar agreements-mobile-topbar"><button className="member-menu" onClick={()=>setNavOpen(!navOpen)} aria-label="Open navigation"><Menu/></button></header>
         : <header className="member-topbar"><button className="member-menu" onClick={()=>setNavOpen(!navOpen)} aria-label="Open navigation"><Menu/></button><span className="topbar-title">{role==='admin'?'Admin Hub':'Member Hub'}</span></header>}
-      <main className={`member-content${isDashboard?' dashboard-content':isStructuredPage?' structured-content':page==='agreements'?' agreements-content':isProjectsCatalog?' projects-content':isProjectEdit?' project-details-content':''}`}>{screens[page]||<Dashboard/>}</main>
+      <main className={`member-content${isDashboard?' dashboard-content':isStructuredPage?' structured-content':page==='legal'?' agreements-content':isProjectsCatalog?' projects-content':isProjectEdit?' project-details-content':''}`}>{screens[page]||<Dashboard/>}</main>
     </div>
     {navOpen&&<button className="nav-scrim" onClick={()=>setNavOpen(false)} aria-label="Close navigation"/>}
   </div>

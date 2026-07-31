@@ -81,7 +81,18 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     }
     if (!body.name?.trim() || body.name.trim().length > projectTitleMax || (body.description?.trim().length || 0) > projectDescriptionMax || !body.slug?.match(/^[a-z0-9]+(?:-[a-z0-9]+)*$/) || !statuses.includes(body.status) || !levels.includes(body.accessLevel)) return NextResponse.json({ error: 'INVALID_PROJECT' }, { status: 400 })
     const sql = db()
-    const rows = await sql`UPDATE projects SET name=${body.name.trim()}, slug=${body.slug}, description=${body.description?.trim() || ''}, status=${body.status}, access_level=${body.accessLevel}, updated_by=${actor.authUserId}, updated_at=now() WHERE id=${id}::uuid RETURNING id, name, slug, description, status, access_level, updated_at`
+    const rows = await sql`
+      WITH updated_project AS (
+        UPDATE projects SET name=${body.name.trim()}, slug=${body.slug}, description=${body.description?.trim() || ''}, status=${body.status}, access_level=${body.accessLevel}, updated_by=${actor.authUserId}, updated_at=now()
+        WHERE id=${id}::uuid
+        RETURNING id, name, slug, description, status, access_level, created_by, updated_by, updated_at
+      ), synced_group AS (
+        INSERT INTO legal_project_groups (project_id, title, created_by, updated_by)
+        SELECT id, name, created_by, updated_by FROM updated_project
+        ON CONFLICT (project_id) DO UPDATE SET title=EXCLUDED.title, updated_by=EXCLUDED.updated_by, updated_at=now()
+        RETURNING id
+      )
+      SELECT id, name, slug, description, status, access_level, updated_at FROM updated_project`
     if (!rows.length) return NextResponse.json({ error: 'PROJECT_NOT_FOUND' }, { status: 404 })
     await sql`INSERT INTO audit_events (actor_auth_user_id, action, target_type, target_id) VALUES (${actor.authUserId}, 'project.updated', 'project', ${id})`
     return NextResponse.json({ project: rows[0] })

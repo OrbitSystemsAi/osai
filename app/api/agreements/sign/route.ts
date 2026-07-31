@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   if (!docusignConfigured()) return NextResponse.json({ error: 'DOCUSIGN_NOT_CONFIGURED' }, { status: 503 })
   try {
     const member = await requireMember(request)
-    const result = await createSigningView(member, `${request.nextUrl.origin}/member/agreements?docusign=returned`)
+    const result = await createSigningView(member, `${request.nextUrl.origin}/member/legal?docusign=returned`)
     const response = NextResponse.json({ url: result.url })
     response.cookies.set('osai_docusign_envelope', sealEnvelope(member.id, result.envelopeId), {
       httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 365,
