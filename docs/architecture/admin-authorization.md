@@ -29,6 +29,8 @@ The bootstrap value accepts comma-separated immutable user IDs. Do not use email
 
 The Admin Hub **Users** page shows every application profile that has been materialized in `user_profiles`, including the administrator. Each row displays the account lifecycle status, application role, and project-membership count. Administrators assign or remove projects through the Projects multi-select. A selected project is stored in `project_memberships` with the canonical `project_access_approved` status; removing a selection removes that membership. The server verifies the administrator role, target profile, and active project identifiers before applying the complete selection, and records the result as a `profile.projects_assigned` audit event.
 
+The member Project Directory includes published `public` and `member` projects plus any non-archived project for which the current immutable auth user ID has a signed or approved membership. This allows an administrator to assign a draft project directly to a member without publishing it to the broader member catalog.
+
 Neon Auth identities become application profiles when they first pass through `/api/me`. A future administrative identity-sync job may materialize dormant Neon Auth accounts that have never entered the hub; until then, “all users” means all OSai application profiles, not untouched authentication-only records.
 
 ## Access levels
