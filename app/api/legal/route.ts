@@ -38,7 +38,14 @@ export async function GET(request: Request) {
           JOIN projects p ON p.id = lpg.project_id
           JOIN project_memberships pm ON pm.project_id = p.id
             AND pm.auth_user_id = ${profile.authUserId}
-            AND pm.status IN ('project_agreement_signed', 'project_access_approved')
+            AND pm.status IN (
+              'project_access_requested',
+              'project_review_pending',
+              'project_information_required',
+              'project_agreement_pending',
+              'project_agreement_signed',
+              'project_access_approved'
+            )
           LEFT JOIN legal_documents ld ON ld.project_group_id = lpg.id
           WHERE p.status <> 'archived'
           GROUP BY lpg.id, lpg.project_id, lpg.title, p.updated_at

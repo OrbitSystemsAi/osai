@@ -23,7 +23,14 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
           JOIN projects p ON p.id = lpg.project_id
           JOIN project_memberships pm ON pm.project_id = p.id
             AND pm.auth_user_id = ${profile.authUserId}
-            AND pm.status IN ('project_agreement_signed', 'project_access_approved')
+            AND pm.status IN (
+              'project_access_requested',
+              'project_review_pending',
+              'project_information_required',
+              'project_agreement_pending',
+              'project_agreement_signed',
+              'project_access_approved'
+            )
           WHERE ld.id = ${id}::uuid AND p.status <> 'archived'`
     if (!rows.length) return NextResponse.json({ error: 'DOCUMENT_NOT_FOUND' }, { status: 404 })
     const fileName = String(rows[0].file_name).replace(/[\r\n"]/g, '_')

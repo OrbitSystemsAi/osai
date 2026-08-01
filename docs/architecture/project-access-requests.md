@@ -9,7 +9,8 @@ Every approved member can discover every non-archived OSai project without recei
 1. The Project Directory returns each project’s public identity, brief, image, published timeline, and the current member’s membership status.
 2. A project tile always opens a limited project detail page. The timeline is read-only. The other pitch sections show only their descriptive subtitle.
 3. **Request Access** creates or restores a `project_access_requested` membership for the authenticated immutable Neon Auth user ID.
-4. Repeated requests are idempotent. Pending and active memberships are not duplicated.
+4. The project’s Legal group and documents become available in the member’s Legal page for review and download.
+5. Repeated requests are idempotent. Pending and active memberships are not duplicated.
 
 ## Administrator flow
 
@@ -24,4 +25,4 @@ The server attempts to notify every approved administrator through Resend. Deliv
 
 ## Access boundary
 
-Project discovery is not authorization. Protected pitch content, files, mutations, and Legal downloads continue to require a signed or approved project membership on the server. Email addresses are notification destinations only and are never used as relational identity keys.
+Project discovery is not authorization. Protected pitch content, project files, and mutations continue to require the appropriate server-validated membership state. Project Legal downloads are intentionally available to pending request states so members can review the required legal package before approval. Email addresses are notification destinations only and are never used as relational identity keys.
