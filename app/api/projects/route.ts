@@ -9,10 +9,11 @@ export async function GET(request: Request) {
     const profile = await requireProfile(request)
     const sql = db()
     const rows = profile.role === 'admin'
-      ? await sql`SELECT id, name, slug, description, image_url, access_level, problem_content FROM projects WHERE status <> 'archived' ORDER BY updated_at DESC`
+      ? await sql`SELECT id, name, slug, description, image_url, access_level, problem_content, solution_content, competition_content, market_content, business_model_content FROM projects WHERE status <> 'archived' ORDER BY updated_at DESC`
       : await sql`
           SELECT project.id, project.name, project.slug, project.description,
-            project.image_url, project.access_level, project.problem_content
+            project.image_url, project.access_level, project.problem_content, project.solution_content,
+            project.competition_content, project.market_content, project.business_model_content
           FROM projects project
           WHERE project.status <> 'archived'
             AND (
