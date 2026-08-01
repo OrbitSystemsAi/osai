@@ -20,8 +20,10 @@ function navigate(path: string) {
 
 function AuthBrand() {
   return <a className="auth-brand" href="/" aria-label="Orbit Systems home">
-    <span className="auth-brand-mark" aria-hidden="true"><i /><b /><em /></span>
-    <span><strong>ORBIT</strong><strong>SYSTEMS</strong><small>AUGMENTED INTELLIGENCE</small></span>
+    <span className="brand-logo-image auth-brand-logo" aria-hidden="true">
+      <img className="brand-logo-base" src="/OSAI_Main-Logo.png?v=20260731" alt="" />
+      <img className="brand-logo-accent" src="/OSAI_Main-Logo.png?v=20260731" alt="" />
+    </span>
   </a>
 }
 

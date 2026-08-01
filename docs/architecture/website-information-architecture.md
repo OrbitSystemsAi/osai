@@ -13,13 +13,14 @@ flowchart TD
     START([Visitor arrives])
 
     subgraph PUBLIC[Public website]
-        PUBNAV[Public navigation<br/>Home · About OSai · Projects · How Access Works · Updates]
+        PUBNAV[Public navigation<br/>Home · Venture · Innovation · Consulting · Insights · Contact]
         HOME[Home]
-        ABOUT[About OSai]
-        PROJECTS[Projects]
+        ABOUT[Innovation]
+        PROJECTS[Venture]
         PROJECTTEASER[Public project page]
-        ACCESS[How Access Works]
-        UPDATES[Public Updates]
+        ACCESS[Consulting]
+        UPDATES[Insights]
+        CONTACT[Contact]
         LEGAL[Privacy · Terms]
         REQUEST[Request Access]
         INVITE[Accept Invitation]
@@ -30,6 +31,7 @@ flowchart TD
         PUBNAV --> PROJECTS
         PUBNAV --> ACCESS
         PUBNAV --> UPDATES
+        PUBNAV --> CONTACT
         PROJECTS --> PROJECTTEASER
         HOME --> LEGAL
     end
@@ -68,7 +70,8 @@ flowchart TD
     LOGIN --> WELCOME
 
     subgraph MEMBER[Authenticated member hub]
-        MEMBERNAV[Member navigation<br/>Dashboard · Projects · Agreements · Beta Programs · Updates · Profile]
+        MEMBERNAV[Member navigation<br/>Pulse · Dashboard · Projects · Agreements · Beta Programs · Updates · Profile]
+        PULSE[Pulse]
         DASHBOARD[Dashboard]
         CATALOG[Project catalog]
         AGREEMENTS[My agreements]
@@ -77,6 +80,7 @@ flowchart TD
         PROFILE[Profile and security]
         NOTIFICATIONS[Notifications]
 
+        MEMBERNAV --> PULSE
         MEMBERNAV --> DASHBOARD
         MEMBERNAV --> CATALOG
         MEMBERNAV --> AGREEMENTS
@@ -201,15 +205,19 @@ flowchart TD
 ### Public navigation
 
 - Home
-- About OSai
-- Projects
-- How Access Works
-- Updates
-- Sign In
-- Primary CTA: **Request Access**
+- Venture
+- Innovation
+- Consulting
+- Insights
+- Contact
+- Log in (opens the Sign in / Create Account dialog)
+- Primary CTA: **Start a conversation**
+
+The public logo and navigation remain fixed while a page scrolls. Desktop uses the full navigation; mobile uses a hamburger-triggered full-screen menu. Public pages do not use a footer.
 
 ### Member navigation
 
+- Pulse
 - Dashboard
 - Projects
 - Agreements

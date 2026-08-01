@@ -1,28 +1,21 @@
 'use client'
 
 import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
-import Image from 'next/image'
 import {
   ArrowLeft, ArrowRight, Bell, BellRing, BookOpen, CalendarDays, Check,
   ChevronRight, Clock3, FileCheck2, FileText, FlaskConical,
   FolderKanban, Hourglass, KeyRound, LayoutDashboard, LockKeyhole, Mail, Menu,
-  DollarSign, ImageIcon, ListTodo, MessageSquareText, Orbit, Pencil, Plus, Search,
+  Activity, DollarSign, ImageIcon, ListTodo, MessageSquareText, Orbit, Pencil, Plus, Search,
   LogOut, ShieldCheck, Target, Trash2, TrendingUp, Upload, User, UserCog, Users, X,
 } from 'lucide-react'
 import AuthPage from './AuthPage'
 import { authClient, emailAuthClient } from './auth'
 
-const services = [
-  { name: 'OSai Ventures', text: 'We co-build and back ventures with exceptional founders. From first conviction to scaling growth, we provide capital, hands-on partnership, and a network that accelerates what’s next.', icon: Orbit },
-  { name: 'OSai Innovation', text: 'We help organizations turn bold ideas into real-world solutions. Our innovation programs blend strategy, design, and emerging technology to create products and ventures that drive lasting impact.', icon: Orbit },
-  { name: 'OSai Consulting', text: 'We solve complex business and technology challenges. From market strategy to operating model and technology roadmaps, we deliver clarity and results that move your business forward.', icon: Orbit },
-]
-
-const stages = ['Discover', 'Validate', 'Define', 'Build', 'Launch', 'Advance']
 const PROJECT_TITLE_MAX = 40
 const PROJECT_DESCRIPTION_MAX = 300
 type MemberNavItem = { slug: string; label: string; icon: typeof LayoutDashboard; count?: number }
 const memberNav: MemberNavItem[] = [
+  { slug: 'pulse', label: 'Pulse', icon: Activity },
   { slug: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { slug: 'projects', label: 'Projects', icon: FolderKanban },
   { slug: 'legal', label: 'Legal', icon: FileCheck2 },
@@ -62,69 +55,116 @@ const updates = [
 
 function Brand({ light = true }: { light?: boolean }) {
   return <a className={`brand ${light ? 'brand-light' : ''}`} href="/" aria-label="Orbit Systems home">
-    <span className="brand-mark" aria-hidden="true"><i /><b /><em /></span>
-    <span className="brand-type"><strong>ORBIT</strong><strong>SYSTEMS</strong><small>AUGMENTED INTELLIGENCE</small></span>
+    <span className="brand-logo-image" aria-hidden="true">
+      <img className="brand-logo-base" src="/OSAI_Main-Logo.png?v=20260731" alt="" />
+      <img className="brand-logo-accent" src="/OSAI_Main-Logo.png?v=20260731" alt="" />
+    </span>
   </a>
 }
 
-function PublicSite() {
+const publicNav = [
+  { label: 'Home', href: '/' },
+  { label: 'Venture', href: '/venture' },
+  { label: 'Innovation', href: '/innovation' },
+  { label: 'Consulting', href: '/consulting' },
+  { label: 'Insights', href: '/insights' },
+  { label: 'Contact', href: '/contact' },
+]
+
+type AccountDialog = 'sign-in' | 'create' | 'forgot'
+
+function PublicHeader({ current, initialDialog = null }: { current: string; initialDialog?: AccountDialog | null }) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [activeStage, setActiveStage] = useState(0)
-  const [accountOpen, setAccountOpen] = useState(false)
-  const [accountDialog, setAccountDialog] = useState<'sign-in' | 'create' | null>(null)
-  const [accountEmail, setAccountEmail] = useState('')
+  const [accountDialog, setAccountDialog] = useState<AccountDialog | null>(initialDialog)
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [verifyPassword, setVerifyPassword] = useState('')
-  const [fullName, setFullName] = useState('')
-  const [authBusy, setAuthBusy] = useState(false)
-  const [authError, setAuthError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [recoverySent, setRecoverySent] = useState(false)
   useEffect(() => {
-    const timer = window.setInterval(() => setActiveStage((stage) => (stage + 1) % stages.length), 1800)
-    return () => window.clearInterval(timer)
-  }, [])
+    document.body.classList.toggle('public-menu-open', menuOpen)
+    return () => document.body.classList.remove('public-menu-open')
+  }, [menuOpen])
   useEffect(() => {
-    if (!accountDialog) return
+    document.body.classList.toggle('modal-open', accountDialog !== null)
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setAccountDialog(null) }
-    document.body.classList.add('modal-open')
     window.addEventListener('keydown', closeOnEscape)
     return () => { document.body.classList.remove('modal-open'); window.removeEventListener('keydown', closeOnEscape) }
   }, [accountDialog])
-  const closeMenu = () => { setMenuOpen(false); setAccountOpen(false) }
-  const openDialog = (dialog: 'sign-in' | 'create') => {
-    setAccountDialog(dialog); setAccountOpen(false); setMenuOpen(false); setAuthError(''); setPassword(''); setVerifyPassword('')
+  const openDialog = (view: AccountDialog) => { setAccountDialog(view); setMenuOpen(false); setError(''); setRecoverySent(false) }
+  const submitAccount = async (event: FormEvent) => {
+    event.preventDefault(); setBusy(true); setError('')
+    try {
+      if (accountDialog === 'forgot') {
+        const { error: recoveryError } = await authClient.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/auth/reset-password` })
+        if (recoveryError) throw recoveryError
+        setRecoverySent(true)
+        return
+      }
+      if (accountDialog === 'create') {
+        if (password !== verifyPassword) throw new Error('Passwords do not match.')
+        const name = `${firstName.trim()} ${lastName.trim()}`.trim()
+        const { error: signUpError } = await emailAuthClient.signUp.email({ email, password, name })
+        if (signUpError) throw signUpError
+      }
+      const { error: signInError } = await authClient.signInWithPassword({ email, password })
+      if (signInError) throw signInError
+      window.location.assign('/member/dashboard')
+    } catch (accountError) {
+      setError(accountError instanceof Error ? accountError.message : 'We could not complete that request. Please try again.')
+    } finally { setBusy(false) }
   }
-  const signIn = async (event: FormEvent) => {
-    event.preventDefault(); setAuthBusy(true); setAuthError('')
-    const { error } = await authClient.signInWithPassword({ email: accountEmail, password })
-    setAuthBusy(false)
-    if (error) return setAuthError(error.message || 'We could not sign you in. Check your details and try again.')
-    window.location.href = '/member/dashboard'
-  }
-  const createAccount = async (event: FormEvent) => {
-    event.preventDefault(); setAuthError('')
-    if (password !== verifyPassword) return setAuthError('The passwords do not match.')
-    setAuthBusy(true)
-    const { error } = await emailAuthClient.signUp.email({ email: accountEmail, password, name: fullName })
-    if (error) { setAuthBusy(false); return setAuthError(error.message || 'We could not create your account. Please try again.') }
-    const { error: signInError } = await authClient.signInWithPassword({ email: accountEmail, password })
-    setAuthBusy(false)
-    if (signInError) return setAuthError(signInError.message || 'Your account was created, but we could not sign you in.')
-    window.location.href = '/member/dashboard'
-  }
-  return <div id="top">
-    <section className="hero">
-      <header className="site-header page-wrap"><Brand /><nav className={menuOpen ? 'open' : ''} aria-label="Primary navigation">
-        <a href="#top" onClick={closeMenu}>Home</a><a href="#ventures" onClick={closeMenu}>Ventures</a><a href="#innovation" onClick={closeMenu}>Innovation</a><a href="#consulting" onClick={closeMenu}>Consulting</a><a href="/insights">Insights</a><a href="#contact" onClick={closeMenu}>Contact</a><span className="account-entry"><button className="nav-sign-in" type="button" aria-expanded={accountOpen} onClick={() => setAccountOpen(!accountOpen)}>Account</button>{accountOpen && <span className="account-menu"><button onClick={() => openDialog('sign-in')}>Sign in</button><button onClick={() => openDialog('create')}>Create Account</button></span>}</span>
-      </nav><div className="header-actions"><button className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'}>{menuOpen ? <X /> : <Menu />}</button></div></header>
-      <div className="hero-art" aria-hidden="true" /><div className="hero-content page-wrap"><div className="hero-copy"><h1>We turn ideas into market-ready businesses and products.</h1><p>OSai brings strategy, product development, technology, and commercialization together—so promising ideas can move from possibility to progress.</p><div className="hero-actions"><a className="button button-orange" href="mailto:hello@osai.com">Start a conversation</a><a className="button button-outline" href="#what-we-do">Explore what we do</a></div></div></div>
-    </section>
-    <main><section className="services page-wrap" id="what-we-do"><h2>Three ways to move<br />an idea forward</h2><div className="service-grid">{services.map(({ name, text, icon: Icon }, index) => <article className="service" id={index === 0 ? 'ventures' : index === 1 ? 'innovation' : 'consulting'} key={name}><span className={`service-icon icon-${index}`}><Icon /></span><h3>{name}</h3><p>{text}</p></article>)}</div></section>
-      <section className="process" id="how-we-work"><div className="page-wrap process-inner"><div className="process-heading"><h2>From possibility<br />to progress.</h2><p>We can contribute at one critical stage or partner across the full journey.</p></div><div className="stage-track">{stages.map((stage, index) => <button key={stage} onClick={() => setActiveStage(index)} className={index <= activeStage ? 'active' : ''}><span><i /></span><strong>{stage}</strong></button>)}</div><div className="process-orbit orbit-one" /><div className="process-orbit orbit-two" /></div></section>
-      <section className="integration page-wrap" id="about"><div className="integration-copy"><h2>One team across<br />the work that matters.</h2><p>Strategy, product creation, technical execution, and go-to-market planning work together—reducing handoffs and keeping the idea connected to the outcome.</p></div><div className="principles"><span>Clarity</span><span>Practical innovation</span><span>Disciplined execution</span><span>Market focus</span></div></section>
-      <section className="cta" id="contact"><div className="page-wrap cta-inner"><div><h2>Have an idea worth<br />moving forward?</h2><p>Tell us what you’re building, where you’re stuck, or what opportunity you want to explore.</p></div><div className="cta-actions"><a className="button button-orange" href="mailto:hello@osai.com">Start a conversation</a><a href="#about">Learn about OSai <ArrowRight size={18} /></a></div></div></section></main>
-    <footer><div className="page-wrap footer-inner"><div><Brand /><p>Creating, building, and taking<br />ideas to market.</p></div><nav><a href="#top">Home</a><a href="#ventures">Ventures</a><a href="#innovation">Innovation</a><a href="#consulting">Consulting</a><a href="#contact">Contact</a></nav></div></footer>
-    {accountDialog && <div className="account-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAccountDialog(null) }}><section className="account-modal" role="dialog" aria-modal="true" aria-labelledby="account-dialog-title"><button className="account-modal-close" type="button" onClick={() => setAccountDialog(null)} aria-label="Close account dialog"><X /></button>{accountDialog === 'sign-in' ? <><h2 id="account-dialog-title">Sign in</h2><p>Continue to your OSai account.</p><form onSubmit={signIn}><label>Username (email)<input type="email" required autoComplete="email" value={accountEmail} onChange={(event) => setAccountEmail(event.target.value)} /></label><label>Password<input type="password" required minLength={8} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} /></label><a className="account-forgot" href="/auth/forgot-password">Forgot password?</a>{authError && <div className="account-error" role="alert">{authError}</div>}<button className="account-submit" disabled={authBusy}>{authBusy ? 'Signing in…' : 'Sign in'}</button></form><button className="account-switch" type="button" onClick={() => openDialog('create')}>Create an account</button></> : <><h2 id="account-dialog-title">Create Account</h2><p>Create your OSai sign-in credentials.</p><form onSubmit={createAccount}><label>Full Name<input required autoComplete="name" value={fullName} onChange={(event) => setFullName(event.target.value)} /></label><label>Email<input type="email" required autoComplete="email" value={accountEmail} onChange={(event) => setAccountEmail(event.target.value)} /></label><label>Password<input type="password" required minLength={8} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} /></label><label>Verify Password<input type="password" required minLength={8} autoComplete="new-password" value={verifyPassword} onChange={(event) => setVerifyPassword(event.target.value)} /></label>{authError && <div className="account-error" role="alert">{authError}</div>}<button className="account-submit" disabled={authBusy}>{authBusy ? 'Creating account…' : 'Create Account'}</button></form><button className="account-switch" type="button" onClick={() => openDialog('sign-in')}>Already have an account? Sign in</button></>}</section></div>}
-  </div>
+  return <><header className="public-header"><div className="page-wrap site-header"><Brand /><nav id="public-navigation" className={menuOpen ? 'open' : ''} aria-label="Primary navigation">
+    {publicNav.map(item => <a key={item.href} className={current === item.href ? 'active' : undefined} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>)}
+    <button className="nav-sign-in" type="button" onClick={() => openDialog('sign-in')}>Log in</button>
+  </nav><button className="menu-button" type="button" aria-expanded={menuOpen} aria-controls="public-navigation" onClick={() => setMenuOpen(open => !open)} aria-label={menuOpen ? 'Close menu' : 'Open menu'}>{menuOpen ? <X /> : <Menu />}</button></div></header>
+  {accountDialog && <div className="account-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setAccountDialog(null) }}><section className="account-modal" role="dialog" aria-modal="true" aria-labelledby="account-dialog-title">
+    <button className="account-modal-close" type="button" onClick={() => setAccountDialog(null)} aria-label="Close account dialog"><X /></button>
+    <h2 id="account-dialog-title">{accountDialog === 'sign-in' ? 'Sign in' : accountDialog === 'create' ? 'Create Account' : 'Recover your account'}</h2>
+    <p>{accountDialog === 'sign-in' ? 'Continue to your OSai member account.' : accountDialog === 'create' ? 'Create your OSai member account.' : 'We’ll send recovery instructions to your account email address.'}</p>
+    {accountDialog === 'forgot' && recoverySent ? <div className="account-recovery-success" role="status"><Mail /><h3>Check your email</h3><p>If an account exists for {email}, recovery instructions are on the way.</p><button className="account-submit" type="button" onClick={() => openDialog('sign-in')}>Return to sign in</button></div> : <form onSubmit={submitAccount}>
+      {accountDialog === 'create' && <div className="account-name-fields"><label>First Name<input required autoComplete="given-name" value={firstName} onChange={event => setFirstName(event.target.value)} /></label><label>Last Name<input required autoComplete="family-name" value={lastName} onChange={event => setLastName(event.target.value)} /></label></div>}
+      <label>Email address<input required type="email" autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} /></label>
+      {accountDialog !== 'forgot' && <label>Password<input required type="password" minLength={8} autoComplete={accountDialog === 'sign-in' ? 'current-password' : 'new-password'} value={password} onChange={event => setPassword(event.target.value)} /></label>}
+      {accountDialog === 'create' && <label>Verify password<input required type="password" minLength={8} autoComplete="new-password" value={verifyPassword} onChange={event => setVerifyPassword(event.target.value)} /></label>}
+      {accountDialog === 'sign-in' && <button className="account-forgot" type="button" onClick={() => openDialog('forgot')}>Forgot password?</button>}
+      {error && <div className="account-error" role="alert">{error}</div>}
+      <button className="account-submit" disabled={busy} type="submit">{busy ? 'Please wait…' : accountDialog === 'sign-in' ? 'Sign in' : accountDialog === 'create' ? 'Create Account' : 'Send recovery email'}</button>
+    </form>}
+    {!recoverySent && <button className="account-switch" type="button" onClick={() => openDialog(accountDialog === 'sign-in' ? 'create' : 'sign-in')}>{accountDialog === 'sign-in' ? 'Create Account' : accountDialog === 'create' ? 'Already have an account? Sign in' : 'Return to sign in'}</button>}
+  </section></div>}</>
+}
+
+function HomePage() {
+  return <section className="hero public-page-hero"><div className="hero-art" aria-hidden="true" /><div className="hero-content page-wrap"><div className="hero-copy"><h1>We turn ideas into market-ready businesses and products.</h1><p>OSai brings strategy, product development, technology, and commercialization together—so promising ideas can move from possibility to progress.</p><div className="hero-actions"><a className="button button-orange" href="/contact">Start a conversation</a><a className="button button-outline" href="/venture">Explore what we do</a></div></div></div></section>
+}
+
+function SignedOutPage() {
+  return <div className="public-site signed-out-site"><PublicHeader current="" initialDialog="sign-in" /><section className="hero public-page-hero"><div className="hero-art" aria-hidden="true" /><div className="hero-content page-wrap"><div className="hero-copy"><h1>You forgot to sign in.</h1><p>Sign in to continue to your OSai member account and protected project access.</p><button className="button button-orange" type="button" onClick={() => window.location.reload()}>Sign in</button></div></div></section></div>
+}
+
+const pageContent: Record<string, { title: string; intro: string; heading: string; body: string; points: string[]; action: string; actionHref: string }> = {
+  '/venture': { title: 'Build the right venture—with conviction.', intro: 'OSai Ventures works alongside founders to move promising ideas from first conviction toward a durable, market-ready business.', heading: 'A hands-on partner for the venture journey.', body: 'We connect strategy, product decisions, technology, and commercialization so the venture stays focused on evidence, momentum, and the next meaningful milestone.', points: ['Opportunity framing', 'Product and market validation', 'Build and launch planning', 'Growth and commercialization'], action: 'Start a venture conversation', actionHref: '/contact' },
+  '/innovation': { title: 'Turn bold ideas into practical innovation.', intro: 'OSai Innovation helps organizations explore opportunities, test assumptions, and create solutions grounded in real customer and business needs.', heading: 'Innovation designed to become real.', body: 'Our programs bring strategy, design, and emerging technology into one disciplined process—from discovery through tested concepts and implementation direction.', points: ['Opportunity discovery', 'Rapid concept development', 'Customer-centered validation', 'Implementation roadmaps'], action: 'Explore an innovation program', actionHref: '/contact' },
+  '/consulting': { title: 'Clarity for complex business and technology decisions.', intro: 'OSai Consulting helps leaders connect strategy, operations, product, and technology around outcomes that matter.', heading: 'Focused expertise, connected execution.', body: 'We work across the decisions that frequently become disconnected—market direction, operating models, product priorities, and technology roadmaps.', points: ['Business and market strategy', 'Product and portfolio direction', 'Operating-model design', 'Technology planning'], action: 'Discuss a consulting need', actionHref: '/contact' },
+  '/insights': { title: 'Ideas for moving from possibility to progress.', intro: 'Perspectives from the work of shaping opportunities, building products, and bringing new ventures to market.', heading: 'What we are learning.', body: 'OSai Insights will share practical thinking from venture building, innovation programs, and consulting work. New perspectives will be published here as they are ready.', points: ['Venture building', 'Practical innovation', 'Product strategy', 'Technology and commercialization'], action: 'Start a conversation', actionHref: '/contact' },
+}
+
+function DetailPage({ content }: { content: (typeof pageContent)[string] }) {
+  return <main className="public-detail"><section className="detail-hero"><div className="page-wrap"><h1>{content.title}</h1><p>{content.intro}</p></div></section><section className="detail-body page-wrap"><div><h2>{content.heading}</h2><p>{content.body}</p><a className="button button-orange" href={content.actionHref}>{content.action}</a></div><ul>{content.points.map(point => <li key={point}>{point}</li>)}</ul></section></main>
+}
+
+function ContactPage() {
+  return <main className="public-detail contact-page"><section className="detail-hero"><div className="page-wrap"><h1>Let’s move a worthwhile idea forward.</h1><p>Tell us what you’re building, where you’re stuck, or what opportunity you want to explore.</p></div></section><section className="contact-body page-wrap"><div><h2>Start a conversation.</h2><p>Share a short description of the opportunity and the kind of help you are looking for. We’ll respond with the most useful next step.</p></div><a className="contact-email" href="mailto:hello@osai.com"><span>Email OSai</span><strong>hello@osai.com</strong><ArrowRight /></a></section></main>
+}
+
+function PublicSite() {
+  const path = window.location.pathname.replace(/\/$/, '') || '/'
+  const content = pageContent[path]
+  return <div className="public-site"><PublicHeader current={path} />{path === '/' ? <HomePage /> : path === '/contact' ? <ContactPage /> : content ? <DetailPage content={content} /> : <HomePage />}</div>
 }
 
 function Status({ children, tone = 'teal' }: { children: ReactNode, tone?: string }) { return <span className={`status status-${tone}`}>{children}</span> }
@@ -202,6 +242,16 @@ function Dashboard() {
     <section className="dashboard-module projects-module"><SectionHead title="Current Projects" action="View all projects" to="/member/projects" /><div className="snapshot-grid">{currentProjects.map(project => <ProjectSnapshot project={project} key={project.name} />)}</div></section>
     <section className="dashboard-module projects-module"><SectionHead title="Available Projects" action="Explore projects" to="/member/projects" /><div className="snapshot-grid">{availableProjects.map(project => <ProjectSnapshot project={project} available key={project.name} />)}</div></section>
     </div>
+  </>
+}
+
+function PulsePage() {
+  const today = new Date()
+  const editionYear = new Intl.DateTimeFormat('en-US', { year: 'numeric', timeZone: 'America/New_York' }).format(today)
+  const editionMonth = new Intl.DateTimeFormat('en-US', { month: 'short', timeZone: 'America/New_York' }).format(today).toUpperCase()
+  const editionDay = new Intl.DateTimeFormat('en-US', { day: '2-digit', timeZone: 'America/New_York' }).format(today)
+  return <><PageHead title="Today’s Pulse" intro="" />
+    <div className="pulse-edition-bar">{editionYear} Edition <span aria-hidden="true">·</span> {editionMonth} {editionDay}</div>
   </>
 }
 
@@ -572,7 +622,7 @@ function identityFromUser(user?: { name?: string | null, email?: string | null }
   return { name, email: user?.email || '', initials }
 }
 
-function ProfilePage({ identity, onSaved }: { identity: MemberIdentity, onSaved: (identity: MemberIdentity) => void }) {
+function ProfilePage({ identity, role, onSaved }: { identity: MemberIdentity, role: 'member' | 'admin', onSaved: (identity: MemberIdentity) => void }) {
   const nameParts = identity.name.split(/\s+/)
   const [firstName, setFirstName] = useState(nameParts[0] || '')
   const [lastName, setLastName] = useState(nameParts.slice(1).join(' '))
@@ -592,12 +642,32 @@ function ProfilePage({ identity, onSaved }: { identity: MemberIdentity, onSaved:
     } catch { return { email: true, inApp: true, projectUpdates: true, betaInvitations: true } }
   })
   const [preferencesSaved, setPreferencesSaved] = useState(false)
+  const profilePhotoKey = `osai.profile-photo.${identity.email || 'preview'}`
+  const [profilePhoto, setProfilePhoto] = useState(() => {
+    try { return window.localStorage.getItem(profilePhotoKey) || '' } catch { return '' }
+  })
   useEffect(() => {
     const nextNameParts = identity.name.split(/\s+/)
     setFirstName(nextNameParts[0] || '')
     setLastName(nextNameParts.slice(1).join(' '))
   }, [identity.name])
   useEffect(() => setEmail(identity.email), [identity.email])
+  useEffect(() => {
+    try { setProfilePhoto(window.localStorage.getItem(profilePhotoKey) || '') } catch { setProfilePhoto('') }
+  }, [profilePhotoKey])
+  const updateProfilePhoto = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !file.type.startsWith('image/')) return
+    if (file.size > 2_000_000) { setStatus('error'); setMessage('Choose an image smaller than 2 MB.'); return }
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') return
+      try { window.localStorage.setItem(profilePhotoKey, reader.result) } catch { setStatus('error'); setMessage('We could not save that image in this browser.'); return }
+      setProfilePhoto(reader.result); setStatus('saved'); setMessage('Your profile image has been updated.')
+    }
+    reader.readAsDataURL(file)
+    event.target.value = ''
+  }
   const saveProfile = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const first = firstName.trim()
@@ -656,7 +726,10 @@ function ProfilePage({ identity, onSaved }: { identity: MemberIdentity, onSaved:
     setPreferencesSaved(true)
   }
   const togglePreference = (key: keyof typeof notificationPreferences) => { setNotificationPreferences((current) => ({ ...current, [key]: !current[key] })); setPreferencesSaved(false) }
-  return <><PageHead title="Profile & Security" intro="Manage your member profile, sign-in details, and notification preferences." /><div className="settings-layout"><section><h2>Profile</h2><div className="avatar-editor"><span>{identity.initials}</span><div><strong>{identity.name}</strong><small>OSai member</small></div></div><form onSubmit={saveProfile}><div className="form-grid"><label>First name<input required autoComplete="given-name" value={firstName} onChange={(event)=>{setFirstName(event.target.value);clearStatus()}}/></label><label>Last name<input required autoComplete="family-name" value={lastName} onChange={(event)=>{setLastName(event.target.value);clearStatus()}}/></label><label className="wide">Email<input type="email" required autoComplete="email" value={email} onChange={(event)=>{setEmail(event.target.value);clearStatus()}}/><small>Changing your sign-in email requires verification at the new address.</small></label></div>{message&&<p className={`profile-message ${status==='error'?'error':''}`} role={status==='error'?'alert':'status'}>{message}</p>}<button className="primary-button" disabled={status==='saving'}>{status==='saving'?'Saving…':status==='saved'?'Saved':'Save changes'}</button></form></section><aside><h2>Security</h2><button className="security-row" type="button" aria-expanded={securityPanel==='password'} onClick={()=>setSecurityPanel(securityPanel==='password'?null:'password')}><KeyRound/><span><strong>Password</strong><small>Update your password</small></span><ChevronRight/></button>{securityPanel==='password'&&<form className="security-panel" onSubmit={changePassword}><label>Current password<input type="password" required autoComplete="current-password" value={currentPassword} onChange={(event)=>{setCurrentPassword(event.target.value);setPasswordStatus('idle')}}/></label><label>New password<input type="password" required minLength={8} autoComplete="new-password" value={newPassword} onChange={(event)=>{setNewPassword(event.target.value);setPasswordStatus('idle')}}/></label><label>Confirm new password<input type="password" required minLength={8} autoComplete="new-password" value={confirmPassword} onChange={(event)=>{setConfirmPassword(event.target.value);setPasswordStatus('idle')}}/></label>{passwordMessage&&<p className={`profile-message ${passwordStatus==='error'?'error':''}`} role={passwordStatus==='error'?'alert':'status'}>{passwordMessage}</p>}<button className="primary-button" disabled={passwordStatus==='saving'}>{passwordStatus==='saving'?'Updating…':'Update password'}</button></form>}<button className="security-row" type="button" aria-expanded={securityPanel==='notifications'} onClick={()=>setSecurityPanel(securityPanel==='notifications'?null:'notifications')}><BellRing/><span><strong>Notification preferences</strong><small>Choose what OSai sends you</small></span><ChevronRight/></button>{securityPanel==='notifications'&&<div className="security-panel preference-panel"><label><input type="checkbox" checked={notificationPreferences.email} onChange={()=>togglePreference('email')}/><span><strong>Email notifications</strong><small>Receive enabled updates by email</small></span></label><label><input type="checkbox" checked={notificationPreferences.inApp} onChange={()=>togglePreference('inApp')}/><span><strong>In-app notifications</strong><small>Show enabled updates in the member hub</small></span></label><label><input type="checkbox" checked={notificationPreferences.projectUpdates} onChange={()=>togglePreference('projectUpdates')}/><span><strong>Project updates</strong><small>News from projects you follow</small></span></label><label><input type="checkbox" checked={notificationPreferences.betaInvitations} onChange={()=>togglePreference('betaInvitations')}/><span><strong>Beta invitations</strong><small>Invitations and beta-program reminders</small></span></label>{preferencesSaved&&<p className="profile-message" role="status">Your notification preferences have been saved.</p>}<button className="primary-button" type="button" onClick={savePreferences}>Save preferences</button></div>}</aside></div></> }
+  return <><PageHead title="Profile & Security" intro="Manage your member profile, sign-in details, and notification preferences." /><div className="settings-layout"><section><h2>Profile</h2><div className="avatar-editor">
+    <label className="profile-portrait">{profilePhoto ? <img src={profilePhoto} alt={`${identity.name} profile`} /> : <span>{identity.initials}</span>}<span className="profile-portrait-overlay"><Pencil /> Edit</span><input type="file" accept="image/*" aria-label="Edit profile image" onChange={updateProfilePhoto} /></label>
+    <div><strong>{identity.name}</strong></div>
+  </div><form onSubmit={saveProfile}><div className="form-grid"><label>First name<input required autoComplete="given-name" value={firstName} onChange={(event)=>{setFirstName(event.target.value);clearStatus()}}/></label><label>Last name<input required autoComplete="family-name" value={lastName} onChange={(event)=>{setLastName(event.target.value);clearStatus()}}/></label><label className="wide">Email<input type="email" required autoComplete="email" value={email} onChange={(event)=>{setEmail(event.target.value);clearStatus()}}/><small>Changing your sign-in email requires verification at the new address.</small></label></div>{message&&<p className={`profile-message ${status==='error'?'error':''}`} role={status==='error'?'alert':'status'}>{message}</p>}<button className="primary-button" disabled={status==='saving'}>{status==='saving'?'Saving…':status==='saved'?'Saved':'Save changes'}</button></form></section><aside><h2>Security</h2><button className="security-row" type="button" aria-expanded={securityPanel==='password'} onClick={()=>setSecurityPanel(securityPanel==='password'?null:'password')}><KeyRound/><span><strong>Password</strong><small>Update your password</small></span><ChevronRight/></button>{securityPanel==='password'&&<form className="security-panel" onSubmit={changePassword}><label>Current password<input type="password" required autoComplete="current-password" value={currentPassword} onChange={(event)=>{setCurrentPassword(event.target.value);setPasswordStatus('idle')}}/></label><label>New password<input type="password" required minLength={8} autoComplete="new-password" value={newPassword} onChange={(event)=>{setNewPassword(event.target.value);setPasswordStatus('idle')}}/></label><label>Confirm new password<input type="password" required minLength={8} autoComplete="new-password" value={confirmPassword} onChange={(event)=>{setConfirmPassword(event.target.value);setPasswordStatus('idle')}}/></label>{passwordMessage&&<p className={`profile-message ${passwordStatus==='error'?'error':''}`} role={passwordStatus==='error'?'alert':'status'}>{passwordMessage}</p>}<button className="primary-button" disabled={passwordStatus==='saving'}>{passwordStatus==='saving'?'Updating…':'Update password'}</button></form>}<button className="security-row" type="button" aria-expanded={securityPanel==='notifications'} onClick={()=>setSecurityPanel(securityPanel==='notifications'?null:'notifications')}><BellRing/><span><strong>Notification preferences</strong><small>Choose what OSai sends you</small></span><ChevronRight/></button>{securityPanel==='notifications'&&<div className="security-panel preference-panel"><label><input type="checkbox" checked={notificationPreferences.email} onChange={()=>togglePreference('email')}/><span><strong>Email notifications</strong><small>Receive enabled updates by email</small></span></label><label><input type="checkbox" checked={notificationPreferences.inApp} onChange={()=>togglePreference('inApp')}/><span><strong>In-app notifications</strong><small>Show enabled updates in the member hub</small></span></label><label><input type="checkbox" checked={notificationPreferences.projectUpdates} onChange={()=>togglePreference('projectUpdates')}/><span><strong>Project updates</strong><small>News from projects you follow</small></span></label><label><input type="checkbox" checked={notificationPreferences.betaInvitations} onChange={()=>togglePreference('betaInvitations')}/><span><strong>Beta invitations</strong><small>Invitations and beta-program reminders</small></span></label>{preferencesSaved&&<p className="profile-message" role="status">Your notification preferences have been saved.</p>}<button className="primary-button" type="button" onClick={savePreferences}>Save preferences</button></div>}<section className="clearance-level" aria-labelledby="clearance-level-title"><ShieldCheck/><div><h3 id="clearance-level-title">Clearance Level</h3><strong>{role==='admin'?'Administrator':'Member'}</strong><p>Your clearance is assigned by OSai and controls access to protected areas.</p></div></section></aside></div></> }
 
 const structuredPageContext: Record<string, { header: string; icon: ReactNode; noticeTitle: string; noticeCopy: string }> = {
   'Beta Programs': { header:'Programs', icon:<FlaskConical/>, noticeTitle:'Beta program access', noticeCopy:'Review invitations and participation information for beta programs available to you.' },
@@ -676,16 +749,16 @@ function MemberHub() {
   useEffect(()=>{ const onPop=()=>setPage(window.location.pathname.split('/').filter(Boolean)[1]||'dashboard'); window.addEventListener('popstate',onPop); return()=>window.removeEventListener('popstate',onPop)},[])
   useEffect(()=>{ authClient.getSession().then(async({data})=>{ if(data?.session?.user)setIdentity(identityFromUser(data.session.user)); if(data?.session?.access_token){ const response=await fetch('/api/me',{headers:{authorization:`Bearer ${data.session.access_token}`}}); const result=await response.json(); if(response.ok&&result.profile?.role==='admin')setRole('admin') } }) },[])
   const navigate=(slug:string)=>{window.history.pushState({},'',`/member/${slug}`);setPage(slug);setNavOpen(false);window.scrollTo(0,0)}
-  const signOut=async()=>{await authClient.signOut();window.location.assign('/auth/sign-in')}
-  const screens:Record<string,ReactNode>={dashboard:<Dashboard/>,projects:<ProjectsPage isAdmin={role==='admin'}/>,legal:<AgreementsPage isAdmin={role==='admin'}/>,'beta-programs':<BetaPage/>,updates:<UpdatesPage/>,notifications:<NotificationsPage/>,profile:<ProfilePage identity={identity} onSaved={setIdentity}/>,...(role==='admin'?{'admin-users':<AdminUsersPage/>}:{})}
+  const signOut=async()=>{await authClient.signOut();window.location.assign('/')}
+  const screens:Record<string,ReactNode>={pulse:<PulsePage/>,dashboard:<Dashboard/>,projects:<ProjectsPage isAdmin={role==='admin'}/>,legal:<AgreementsPage isAdmin={role==='admin'}/>,'beta-programs':<BetaPage/>,updates:<UpdatesPage/>,notifications:<NotificationsPage/>,profile:<ProfilePage identity={identity} role={role} onSaved={setIdentity}/>,...(role==='admin'?{'admin-users':<AdminUsersPage/>}:{})}
   const visibleNav = role === 'admin' ? [...memberNav, ...adminNav, ...sidebarUtilityNav] : [...memberNav, ...sidebarUtilityNav]
   const isDashboard = page==='dashboard'
-  const isStructuredPage = ['beta-programs','updates','admin-users','profile','notifications'].includes(page)
+  const isStructuredPage = ['pulse','beta-programs','updates','admin-users','profile','notifications'].includes(page)
   const isProjectEdit = page==='projects'&&new URLSearchParams(window.location.search).has('adminEdit')
   const isProjectsCatalog = page==='projects'&&!window.location.pathname.split('/').filter(Boolean)[2]&&!isProjectEdit
   return <div className="member-shell">
     <aside className={`member-sidebar ${navOpen?'open':''}`}>
-      <div className="member-brand"><a href="/" aria-label="Orbit Systems home"><Image src="/osai-header-logo.png" alt="Orbit Systems — Augmented Intelligence" width={1196} height={399} priority /></a></div>
+      <div className="member-brand"><a href="/" aria-label="Orbit Systems home"><img src="/OSAI_Main-Logo.png?v=20260731" alt="Orbit Systems — Augmented Intelligence" width="1280" height="640" /></a></div>
       <nav aria-label="Member navigation">
         {visibleNav.map(({slug,label,icon:Icon,count})=><a href={`/member/${slug}`} className={page===slug?'active':undefined} onClick={(e)=>{e.preventDefault();navigate(slug)}} key={slug}><Icon/><span>{label}</span>{count?<b>{count}</b>:null}</a>)}
         <button className="sidebar-signout" type="button" onClick={signOut}><LogOut/><span>Sign Out</span></button>
@@ -710,13 +783,15 @@ function ProtectedMemberHub() {
     if (!client) { setState('signed-out'); return }
     client.getSession().then(({ data }) => setState(data?.session ? 'signed-in' : 'signed-out'))
   }, [isDevelopmentPreview])
+  useEffect(() => { if (state === 'signed-out') window.location.replace('/auth/sign-in') }, [state])
   if (isDevelopmentPreview) return <MemberHub />
   if (state === 'checking') return <main className="session-check"><ShieldCheck /><p>Checking your secure session…</p></main>
-  if (state === 'signed-out') return <AuthPage />
+  if (state === 'signed-out') return <main className="session-check"><ShieldCheck /><p>Taking you to sign in…</p></main>
   return <MemberHub />
 }
 
 export default function App() {
+  if (window.location.pathname === '/auth/sign-in') return <SignedOutPage />
   if (window.location.pathname.startsWith('/auth/')) return <AuthPage />
   return window.location.pathname.startsWith('/member') ? <ProtectedMemberHub /> : <PublicSite/>
 }

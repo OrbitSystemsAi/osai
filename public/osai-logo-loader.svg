@@ -1,0 +1,180 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="loader-title loader-description">
+  <title id="loader-title">OSai loading</title>
+  <desc id="loader-description">Concentric orbital rings assemble into the OSai logo.</desc>
+
+  <defs>
+    <filter id="soft-glow" x="-100%" y="-100%" width="300%" height="300%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <mask id="orbit-cutouts" maskUnits="userSpaceOnUse" x="250" y="150" width="300" height="300">
+      <rect x="250" y="150" width="300" height="300" fill="white"/>
+      <circle cx="326" cy="226" r="34" fill="black"/>
+      <circle cx="500" cy="230" r="45" fill="black"/>
+      <circle cx="471" cy="402" r="44" fill="black"/>
+    </mask>
+
+    <style>
+      :root {
+        --navy: #344c61;
+        --navy-light: #536f87;
+        --orange: #ee8934;
+        --orange-light: #ffb04f;
+        --cycle: 4.2s;
+      }
+
+      .ring,
+      .traveler,
+      .logo,
+      .echo {
+        transform-box: view-box;
+        transform-origin: 400px 300px;
+        animation-duration: var(--cycle);
+        animation-iteration-count: infinite;
+        animation-timing-function: cubic-bezier(.4, 0, .2, 1);
+      }
+
+      .ring {
+        fill: none;
+        stroke-linecap: round;
+        opacity: 0;
+      }
+
+      .ring-outer {
+        stroke: var(--navy-light);
+        stroke-width: 15;
+        stroke-dasharray: 1 1200;
+        animation-name: outer-orbit;
+      }
+
+      .ring-middle {
+        stroke: var(--orange-light);
+        stroke-width: 19;
+        stroke-dasharray: 1 1000;
+        animation-name: middle-orbit;
+      }
+
+      .ring-inner {
+        stroke: var(--navy);
+        stroke-width: 23;
+        stroke-dasharray: 1 800;
+        animation-name: inner-orbit;
+      }
+
+      .traveler { opacity: 0; }
+      .traveler-a { animation-name: traveler-a; }
+      .traveler-b { animation-name: traveler-b; }
+      .traveler-c { animation-name: traveler-c; }
+
+      .logo {
+        opacity: 0;
+        animation-name: logo-assemble;
+      }
+
+      .echo {
+        fill: none;
+        stroke: var(--orange);
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-dasharray: 44 1200;
+        opacity: 0;
+        animation-name: final-echo;
+      }
+
+      @keyframes outer-orbit {
+        0%   { opacity: 0; stroke-dasharray: 1 1200; transform: rotate(-92deg); }
+        5%   { opacity: 1; }
+        29%  { opacity: 1; stroke-dasharray: 910 1200; }
+        68%  { opacity: 1; stroke-dasharray: 910 1200; transform: rotate(218deg); }
+        82%, 100% { opacity: 0; stroke-dasharray: 80 1200; transform: rotate(260deg); }
+      }
+
+      @keyframes middle-orbit {
+        0%, 10% { opacity: 0; stroke-dasharray: 1 1000; transform: rotate(100deg); }
+        18% { opacity: 1; }
+        38% { opacity: 1; stroke-dasharray: 825 1000; }
+        70% { opacity: 1; stroke-dasharray: 825 1000; transform: rotate(-330deg); }
+        86%, 100% { opacity: 0; stroke-dasharray: 60 1000; transform: rotate(-390deg); }
+      }
+
+      @keyframes inner-orbit {
+        0%, 19% { opacity: 0; stroke-dasharray: 1 800; transform: rotate(-55deg); }
+        27% { opacity: 1; }
+        43% { opacity: 1; stroke-dasharray: 590 800; }
+        67% { opacity: 1; stroke-dasharray: 590 800; transform: rotate(555deg); }
+        80%, 100% { opacity: 0; stroke-dasharray: 45 800; transform: rotate(620deg); }
+      }
+
+      @keyframes traveler-a {
+        0% { opacity: 0; transform: rotate(-90deg); }
+        5% { opacity: 1; }
+        59% { opacity: 1; transform: rotate(500deg); }
+        72%, 100% { opacity: 0; transform: rotate(520deg); }
+      }
+
+      @keyframes traveler-b {
+        0%, 14% { opacity: 0; transform: rotate(160deg); }
+        22% { opacity: 1; }
+        64% { opacity: 1; transform: rotate(-270deg); }
+        76%, 100% { opacity: 0; transform: rotate(-290deg); }
+      }
+
+      @keyframes traveler-c {
+        0%, 25% { opacity: 0; transform: rotate(-40deg); }
+        33% { opacity: 1; }
+        60% { opacity: 1; transform: rotate(680deg); }
+        72%, 100% { opacity: 0; transform: rotate(700deg); }
+      }
+
+      @keyframes logo-assemble {
+        0%, 58% { opacity: 0; transform: scale(.84); }
+        72% { opacity: .72; transform: scale(1.055); }
+        79% { opacity: 1; transform: scale(1); }
+        91% { opacity: 1; transform: scale(1); }
+        100% { opacity: 0; transform: scale(.96); }
+      }
+
+      @keyframes final-echo {
+        0%, 73% { opacity: 0; stroke-dashoffset: 0; transform: rotate(-24deg); }
+        81% { opacity: 1; }
+        94% { opacity: .85; stroke-dashoffset: -250; transform: rotate(236deg); }
+        100% { opacity: 0; stroke-dashoffset: -290; transform: rotate(270deg); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .ring, .traveler, .echo { display: none; }
+        .logo { animation: none; opacity: 1; }
+      }
+    </style>
+  </defs>
+
+  <g aria-hidden="true">
+    <circle class="ring ring-outer" cx="400" cy="300" r="174"/>
+    <circle class="ring ring-middle" cx="400" cy="300" r="145"/>
+    <circle class="ring ring-inner" cx="400" cy="300" r="111"/>
+
+    <g class="traveler traveler-a" filter="url(#soft-glow)">
+      <circle cx="400" cy="126" r="10.5" fill="var(--orange)"/>
+    </g>
+    <g class="traveler traveler-b">
+      <circle cx="400" cy="155" r="7.5" fill="var(--navy-light)"/>
+    </g>
+    <g class="traveler traveler-c" filter="url(#soft-glow)">
+      <circle cx="400" cy="189" r="5.5" fill="var(--orange-light)"/>
+    </g>
+
+    <g class="logo">
+      <circle cx="400" cy="300" r="118" fill="none" stroke="var(--navy)" stroke-width="26" mask="url(#orbit-cutouts)"/>
+      <circle cx="400" cy="300" r="76" fill="var(--navy)"/>
+      <path d="M354 226a28 28 0 1 1-56 0a28 28 0 1 1 56 0ZM339 226a13 13 0 1 0-26 0a13 13 0 1 0 26 0Z" fill="var(--navy)" fill-rule="evenodd"/>
+      <circle cx="500" cy="230" r="35" fill="var(--orange)"/>
+      <circle cx="471" cy="402" r="34" fill="var(--navy)"/>
+    </g>
+
+    <circle class="echo" cx="400" cy="300" r="194"/>
+  </g>
+</svg>
