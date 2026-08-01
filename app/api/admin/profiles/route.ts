@@ -14,7 +14,17 @@ export async function GET(request: Request) {
         profile.status, profile.updated_at,
         count(project.id)::int AS project_count,
         coalesce(jsonb_agg(jsonb_build_object(
-          'id', project.id, 'name', project.name, 'role', membership.project_role, 'status', membership.status
+          'id', project.id, 'name', project.name, 'role', membership.project_role, 'status', membership.status,
+          'legalDocuments', coalesce((
+            SELECT jsonb_agg(jsonb_build_object(
+              'id', document.id,
+              'fileName', document.file_name,
+              'documentType', document.document_type
+            ) ORDER BY document.created_at DESC)
+            FROM legal_project_groups legal_group
+            JOIN legal_documents document ON document.project_group_id = legal_group.id
+            WHERE legal_group.project_id = project.id
+          ), '[]'::jsonb)
         ) ORDER BY project.name) FILTER (WHERE project.id IS NOT NULL), '[]'::jsonb) AS projects
       FROM user_profiles profile
       LEFT JOIN project_memberships membership ON membership.auth_user_id = profile.auth_user_id
@@ -68,6 +78,7 @@ export async function PATCH(request: Request) {
       ), removed AS (
         DELETE FROM project_memberships
         WHERE auth_user_id = ${body.authUserId}
+          AND status IN ('project_agreement_signed', 'project_access_approved')
           AND project_id NOT IN (SELECT project_id FROM selected)
       )
       INSERT INTO project_memberships (project_id, auth_user_id, project_role, status)

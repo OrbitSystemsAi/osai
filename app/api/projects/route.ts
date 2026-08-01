@@ -9,23 +9,16 @@ export async function GET(request: Request) {
     const profile = await requireProfile(request)
     const sql = db()
     const rows = profile.role === 'admin'
-      ? await sql`SELECT id, name, slug, description, image_url, access_level, problem_content, solution_content, competition_content, market_content, business_model_content FROM projects WHERE status <> 'archived' ORDER BY updated_at DESC`
+      ? await sql`SELECT id, name, slug, description, image_url, access_level, milestones, 'project_access_approved'::text AS membership_status FROM projects WHERE status <> 'archived' ORDER BY updated_at DESC`
       : await sql`
           SELECT project.id, project.name, project.slug, project.description,
-            project.image_url, project.access_level, project.problem_content, project.solution_content,
-            project.competition_content, project.market_content, project.business_model_content
+            project.image_url, project.access_level, project.milestones,
+            membership.status AS membership_status
           FROM projects project
+          LEFT JOIN project_memberships membership
+            ON membership.project_id = project.id
+            AND membership.auth_user_id = ${profile.authUserId}
           WHERE project.status <> 'archived'
-            AND (
-              (project.status = 'published' AND project.access_level IN ('public', 'member'))
-              OR EXISTS (
-                SELECT 1
-                FROM project_memberships membership
-                WHERE membership.project_id = project.id
-                  AND membership.auth_user_id = ${profile.authUserId}
-                  AND membership.status IN ('project_agreement_signed', 'project_access_approved')
-              )
-            )
           ORDER BY project.updated_at DESC`
     return NextResponse.json({ projects: rows })
   } catch (error) {

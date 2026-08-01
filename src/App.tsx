@@ -30,18 +30,23 @@ const adminNav: MemberNavItem[] = [
   { slug: 'admin-users', label: 'Users', icon: UserCog, count: 0 },
 ]
 
-type CatalogProject = { id?: string; slug: string; name: string; description: string; status: string; tone: string; initials: string; imageUrl?: string; accessLevel?: string }
+type Milestone = { id: string; name: string; date: string; status: 'planned' | 'in_progress' | 'completed' }
+type CatalogProject = { id?: string; slug: string; name: string; description: string; status: string; tone: string; initials: string; imageUrl?: string; accessLevel?: string; membershipStatus?: string; milestones: Milestone[] }
 const projects: CatalogProject[] = []
 const projectPitchSections = ['Timeline', 'Problem', 'Solution', 'Competition', 'Market', 'Traction', 'Team', 'Business Model', 'Invest']
 function ProjectPitchLinks({ active, onSelect }: { active?: string; onSelect?: (section: string) => void }) { return <nav className="project-pitch-links" aria-label="Project presentation sections">{projectPitchSections.map(label=><a className={active===label?'active':undefined} key={label} href={`#${label.toLowerCase().replaceAll(' ','-')}`} onClick={onSelect?event=>{event.preventDefault();onSelect(label)}:undefined}>{label}</a>)}</nav> }
-const catalogProjectFromApi = (project: { id?:string; slug:string; name:string; description:string; image_url:string; access_level:string }, index: number, isAdmin: boolean): CatalogProject => ({
+const activeProjectAccess = new Set(['project_agreement_signed', 'project_access_approved'])
+const pendingProjectAccess = new Set(['project_access_requested', 'project_review_pending', 'project_information_required', 'project_agreement_pending'])
+const catalogProjectFromApi = (project: { id?:string; slug:string; name:string; description:string; image_url:string; access_level:string; membership_status?:string; milestones?:Milestone[] }, index: number, isAdmin: boolean): CatalogProject => ({
   id: project.id,
   slug: project.slug,
   name: project.name,
   description: project.description,
   imageUrl: project.image_url,
   accessLevel: project.access_level,
-  status: isAdmin ? 'Full access' : ['public','member'].includes(project.access_level) ? 'Member overview' : 'Request access',
+  membershipStatus: project.membership_status,
+  milestones: Array.isArray(project.milestones) ? project.milestones : [],
+  status: isAdmin || activeProjectAccess.has(project.membership_status || '') ? 'Full access' : pendingProjectAccess.has(project.membership_status || '') ? 'Access requested' : 'Preview',
   tone: ['teal','blue','slate'][index % 3],
   initials: project.name.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join('').toUpperCase() || 'OS',
 })
@@ -259,6 +264,47 @@ function PulsePage() {
   </>
 }
 
+const memberPitchSubtitles: Record<string, string> = {
+  Problem: 'The problem this project is working to solve.',
+  Solution: 'How the project addresses the identified problem.',
+  Competition: 'The competitive landscape and the project’s differentiation.',
+  Market: 'The audience, market, and opportunity for this project.',
+  Traction: 'Signals of project progress and adoption.',
+  Team: 'The people building and supporting this project.',
+  'Business Model': 'How the project creates, delivers, and captures value.',
+  Invest: 'Investment information for approved participants.',
+}
+
+function MemberLimitedProjectDetail({ project, onBack, onProjectChange }: { project: CatalogProject; onBack: () => void; onProjectChange: (project: CatalogProject) => void }) {
+  const [activeSection, setActiveSection] = useState('Timeline')
+  const [requesting, setRequesting] = useState(false)
+  const [requestMessage, setRequestMessage] = useState('')
+  const membershipStatus = project.membershipStatus || ''
+  const hasAccess = activeProjectAccess.has(membershipStatus)
+  const requestPending = pendingProjectAccess.has(membershipStatus)
+  const requestAccess = async () => {
+    if (!project.id || requesting || hasAccess || requestPending) return
+    try {
+      setRequesting(true)
+      setRequestMessage('')
+      const data = await projectAccessRequest(project.id)
+      onProjectChange({ ...project, membershipStatus: data.status, status: 'Access requested' })
+      setRequestMessage(data.emailDelivery==='sent'?'Your request has been sent to the OSai administrators.':'Your access request has been recorded for administrator review.')
+    } catch (error) {
+      setRequestMessage(error instanceof Error ? error.message : 'Could not send the access request.')
+    } finally { setRequesting(false) }
+  }
+  const milestones = [...project.milestones].sort((a,b)=>a.date.localeCompare(b.date))
+  const cover = <div className={`project-cover project-cover-${project.tone}`}>{project.imageUrl?<div className="project-cover-image" role="img" aria-label={`${project.name} project`} style={{backgroundImage:`url(${project.imageUrl})`}}/>:<span><ImageIcon/><b>{project.initials}</b></span>}</div>
+  return <div className="project-detail member-project-detail member-limited-project">
+    <button className="project-back" type="button" onClick={onBack}><ArrowLeft/> All projects</button>
+    <section className="project-identity">{cover}<div><div className="member-project-title-row"><h1>{project.name}</h1><button className="request-access-pill" type="button" disabled={requesting || hasAccess || requestPending} onClick={()=>void requestAccess()}>{requesting?'Sending…':hasAccess?'Access Granted':requestPending?'Access Requested':'Request Access'}</button></div><p>{project.description || 'No project brief has been added.'}</p><ProjectPitchLinks active={activeSection} onSelect={setActiveSection}/>{requestMessage&&<small className="member-access-message" role="status">{requestMessage}</small>}</div></section>
+    <section className="member-project-preview-body" aria-live="polite">
+      {activeSection==='Timeline'?<div className="member-readonly-timeline">{milestones.length?<div className="control-panel-timeline-scroll"><div className="control-panel-timeline">{milestones.map(milestone=><article key={milestone.id}><span className={`timeline-point timeline-point-${milestone.status}`} aria-hidden="true">{milestone.status==='completed'?<Check/>:<span/>}</span><strong>{milestone.name}</strong><time dateTime={milestone.date}>{new Intl.DateTimeFormat('en-US',{dateStyle:'medium'}).format(new Date(`${milestone.date}T12:00:00`))}</time><span className={`timeline-status timeline-status-${milestone.status}`}>{milestone.status.replace('_',' ')}</span></article>)}</div></div>:<div className="member-project-preview-empty">No timeline has been published for this project.</div>}</div>:<p className="member-pitch-subtitle">{memberPitchSubtitles[activeSection]}</p>}
+    </section>
+  </div>
+}
+
 function MemberProjectDetailPage({ project, onBack, isAdmin, onProjectChange }: { project: CatalogProject; onBack: () => void; isAdmin: boolean; onProjectChange: (project: CatalogProject) => void }) {
   const [adminProject, setAdminProject] = useState<AdminProjectDetail | null>(null)
   const [name, setName] = useState(project.name)
@@ -286,6 +332,7 @@ function MemberProjectDetailPage({ project, onBack, isAdmin, onProjectChange }: 
   const saveImage = async (nextImageUrl: string) => { const record = await ensureAdminProject(); await adminRequest(`/api/admin/projects/${record.id}`, { method: 'PATCH', body: JSON.stringify({ dashboard: { imageUrl: nextImageUrl, userGoal: record.user_goal, costBudget: record.cost_budget, costActual: record.cost_actual, adoptionRate: record.adoption_rate, forecastPenetration: record.forecast_penetration, milestones: record.milestones, tasks: record.tasks, ...storyContentPayload(record) } }) }); setImageUrl(nextImageUrl); setAdminProject({ ...record, image_url: nextImageUrl }); onProjectChange({ ...project, name, description, imageUrl: nextImageUrl }) }
   const uploadImage = async (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; event.target.value = ''; if (!file) return; if (!['image/jpeg','image/png','image/webp'].includes(file.type)) { setAdminMessage('Use a JPG, PNG, or WebP image.'); return } if (file.size > 2 * 1024 * 1024) { setAdminMessage('Choose an image smaller than 2 MB.'); return } try { setAdminMessage('Uploading…'); const dataUrl = await new Promise<string>((resolve,reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error('Could not read the image.')); reader.readAsDataURL(file) }); await saveImage(dataUrl); setAdminMessage('') } catch (error) { setAdminMessage(error instanceof Error ? error.message : 'Could not upload the image.') } }
   const openAdminSection = async (section: 'milestones' | 'tasks') => { try { const record = await ensureAdminProject(); window.location.href = `/member/projects?adminEdit=${record.id}&edit=${section}#${section === 'milestones' ? 'reports' : 'tasks'}` } catch (error) { setAdminMessage(error instanceof Error ? error.message : 'Could not open project editing.') } }
+  if (!isAdmin) return <MemberLimitedProjectDetail project={project} onBack={onBack} onProjectChange={onProjectChange}/>
   const cover = <div className={`project-cover project-cover-${project.tone}${isAdmin?' admin-hover-edit':''}`}>{imageUrl?<div className="project-cover-image admin-hover-content" role="img" aria-label={`${name} project`} style={{backgroundImage:`url(${imageUrl})`}}/>:<span className={isAdmin?'admin-hover-content':undefined}><ImageIcon/><b>{project.initials}</b></span>}{isAdmin&&<div className="admin-hover-actions">{imageUrl&&<button type="button" onClick={()=>void saveImage('')}><Trash2/> Delete</button>}<label className="admin-hover-label"><ImageIcon/> {imageUrl?'Edit':'Upload'}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={event=>void uploadImage(event)}/></label></div>}</div>
   const title = isAdmin?(editingPart==='title'?<div className="admin-inline-editor"><input aria-label="Project title" maxLength={PROJECT_TITLE_MAX} value={name} onChange={event=>setName(event.target.value)}/><small>{name.length}/{PROJECT_TITLE_MAX}</small><button type="button" onClick={()=>void saveText()}>Save</button><button type="button" onClick={()=>{setName(adminProject?.name||project.name);setEditingPart(null)}}>Cancel</button></div>:<div className="admin-hover-edit admin-title-edit"><h1 className="admin-hover-content">{name}</h1><div className="admin-hover-actions"><button type="button" onClick={()=>setEditingPart('title')}><Pencil/> Edit</button></div></div>):<h1>{name}</h1>
   const projectDescription = description || 'No project brief has been added.'
@@ -313,7 +360,7 @@ function ProjectsPage({ isAdmin }: { isAdmin: boolean }) {
   const [addingProject, setAddingProject] = useState(false)
   const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null)
   const [adminEditingProjectId, setAdminEditingProjectId] = useState<string | null>(() => isAdmin ? new URLSearchParams(window.location.search).get('adminEdit') : null)
-  useEffect(() => { let active = true; void projectCatalogRequest().then(data => { if (!active) return; const managed = (data.projects as Array<{id:string;slug:string;name:string;description:string;image_url:string;access_level:string}>).map((project,index)=>catalogProjectFromApi(project,index,isAdmin)); setCatalogProjects(managed); if (initialSlug) setSelected(managed.find(project=>project.slug===initialSlug)||null) }).catch(() => { setCatalogProjects([]) }); return () => { active = false } }, [isAdmin, initialSlug])
+  useEffect(() => { let active = true; void projectCatalogRequest().then(data => { if (!active) return; const managed = (data.projects as Array<{id:string;slug:string;name:string;description:string;image_url:string;access_level:string;membership_status?:string;milestones?:Milestone[]}>).map((project,index)=>catalogProjectFromApi(project,index,isAdmin)); setCatalogProjects(managed); if (initialSlug) setSelected(managed.find(project=>project.slug===initialSlug)||null) }).catch(() => { setCatalogProjects([]) }); return () => { active = false } }, [isAdmin, initialSlug])
   const updateProject = (nextProject: CatalogProject) => { setCatalogProjects(current => current.map(item => item.slug === nextProject.slug ? nextProject : item)); setSelected(current => current?.slug === nextProject.slug ? nextProject : current) }
   const openProject = (project: CatalogProject) => { window.history.pushState({},'',`/member/projects/${project.slug}`); setSelected(project); window.scrollTo(0,0) }
   const closeProject = () => { window.history.pushState({},'','/member/projects'); setSelected(null); setAdminEditingProjectId(null); window.scrollTo(0,0) }
@@ -321,12 +368,12 @@ function ProjectsPage({ isAdmin }: { isAdmin: boolean }) {
   const addBlankProject = async () => { if (addingProject) return; try { setAddingProject(true); const stamp = `${Date.now()}-${Math.random().toString(36).slice(2,7)}`; const data = await adminRequest('/api/admin/projects', { method:'POST', body:JSON.stringify({ name:'Project Title', slug:`project-${stamp}`, description:'', status:'draft', accessLevel:'member' }) }); const project = catalogProjectFromApi({ ...data.project, image_url:'' },0,true); setCatalogProjects(current => [project,...current]) } finally { setAddingProject(false) } }
   const deleteProject = async (project: CatalogProject) => { if (!project.id) return; try { await adminRequest(`/api/admin/projects/${project.id}`, { method:'DELETE' }); setCatalogProjects(current => current.filter(item => item.id !== project.id)); setDeletingProjectId(null) } catch { setDeletingProjectId(null) } }
   const syncAdminProject = (project: AdminProjectDetail) => setCatalogProjects(current => current.map(item => item.id === project.id ? { ...item, slug:project.slug, name:project.name, description:project.description, imageUrl:project.image_url, initials:project.name.split(/\s+/).map(part=>part[0]).slice(0,2).join('').toUpperCase() } : item))
-  const visibleProjects = catalogProjects.filter(project => `${project.name} ${project.description}`.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+  const visibleProjects = catalogProjects.filter(project => `${project.name} ${project.description}`.toLowerCase().includes(searchQuery.trim().toLowerCase())).filter(project => filter==='Requested'?pendingProjectAccess.has(project.membershipStatus||''):filter==='Available'?!activeProjectAccess.has(project.membershipStatus||'')&&!pendingProjectAccess.has(project.membershipStatus||''):true)
   if (isAdmin&&adminEditingProjectId) return <AdminProjectDetailPage key={adminEditingProjectId} projectId={adminEditingProjectId} onBack={closeProject} onProjectSaved={syncAdminProject}/>
   if (selected) return <MemberProjectDetailPage project={selected} onBack={closeProject} isAdmin={isAdmin} onProjectChange={updateProject}/>
   const directoryNotice = <div className="info-banner project-directory-notice"><FolderKanban/><span><strong>Project directory</strong><small>{isAdmin?'Select a project to view or manage its details.':'Select a project to view its details and available materials.'}</small></span></div>
   if (isAdmin) return <><PageHead title="Project Directory" intro="" /><div className="toolbar admin-project-toolbar"><span className="admin-project-toolbar-title">All projects</span><div className="admin-project-toolbar-actions"><button className="admin-add-project" type="button" disabled={addingProject} onClick={()=>void addBlankProject()}><Plus/> Add Project</button><label className="search"><Search size={18}/><input aria-label="Search projects" placeholder="Search projects" value={searchQuery} onChange={event=>setSearchQuery(event.target.value)}/></label></div></div>{directoryNotice}<div className="admin-project-tiles">{visibleProjects.map(project=><article className="admin-project-tile admin-hover-edit" key={project.slug} onMouseLeave={()=>setDeletingProjectId(current=>current===project.id?null:current)}><div className="admin-hover-content"><div className={`admin-project-tile-image ${project.tone}`}>{project.imageUrl?<div className="catalog-visual-image" role="img" aria-label={`${project.name} project`} style={{backgroundImage:`url(${project.imageUrl})`}}/>:<span><ImageIcon/></span>}</div><strong>{project.name}</strong></div><div className="admin-hover-actions">{project.id&&<><a href={`/member/projects?adminEdit=${project.id}&edit=overview#overview`} onClick={event=>{event.preventDefault();window.history.pushState({},'',`/member/projects?adminEdit=${project.id}&edit=overview#overview`);setAdminEditingProjectId(project.id||null);window.scrollTo(0,0)}}><Pencil/> Edit</a>{deletingProjectId===project.id?<button className="confirm-delete-project" type="button" onClick={()=>void deleteProject(project)}><Trash2/> Confirm Delete</button>:<button type="button" onClick={()=>setDeletingProjectId(project.id||null)}><Trash2/> Delete</button>}</>}</div></article>)}</div></>
-  return <><PageHead title="Project Directory" intro="" /><div className="toolbar"><div className="filter-tabs">{['All projects','Available','Requested'].map(x=><button className={filter===x?'active':''} onClick={()=>setFilter(x)} key={x}>{x}</button>)}</div><div className="admin-project-toolbar-actions"><label className="search"><Search size={18}/><input aria-label="Search projects" placeholder="Search projects" value={searchQuery} onChange={event=>setSearchQuery(event.target.value)}/></label></div></div>{directoryNotice}<div className="project-catalog">{visibleProjects.map((p,i)=><article className="catalog-row" key={p.slug}><div className={`catalog-visual ${p.tone}`}>{p.imageUrl?<div className="catalog-visual-image" role="img" aria-label={`${p.name} project`} style={{backgroundImage:`url(${p.imageUrl})`}}/>:<span>{p.initials}</span>}</div><div><Status tone={p.tone}>{p.status}</Status><h2>{p.name}</h2><p>{p.description}</p><div className="meta-line"><span><Clock3/> {i===0?'Updated 2 days ago':'Updated this month'}</span><span><ShieldCheck/> {p.status==='Request access'?'Additional access required':'Member access'}</span></div></div><button className={p.status==='Request access'?'secondary-button':'text-button'} onClick={()=>p.status==='Request access'?undefined:openProject(p)}>{p.status==='Request access'?'Request access':'Open project'} <ArrowRight size={17}/></button></article>)}</div></>
+  return <><PageHead title="Project Directory" intro="" /><div className="toolbar"><div className="filter-tabs">{['All projects','Available','Requested'].map(x=><button className={filter===x?'active':''} onClick={()=>setFilter(x)} key={x}>{x}</button>)}</div><div className="admin-project-toolbar-actions"><label className="search"><Search size={18}/><input aria-label="Search projects" placeholder="Search projects" value={searchQuery} onChange={event=>setSearchQuery(event.target.value)}/></label></div></div>{directoryNotice}<div className="project-catalog">{visibleProjects.map((p,i)=><article className="catalog-row" key={p.slug}><div className={`catalog-visual ${p.tone}`}>{p.imageUrl?<div className="catalog-visual-image" role="img" aria-label={`${p.name} project`} style={{backgroundImage:`url(${p.imageUrl})`}}/>:<span>{p.initials}</span>}</div><div><Status tone={p.tone}>{p.status}</Status><h2>{p.name}</h2><p>{p.description}</p><div className="meta-line"><span><Clock3/> {i===0?'Updated 2 days ago':'Updated this month'}</span><span><ShieldCheck/> {activeProjectAccess.has(p.membershipStatus||'')?'Member access':pendingProjectAccess.has(p.membershipStatus||'')?'Access requested':'Preview access'}</span></div></div><button className="text-button" onClick={()=>openProject(p)}>Open project <ArrowRight size={17}/></button></article>)}</div></>
 }
 
 type AgreementState = { configured: boolean; environment?: 'demo' | 'production'; status: string; completedAt?: string | null; error?: string }
@@ -345,6 +392,14 @@ async function projectCatalogRequest() {
   const data = await response.json()
   if (!response.ok) throw new Error(data.error || 'Could not load projects.')
   return data
+}
+
+async function projectAccessRequest(projectId: string) {
+  const headers = await memberAuthHeaders()
+  const response = await fetch(`/api/projects/${projectId}/access-request`, { method: 'POST', headers, cache: 'no-store' })
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.error || 'Could not request project access.')
+  return data as { status: string; emailDelivery: string }
 }
 
 function AgreementsPage({ isAdmin }: { isAdmin: boolean }) {
@@ -489,14 +544,16 @@ function BetaPage() { return <><PageHead title="Beta Programs" intro="Join invit
 function UpdateList({limit=updates.length}:{limit?:number}) { return <div className="update-list">{updates.slice(0,limit).map(({title,detail,date,icon:Icon})=><a href="/member/updates" key={title}><span className="mini-icon"><Icon/></span><span><strong>{title}</strong><small>{detail}</small></span><time>{date}</time><ChevronRight/></a>)}</div> }
 function UpdatesPage() { return <><PageHead title="Updates" intro="News and changes from the projects and programs you can access." /><div className="update-layout"><UpdateList/><aside><h3>Following</h3><p>You’re receiving updates for one project.</p><div className="following"><span className="project-avatar teal">AP</span><span><strong>Advanced Predictive Data</strong><small>Email and in-app updates</small></span></div><button className="secondary-button">Manage preferences</button></aside></div></> }
 function NotificationsPage() { const [read,setRead]=useState<number[]>([]); const notes=['Your beta invitation is ready to review','Advanced Predictive Data published an update','Your General NDA was completed']; return <><PageHead title="Notifications" intro="Access, agreement, and project activity that needs your attention." /><div className="notification-actions"><button className="text-button" onClick={()=>setRead([0,1,2])}><Check/> Mark all as read</button></div><div className="notification-list">{notes.map((n,i)=><button onClick={()=>setRead([...read,i])} className={read.includes(i)?'read':''} key={n}><span className="notice-dot"/><span className="mini-icon">{i===0?<FlaskConical/>:i===1?<BookOpen/>:<FileCheck2/>}</span><span><strong>{n}</strong><small>{i===0?'Invitation expires August 11':i===1?'2 days ago':'July 18'}</small></span><ChevronRight/></button>)}</div></> }
-type Milestone = { id: string; name: string; date: string; status: 'planned' | 'in_progress' | 'completed' }
 type ProjectTask = { id: string; name: string; description: string; status: 'to_do' | 'in_progress' | 'completed'; dueDate: string }
 type StoryBlock = { id: string; rowId?: string; type: 'heading' | 'paragraph' | 'image' | 'quote' | 'list' | 'statistic'; text?: string; imageUrl?: string; caption?: string; alt?: string }
 type AdminProject = { id: string; name: string; slug: string; description: string; status: string; access_level: string }
 type AdminProjectDetail = AdminProject & { image_url: string; user_goal: number; user_actual: number; cost_budget: number; cost_actual: number; adoption_rate: number; forecast_penetration: number; milestones: Milestone[]; tasks: ProjectTask[]; problem_content: StoryBlock[]; solution_content: StoryBlock[]; competition_content: StoryBlock[]; market_content: StoryBlock[]; business_model_content: StoryBlock[]; created_at?: string }
-type UserProject = { id: string; name: string; role: string; status: string }
+type UserLegalDocument = { id: string; fileName: string; documentType: string }
+type UserProject = { id: string; name: string; role: string; status: string; legalDocuments: UserLegalDocument[] }
 type AdminProjectOption = { id: string; name: string }
 type AdminProfile = { auth_user_id: string; email: string; display_name: string; role: 'member' | 'admin'; status: 'pending_approval' | 'approved' | 'declined' | 'revoked'; project_count: number; projects: UserProject[] }
+const isActiveUserProject = (project: UserProject) => activeProjectAccess.has(project.status)
+const isPendingUserProject = (project: UserProject) => pendingProjectAccess.has(project.status)
 async function adminRequest(path: string, init?: RequestInit) {
   const headers = await memberAuthHeaders()
   const response = await fetch(path, { ...init, cache: 'no-store', headers: { ...headers, ...(init?.body ? { 'content-type': 'application/json' } : {}) } })
@@ -508,13 +565,15 @@ async function adminRequest(path: string, init?: RequestInit) {
 function AdminUsersPage() {
   const [profiles, setProfiles] = useState<AdminProfile[]>([])
   const [projectOptions, setProjectOptions] = useState<AdminProjectOption[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
   const [savingProjectsFor, setSavingProjectsFor] = useState('')
+  const [savingRoleFor, setSavingRoleFor] = useState('')
   const [message, setMessage] = useState('Loading profiles…')
   const load = async () => { try { const data = await adminRequest('/api/admin/profiles'); setProfiles(data.profiles); setProjectOptions(data.projects); setMessage('') } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not load profiles.') } }
   useEffect(() => { void load() }, [])
-  const changeRole = async (profile: AdminProfile, role: 'member' | 'admin') => { try { await adminRequest('/api/admin/profiles', { method: 'PATCH', body: JSON.stringify({ authUserId: profile.auth_user_id, role }) }); await load() } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not update the role.') } }
+  const changeRole = async (profile: AdminProfile, role: 'member' | 'admin') => { setSavingRoleFor(profile.auth_user_id); try { await adminRequest('/api/admin/profiles', { method: 'PATCH', body: JSON.stringify({ authUserId: profile.auth_user_id, role }) }); await load() } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not update the role.') } finally { setSavingRoleFor('') } }
   const toggleProject = async (profile: AdminProfile, projectId: string, checked: boolean) => {
-    const assigned = profile.projects.map(project => project.id)
+    const assigned = profile.projects.filter(isActiveUserProject).map(project => project.id)
     const projectIds = checked ? [...new Set([...assigned, projectId])] : assigned.filter(id => id !== projectId)
     setSavingProjectsFor(profile.auth_user_id)
     try {
@@ -526,7 +585,10 @@ function AdminUsersPage() {
       setSavingProjectsFor('')
     }
   }
-  return <><PageHead title="Users" intro="Review user access, administrator rights, and project involvement." />{message&&<p className="profile-message" role="status">{message}</p>}<div className="admin-table user-directory"><div className="admin-table-head"><span>User</span><span>Account status</span><span>Projects</span><span>Role</span></div>{profiles.map(profile=><article className="admin-person" key={profile.auth_user_id}><span className="user-identity"><strong>{profile.display_name}{profile.role==='admin'&&<em>Admin</em>}</strong><small>{profile.email}</small><code>{profile.auth_user_id}</code></span><Status tone={profile.status==='approved'?'teal':profile.status==='pending_approval'?'orange':'slate'}>{profile.status.replaceAll('_',' ')}</Status><details className="project-assignment"><summary><span><strong>{profile.project_count} {profile.project_count===1?'project':'projects'}</strong><small>{profile.project_count?'Select project assignments':'No project involvement'}</small></span><ChevronRight aria-hidden="true" /></summary><div className="project-assignment-menu">{projectOptions.length?projectOptions.map(project=><label key={project.id}><input type="checkbox" checked={profile.projects.some(assigned=>assigned.id===project.id)} disabled={savingProjectsFor===profile.auth_user_id} onChange={event=>void toggleProject(profile,project.id,event.target.checked)} /><span>{project.name}</span></label>):<small>No projects are available.</small>}{savingProjectsFor===profile.auth_user_id&&<small role="status">Saving assignments…</small>}</div></details><select className="user-role-select" aria-label={`Role for ${profile.display_name}`} value={profile.role} onChange={event=>void changeRole(profile,event.target.value as 'member'|'admin')}><option value="member">Member</option><option value="admin">Administrator</option></select></article>)}</div></>
+  const normalizedQuery = searchQuery.trim().toLowerCase()
+  const visibleProfiles = profiles.filter(profile => !normalizedQuery || [profile.display_name, profile.email, profile.auth_user_id, profile.status, profile.role, ...profile.projects.flatMap(project => [project.name, ...project.legalDocuments.map(document => document.fileName)])].join(' ').toLowerCase().includes(normalizedQuery))
+  const collaboratorsFor = (profile: AdminProfile) => profiles.filter(other => other.auth_user_id !== profile.auth_user_id && other.projects.filter(isActiveUserProject).some(project => profile.projects.filter(isActiveUserProject).some(assigned => assigned.id === project.id)))
+  return <><PageHead title="Users" intro="Review user access, required legal documents, project teams, and administrator rights." /><div className="toolbar admin-users-toolbar"><span className="admin-project-toolbar-title">User Directory</span><label className="search"><Search size={18}/><input aria-label="Search users" placeholder="Search users" value={searchQuery} onChange={event=>setSearchQuery(event.target.value)}/></label></div>{message&&<p className="profile-message" role="status">{message}</p>}<div className="admin-table user-directory"><div className="admin-table-head"><span>User</span><span>Status</span><span>Legal</span><span>Projects</span><span>Teams</span><span>Role</span></div>{visibleProfiles.map(profile=>{const documents=profile.projects.flatMap(project=>project.legalDocuments.map(document=>({...document,projectName:project.name})));const collaborators=collaboratorsFor(profile);const activeProjects=profile.projects.filter(isActiveUserProject);const pendingProjects=profile.projects.filter(isPendingUserProject);return <article className="admin-person" key={profile.auth_user_id}><span className="user-identity"><strong>{profile.display_name}{profile.role==='admin'&&<em>Admin</em>}</strong><small>{profile.email}</small><code>{profile.auth_user_id}</code></span><Status tone={profile.status==='approved'?'teal':profile.status==='pending_approval'?'orange':'slate'}>{profile.status.replaceAll('_',' ')}</Status><details className="project-assignment user-legal-dropdown"><summary><span><strong>{documents.length} {documents.length===1?'document':'documents'}</strong><small>{documents.length?'View required documents':'No required documents'}</small></span><ChevronRight aria-hidden="true" /></summary><div className="project-assignment-menu legal-assignment-menu">{documents.length?documents.map(document=><span className="legal-dropdown-item" key={document.id}><FileText aria-hidden="true"/><span><strong>{document.fileName}</strong><small>{document.projectName}</small></span></span>):<small>No required documents.</small>}</div></details><details className="project-assignment"><summary><span><strong>{activeProjects.length} {activeProjects.length===1?'project':'projects'}</strong><small>{pendingProjects.length?`${pendingProjects.length} access ${pendingProjects.length===1?'request':'requests'}`:activeProjects.length?'Select project assignments':'No project involvement'}</small></span><ChevronRight aria-hidden="true" /></summary><div className="project-assignment-menu">{projectOptions.length?projectOptions.map(project=>{const assignment=profile.projects.find(assigned=>assigned.id===project.id);const requested=assignment?isPendingUserProject(assignment):false;return <label className={requested?'project-option-requested':undefined} key={project.id}><input type="checkbox" checked={Boolean(assignment&&isActiveUserProject(assignment))} disabled={savingProjectsFor===profile.auth_user_id} onChange={event=>void toggleProject(profile,project.id,event.target.checked)} /><span>{project.name}</span>{requested&&<em>Requested</em>}</label>}):<small>No projects are available.</small>}{savingProjectsFor===profile.auth_user_id&&<small role="status">Saving assignments…</small>}</div></details><details className="project-assignment user-teams-dropdown"><summary><span><strong>{activeProjects.length} {activeProjects.length===1?'team':'teams'}</strong><small>{activeProjects.length?'View project teams':'No project teams'}</small></span><ChevronRight aria-hidden="true" /></summary><div className="project-assignment-menu teams-assignment-menu">{activeProjects.length?activeProjects.map(project=><span className="team-dropdown-item" key={project.id}><Users aria-hidden="true"/><span><strong>{project.name}</strong><small>{collaborators.filter(other=>other.projects.filter(isActiveUserProject).some(assigned=>assigned.id===project.id)).length} collaborators</small></span></span>):<small>No project teams.</small>}</div></details><details className="project-assignment user-role-dropdown"><summary aria-label={`Role for ${profile.display_name}`}><span><strong>{profile.role==='admin'?'Administrator':'Member'}</strong></span><ChevronRight aria-hidden="true" /></summary><div className="project-assignment-menu role-assignment-menu">{(['member','admin'] as const).map(role=><button type="button" className={profile.role===role?'selected':undefined} disabled={savingRoleFor===profile.auth_user_id} onClick={event=>{event.currentTarget.closest('details')?.removeAttribute('open');if(role!==profile.role)void changeRole(profile,role)}} key={role}><span className="role-check" aria-hidden="true">{profile.role===role?<Check/>:null}</span>{role==='admin'?'Administrator':'Member'}</button>)}{savingRoleFor===profile.auth_user_id&&<small role="status">Saving role…</small>}</div></details></article>})}{!message&&!visibleProfiles.length&&<p className="user-directory-empty">No users match “{searchQuery}”.</p>}</div></>
 }
 
 function projectDetailFromApi(project: AdminProjectDetail): AdminProjectDetail {
@@ -754,7 +816,7 @@ function ProfilePage({ identity, role, onSaved }: { identity: MemberIdentity, ro
 const structuredPageContext: Record<string, { header: string; icon: ReactNode; noticeTitle: string; noticeCopy: string }> = {
   'Beta Programs': { header:'Programs', icon:<FlaskConical/>, noticeTitle:'Beta program access', noticeCopy:'Review invitations and participation information for beta programs available to you.' },
   Updates: { header:'Project Updates', icon:<BookOpen/>, noticeTitle:'Updates available to you', noticeCopy:'Review news and changes from projects and programs you can access.' },
-  Users: { header:'User Directory', icon:<Users/>, noticeTitle:'User access administration', noticeCopy:'Review account status, project involvement, and administrator roles.' },
+  Users: { header:'User Directory', icon:<Users/>, noticeTitle:'User access administration', noticeCopy:'Review status, required legal documents, project collaboration, and administrator roles.' },
   'Profile & Security': { header:'Account Settings', icon:<User/>, noticeTitle:'Profile and security', noticeCopy:'Manage your member profile, sign-in details, and notification preferences.' },
   Notifications: { header:'Notification Center', icon:<Bell/>, noticeTitle:'Account activity', noticeCopy:'Access, agreement, and project activity that needs your attention appears below.' },
 }
