@@ -1,15 +1,15 @@
 import { createHmac, createSign, timingSafeEqual } from 'node:crypto'
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose'
 
-type Member = { id: string; name: string; email: string }
+type Member = { id: string; name: string; email: string; hasExplicitName: boolean }
 
 const neonJwks = new Map<string, ReturnType<typeof createRemoteJWKSet>>()
 
 function memberFromClaims(claims: JWTPayload): Member | null {
   const email = typeof claims.email === 'string' ? claims.email : null
   if (!claims.sub || !email) return null
-  const name = typeof claims.name === 'string' && claims.name.trim() ? claims.name.trim() : email.split('@')[0]
-  return { id: claims.sub, email, name }
+  const explicitName = typeof claims.name === 'string' ? claims.name.trim() : ''
+  return { id: claims.sub, email, name: explicitName || email.split('@')[0], hasExplicitName: Boolean(explicitName) }
 }
 
 const required = ['DOCUSIGN_INTEGRATION_KEY', 'DOCUSIGN_USER_ID', 'DOCUSIGN_ACCOUNT_ID', 'DOCUSIGN_PRIVATE_KEY', 'DOCUSIGN_GENERAL_NDA_TEMPLATE_ID', 'DOCUSIGN_STATE_SECRET'] as const
@@ -61,7 +61,8 @@ export async function requireMember(request: Request): Promise<Member> {
     if (process.env.NODE_ENV !== 'production') console.warn('Neon session response did not include a user', { keys: Object.keys(payload || {}) })
     throw new Error('UNAUTHENTICATED')
   }
-  return { id: user.id, email: user.email, name: user.name?.trim() || user.email.split('@')[0] }
+  const explicitName = typeof user.name === 'string' ? user.name.trim() : ''
+  return { id: user.id, email: user.email, name: explicitName || user.email.split('@')[0], hasExplicitName: Boolean(explicitName) }
 }
 
 function base64url(value: string | Buffer) {

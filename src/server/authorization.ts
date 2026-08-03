@@ -17,7 +17,7 @@ export async function requireProfile(request: Request): Promise<AppProfile> {
     VALUES (${member.id}, ${member.email}, ${member.name}, ${bootstrapAdmin ? 'admin' : 'member'})
     ON CONFLICT (auth_user_id) DO UPDATE SET
       email = EXCLUDED.email,
-      display_name = EXCLUDED.display_name,
+      display_name = CASE WHEN ${member.hasExplicitName} THEN EXCLUDED.display_name ELSE user_profiles.display_name END,
       role = CASE WHEN ${bootstrapAdmin} THEN 'admin' ELSE user_profiles.role END,
       updated_at = now()
     RETURNING auth_user_id, email, display_name, role

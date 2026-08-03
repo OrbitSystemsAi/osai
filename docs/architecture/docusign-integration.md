@@ -2,9 +2,11 @@
 
 ## Outcome
 
-The member Legal page now supports a DocuSign developer-account flow for the General NDA. A signed-in member can start an embedded signing ceremony from a DocuSign template and OSai re-queries the envelope after DocuSign returns the member to `/member/legal`.
+The member Legal page now supports a DocuSign developer-account flow for the General Mutual Non-Disclosure Agreement (General MNDA). A signed-in member can start an embedded signing ceremony from a DocuSign template and OSai re-queries the envelope after DocuSign returns the member to `/member/legal`.
 
-The current implementation is a sandbox integration slice. It does **not** create a production access grant. Envelope identity is held in a signed, HTTP-only cookie until the application-owned Neon agreement tables, webhook audit trail, and administrator approval records are implemented.
+The current implementation is a sandbox integration slice. It does **not** create a production access grant. Envelope identity is retained in the application-owned `agreement_envelopes` table and in a signed, HTTP-only member cookie. Webhook processing, the complete audit trail, and final administrator approval records remain future work.
+
+For the current test flow, a verified completed General MNDA sandbox envelope is a prerequisite for a non-administrator to open or download any project legal document. Administrators retain their documented legal-management bypass. Sandbox completion unlocks only the test legal-document sequence; it does not create real project access or satisfy a production agreement requirement.
 
 ## DocuSign developer-account setup
 
@@ -25,8 +27,9 @@ The current implementation is a sandbox integration slice. It does **not** creat
 
 - DocuSign secrets are server-only and never use the `NEXT_PUBLIC_` prefix.
 - The signer name, email, and immutable Neon Auth user ID come from the validated server session.
-- The signed cookie prevents a member from substituting an envelope identifier, but it is not the durable system of record required by the foundation roadmap.
-- Before confidential content is enabled, add application-owned `AgreementEnvelope`, `AccessGrant`, and `AuditEvent` records; validate DocuSign Connect HMAC signatures; process events idempotently; reconcile envelopes periodically; and grant access only after a verified completion event commits.
+- The signed cookie prevents a member from substituting an envelope identifier. `agreement_envelopes` provides the durable member-to-envelope record used by the administrator directory and member status reconciliation.
+- Before confidential content is enabled, add `AccessGrant` records and the complete agreement `AuditEvent` workflow; validate DocuSign Connect HMAC signatures; process events idempotently; reconcile envelopes periodically; and grant access only after a verified completion event commits.
+- Demo/sandbox envelope completion remains test-only. Only a completed production General MNDA may advance the administrator directory beyond **Site Member / Pending MNDA**.
 - The current client-side member route gate must also be replaced with server-side page authorization before protected data is rendered.
 
 ## Verification states

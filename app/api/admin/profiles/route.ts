@@ -12,6 +12,19 @@ export async function GET(request: Request) {
     const [rows, projects] = await Promise.all([sql`
       SELECT profile.auth_user_id, profile.email, profile.display_name, profile.role,
         profile.status, profile.updated_at,
+        CASE
+          WHEN profile.role = 'admin' THEN 'Administrator'
+          WHEN profile.status = 'approved' AND agreement.completed_at IS NULL THEN 'Site Member'
+          WHEN profile.status = 'approved' THEN 'Pending Approval'
+          WHEN profile.status = 'pending_approval' THEN 'Pending Membership'
+          ELSE 'Member'
+        END AS membership_role,
+        CASE
+          WHEN profile.role = 'admin' THEN 'Approved'
+          WHEN profile.status = 'approved' AND agreement.completed_at IS NULL THEN 'Pending MNDA'
+          WHEN profile.status = 'approved' THEN 'Pending Approval'
+          ELSE initcap(replace(profile.status, '_', ' '))
+        END AS membership_status,
         count(project.id)::int AS project_count,
         coalesce(jsonb_agg(jsonb_build_object(
           'id', project.id, 'name', project.name, 'role', membership.project_role, 'status', membership.status,
@@ -27,9 +40,19 @@ export async function GET(request: Request) {
           ), '[]'::jsonb)
         ) ORDER BY project.name) FILTER (WHERE project.id IS NOT NULL), '[]'::jsonb) AS projects
       FROM user_profiles profile
+      LEFT JOIN LATERAL (
+        SELECT completed_at
+        FROM agreement_envelopes
+        WHERE auth_user_id = profile.auth_user_id
+          AND agreement_type = 'general_mnda'
+          AND environment = 'production'
+          AND status = 'completed'
+        ORDER BY completed_at DESC
+        LIMIT 1
+      ) agreement ON true
       LEFT JOIN project_memberships membership ON membership.auth_user_id = profile.auth_user_id
       LEFT JOIN projects project ON project.id = membership.project_id AND project.status <> 'archived'
-      GROUP BY profile.auth_user_id
+      GROUP BY profile.auth_user_id, agreement.completed_at
       ORDER BY profile.display_name, profile.email
     `, sql`
       SELECT id, name
@@ -91,6 +114,55 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ authUserId: body.authUserId, projectIds })
   } catch (error) {
     const result = apiError(error, 'PROFILE_UPDATE_FAILED')
+    return NextResponse.json({ error: result.message }, { status: result.status })
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const actor = await requireAdmin(request)
+    const body = await request.json() as { authUserId?: string }
+    if (!body.authUserId) return NextResponse.json({ error: 'INVALID_PROFILE_DELETE' }, { status: 400 })
+    if (body.authUserId === actor.authUserId) return NextResponse.json({ error: 'CANNOT_DELETE_OWN_ACCOUNT' }, { status: 409 })
+
+    const sql = db()
+    const profiles = await sql`
+      SELECT auth_user_id, role
+      FROM user_profiles
+      WHERE auth_user_id = ${body.authUserId}
+    `
+    if (!profiles.length) return NextResponse.json({ error: 'PROFILE_NOT_FOUND' }, { status: 404 })
+    if (profiles[0].role === 'admin') return NextResponse.json({ error: 'CANNOT_DELETE_ADMIN_ACCOUNT' }, { status: 409 })
+
+    const dependencies = await sql`
+      SELECT
+        (SELECT count(*)::int FROM projects WHERE created_by = ${body.authUserId} OR updated_by = ${body.authUserId}) AS projects,
+        (SELECT count(*)::int FROM legal_project_groups WHERE created_by = ${body.authUserId} OR updated_by = ${body.authUserId}) AS legal_groups,
+        (SELECT count(*)::int FROM legal_documents WHERE uploaded_by = ${body.authUserId}) AS legal_documents
+    `
+    const dependency = dependencies[0]
+    if (Number(dependency.projects) || Number(dependency.legal_groups) || Number(dependency.legal_documents)) {
+      return NextResponse.json({
+        error: 'PROFILE_HAS_OWNED_RECORDS',
+        dependencies: {
+          projects: Number(dependency.projects),
+          legalGroups: Number(dependency.legal_groups),
+          legalDocuments: Number(dependency.legal_documents),
+        },
+      }, { status: 409 })
+    }
+
+    await sql.transaction(transaction => [
+      transaction`DELETE FROM user_profiles WHERE auth_user_id = ${body.authUserId}`,
+      transaction`DELETE FROM neon_auth."user" WHERE id = ${body.authUserId}`,
+      transaction`
+        INSERT INTO audit_events (actor_auth_user_id, action, target_type, target_id, metadata)
+        VALUES (${actor.authUserId}, 'profile.deleted', 'user_profile', ${body.authUserId}, ${JSON.stringify({ formerRole: profiles[0].role })}::jsonb)
+      `,
+    ])
+    return new NextResponse(null, { status: 204 })
+  } catch (error) {
+    const result = apiError(error, 'PROFILE_DELETE_FAILED')
     return NextResponse.json({ error: result.message }, { status: result.status })
   }
 }

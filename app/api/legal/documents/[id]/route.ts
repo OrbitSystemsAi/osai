@@ -11,6 +11,18 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const { id } = await context.params
     if (!uuidPattern.test(id)) return NextResponse.json({ error: 'DOCUMENT_NOT_FOUND' }, { status: 404 })
     const sql = db()
+    if (profile.role !== 'admin') {
+      const environment = process.env.DOCUSIGN_API_BASE_URL?.includes('demo.docusign.net') ? 'demo' : 'production'
+      const generalAgreement = await sql`
+        SELECT 1
+        FROM agreement_envelopes
+        WHERE auth_user_id = ${profile.authUserId}
+          AND agreement_type = 'general_mnda'
+          AND environment = ${environment}
+          AND status = 'completed'
+        LIMIT 1`
+      if (!generalAgreement.length) return NextResponse.json({ error: 'GENERAL_MNDA_REQUIRED' }, { status: 403 })
+    }
     const rows = profile.role === 'admin'
       ? await sql`
           SELECT ld.file_name, ld.mime_type, ld.file_data

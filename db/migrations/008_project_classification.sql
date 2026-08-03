@@ -1,0 +1,4 @@
+ALTER TABLE projects
+  ADD COLUMN IF NOT EXISTS industry varchar(80) NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS category varchar(80) NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS sub_category varchar(80) NOT NULL DEFAULT '';

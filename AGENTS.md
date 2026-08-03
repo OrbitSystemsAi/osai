@@ -1,5 +1,9 @@
 # OSai Shared Agent Instructions
 
+## Shared Project Structure
+
+Before creating or reorganizing project documentation, read and follow `/Users/earlpowery/Development/PROJECT_STRUCTURE.md`. Project-specific instructions may extend that standard; document any intentional exception in this file.
+
 This file is the common operating brief for every AI chat or coding agent working on the Orbit Systems / OSai website and platform. Read it before planning, writing, designing, coding, or reviewing work in this repository.
 
 ## 0. Canonical workspace root

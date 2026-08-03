@@ -12,6 +12,9 @@ const projectDescriptionMax = 350
 
 type DashboardBody = {
   imageUrl?: string
+  industry?: string
+  category?: string
+  subCategory?: string
   userGoal?: number
   costBudget?: number
   costActual?: number
@@ -32,6 +35,7 @@ function validDashboard(body: DashboardBody) {
   if ((body.adoptionRate ?? 0) > 100 || (body.forecastPenetration ?? 0) > 100) return false
   if (!Array.isArray(body.milestones) || !Array.isArray(body.tasks)) return false
   if (!Array.isArray(body.problemContent) || !Array.isArray(body.solutionContent) || !Array.isArray(body.competitionContent) || !Array.isArray(body.marketContent) || !Array.isArray(body.businessModelContent)) return false
+  if ([body.industry, body.category, body.subCategory].some(value => (value?.trim().length || 0) > 80)) return false
   if (body.milestones.some(item => !item.id || !item.name?.trim() || !milestoneStatuses.includes(item.status))) return false
   if (body.tasks.some(item => !item.id || !item.name?.trim() || !taskStatuses.includes(item.status))) return false
   if (body.problemContent.length > 100 || body.problemContent.some(item => !item.id || (item.rowId?.length || 0) > 120 || !['heading','paragraph','image','quote','list','statistic'].includes(item.type) || (item.text?.length || 0) > 5000 || (item.caption?.length || 0) > 240 || (item.alt?.length || 0) > 160 || (item.imageUrl?.length || 0) > 2_800_000)) return false
@@ -46,6 +50,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const { id } = await context.params
     const rows = await db()`
       SELECT p.id, p.name, p.slug, p.description, p.status, p.access_level, p.image_url,
+        p.industry, p.category, p.sub_category,
         p.user_goal, p.cost_budget, p.cost_actual, p.adoption_rate, p.forecast_penetration,
         p.milestones, p.tasks, p.problem_content, p.solution_content, p.competition_content,
         p.market_content, p.business_model_content, p.created_at, p.updated_at, count(pm.auth_user_id)::int AS user_actual
@@ -79,7 +84,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       const businessModelContent = JSON.stringify(dashboard.businessModelContent)
       const sql = db()
       const rows = await sql`
-        UPDATE projects SET image_url=${dashboard.imageUrl?.trim() || ''}, user_goal=${dashboard.userGoal || 0},
+        UPDATE projects SET image_url=${dashboard.imageUrl?.trim() || ''},
+          industry=${dashboard.industry?.trim() || ''}, category=${dashboard.category?.trim() || ''},
+          sub_category=${dashboard.subCategory?.trim() || ''}, user_goal=${dashboard.userGoal || 0},
           cost_budget=${dashboard.costBudget || 0}, cost_actual=${dashboard.costActual || 0},
           adoption_rate=${dashboard.adoptionRate || 0}, forecast_penetration=${dashboard.forecastPenetration || 0},
           milestones=${milestones}::jsonb, tasks=${tasks}::jsonb, problem_content=${problemContent}::jsonb,
