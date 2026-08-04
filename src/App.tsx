@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Bell, BellRing, BookOpen, CalendarDays, Check, ChevronRight, Clock3, FileCheck2, FileText, FlaskConical, FolderKanban, Hourglass, KeyRound, LayoutDashboard, LockKeyhole, Mail, Menu, Activity, DollarSign, ImageIcon, ListTodo, MessageSquareText, Orbit, Pencil, Plus, Search, LogOut, ShieldCheck, Target, Trash2, TrendingUp, Upload, User, UserCog, Users, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
+import { ArrowLeft, ArrowRight, Bell, BellRing, BookOpen, CalendarDays, Check, ChevronRight, Clock3, FileCheck2, FileText, FlaskConical, FolderKanban, Hourglass, KeyRound, LayoutDashboard, LockKeyhole, Mail, Menu, Activity, DollarSign, ImageIcon, ListTodo, MessageSquareText, Orbit, Pencil, Plus, Search, LogOut, ShieldCheck, Tags, Target, Trash2, TrendingUp, Upload, User, UserCog, Users, X } from "lucide-react";
 import AuthPage from "./AuthPage";
 import { authClient, emailAuthClient } from "./auth";
 
@@ -25,7 +25,16 @@ const sidebarUtilityNav: MemberNavItem[] = [
   { slug: "profile", label: "Profile", icon: User },
   { slug: "notifications", label: "Notifications", icon: Bell },
 ];
-const adminNav: MemberNavItem[] = [{ slug: "admin-users", label: "Users", icon: UserCog, count: 0 }];
+const adminNav: MemberNavItem[] = [
+  { slug: "admin-profile", label: "Profile", icon: User },
+  { slug: "admin-labels", label: "Labels", icon: Tags },
+  { slug: "admin-users", label: "Users", icon: UserCog },
+  { slug: "admin-teams", label: "Teams", icon: Users },
+  { slug: "admin-roles", label: "Roles", icon: ShieldCheck },
+  { slug: "admin-legal", label: "Legal", icon: FileCheck2 },
+  { slug: "admin-beta", label: "Beta", icon: FlaskConical },
+  { slug: "admin-communication", label: "Communication", icon: MessageSquareText },
+];
 
 type Milestone = {
   id: string;
@@ -50,6 +59,12 @@ type CatalogProject = {
   industryImageUrl?: string;
   industryBriefDescription?: string;
   industryLongDescription?: string;
+  categoryImageUrl?: string;
+  categoryBriefDescription?: string;
+  categoryLongDescription?: string;
+  subCategoryImageUrl?: string;
+  subCategoryBriefDescription?: string;
+  subCategoryLongDescription?: string;
   milestones: Milestone[];
 };
 const projects: CatalogProject[] = [];
@@ -95,6 +110,12 @@ const catalogProjectFromApi = (
     industry_image_url?: string;
     industry_brief_description?: string;
     industry_long_description?: string;
+    category_image_url?: string;
+    category_brief_description?: string;
+    category_long_description?: string;
+    subcategory_image_url?: string;
+    subcategory_brief_description?: string;
+    subcategory_long_description?: string;
     milestones?: Milestone[];
   },
   index: number,
@@ -113,6 +134,12 @@ const catalogProjectFromApi = (
   industryImageUrl: project.industry_image_url?.trim() || "",
   industryBriefDescription: project.industry_brief_description?.trim() || "",
   industryLongDescription: project.industry_long_description?.trim() || "",
+  categoryImageUrl: project.category_image_url?.trim() || "",
+  categoryBriefDescription: project.category_brief_description?.trim() || "",
+  categoryLongDescription: project.category_long_description?.trim() || "",
+  subCategoryImageUrl: project.subcategory_image_url?.trim() || "",
+  subCategoryBriefDescription: project.subcategory_brief_description?.trim() || "",
+  subCategoryLongDescription: project.subcategory_long_description?.trim() || "",
   milestones: Array.isArray(project.milestones) ? project.milestones : [],
   status: isAdmin || activeProjectAccess.has(project.membership_status || "") ? "Full access" : pendingProjectAccess.has(project.membership_status || "") ? "Access requested" : "Preview",
   tone: ["teal", "blue", "slate"][index % 3],
@@ -125,33 +152,6 @@ const catalogProjectFromApi = (
       .join("")
       .toUpperCase() || "OS",
 });
-
-const updates = [
-  {
-    title: "Project brief updated",
-    detail: "Advanced Predictive Data",
-    date: "Jul 26",
-    icon: FileText,
-  },
-  {
-    title: "New beta invitation",
-    detail: "Career Pivot research preview",
-    date: "Jul 24",
-    icon: FlaskConical,
-  },
-  {
-    title: "Agreement completed",
-    detail: "General NDA · Version 1.0",
-    date: "Jul 18",
-    icon: FileCheck2,
-  },
-  {
-    title: "Member hub welcome",
-    detail: "A guide to your OSai access",
-    date: "Jul 16",
-    icon: MessageSquareText,
-  },
-];
 
 function Brand({ light = true }: { light?: boolean }) {
   return (
@@ -756,7 +756,199 @@ function Dashboard() {
   );
 }
 
-function PulsePage() {
+function UserPostingEditor({ onBack, contributorName }: { onBack: () => void; contributorName: string }) {
+  type PostingRecord = {
+    id: string; section: string; title: string; summary: string; body: string; contributorName: string;
+    topics: string[]; citations: { label: string; url: string }[]; distribution: { channels: string[]; audience: string };
+    submissionStatus: "local_draft" | "submitting" | "submitted" | "failed"; submissionAttempts: number;
+    lastSubmissionError?: string | null; nextRetryAt?: string | null; updatedAt: string;
+  };
+  const [postId, setPostId] = useState("");
+  const [section, setSection] = useState("OSai Briefing");
+  const [headline, setHeadline] = useState("");
+  const [summary, setSummary] = useState("");
+  const [body, setBody] = useState("");
+  const [contributor, setContributor] = useState(contributorName);
+  const [tags, setTags] = useState("");
+  const [citations, setCitations] = useState("");
+  const [audience, setAudience] = useState("public");
+  const [submissionStatus, setSubmissionStatus] = useState<PostingRecord["submissionStatus"]>("local_draft");
+  const [status, setStatus] = useState("Loading your latest local draft…");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const postingPayload = () => ({
+    section, title: headline, summary, body, contributorName: contributor,
+    topics: tags.split(",").map(tag => tag.trim()).filter(Boolean),
+    citations: citations.split("\n").map(line => line.trim()).filter(Boolean).map(line => {
+      const [label, ...urlParts] = line.split("|");
+      return { label: label.trim(), url: urlParts.join("|").trim() };
+    }),
+    distribution: { channels: ["onn"], audience },
+  });
+  const applyPost = useCallback((post: PostingRecord) => {
+    setPostId(post.id); setSection(post.section); setHeadline(post.title); setSummary(post.summary); setBody(post.body);
+    setContributor(post.contributorName); setTags(post.topics.join(", "));
+    setCitations(post.citations.map(citation => `${citation.label} | ${citation.url}`).join("\n"));
+    setAudience(post.distribution.audience); setSubmissionStatus(post.submissionStatus);
+    if (post.submissionStatus === "submitted") setStatus("Submitted to ONN");
+    else if (post.submissionStatus === "failed") setStatus(`Saved locally · ONN submission failed${post.submissionAttempts ? ` (attempt ${post.submissionAttempts})` : ""}`);
+    else setStatus(`Saved locally · ${new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(new Date(post.updatedAt))}`);
+  }, []);
+  useEffect(() => { if (!contributor.trim() && contributorName.trim()) setContributor(contributorName); }, [contributor, contributorName]);
+  useEffect(() => {
+    let active = true;
+    memberRequest("/api/posts").then(data => {
+      if (!active) return;
+      const latest = (data.posts as PostingRecord[])[0];
+      if (latest && latest.submissionStatus !== "submitted") applyPost(latest);
+      else setStatus("Not yet saved · local OSai draft");
+    }).catch(loadError => active && setStatus(loadError instanceof Error ? loadError.message : "Could not load drafts."));
+    return () => { active = false; };
+  }, [applyPost]);
+  const saveDraft = async () => {
+    setBusy(true); setError("");
+    try {
+      const data = await memberRequest(postId ? `/api/posts/${postId}` : "/api/posts", { method: postId ? "PATCH" : "POST", body: JSON.stringify(postingPayload()) });
+      applyPost(data.post as PostingRecord);
+      return data.post as PostingRecord;
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Could not save this draft.");
+      return null;
+    } finally { setBusy(false); }
+  };
+  const submitPost = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setBusy(true); setError("");
+    try {
+      const saved = await saveDraft();
+      if (!saved) return;
+      const id = saved.id;
+      setStatus("Saved locally · submitting to ONN…");
+      const data = await memberRequest(`/api/posts/${id}/submit`, { method: "POST" });
+      applyPost(data.post as PostingRecord);
+    } catch (submitError) {
+      const message = submitError instanceof Error ? submitError.message : "ONN submission failed.";
+      setSubmissionStatus("failed"); setStatus("Saved locally · not submitted to ONN"); setError(`${message} Your OSai draft is safe; you can retry.`);
+    } finally { setBusy(false); }
+  };
+  return (
+    <section className="posting-editor" aria-label="User Posting Editor">
+      <header className="posting-editor-header">
+        <button type="button" onClick={onBack}><ArrowLeft /> Back to The Pulse</button>
+        <div>
+          <span>{status}</span>
+          <button type="button" onClick={() => void saveDraft()} disabled={busy || submissionStatus === "submitted"}>Save Draft</button>
+          <button type="submit" form="pulse-post-form" disabled={busy || submissionStatus === "submitted"}>{submissionStatus === "failed" ? "Retry ONN" : submissionStatus === "submitted" ? "Submitted" : "Submit to ONN"}</button>
+        </div>
+      </header>
+      <div className="posting-editor-title">
+        <h1>User Posting Editor</h1>
+        <p>Compose an OSai story, save it locally, and explicitly submit the validated version to ONN.</p>
+        {error ? <p className="posting-editor-error" role="alert">{error}</p> : null}
+      </div>
+      <div className="posting-editor-layout">
+        <form id="pulse-post-form" className="posting-editor-form" onSubmit={submitPost}>
+          <label>
+            Section
+            <select value={section} onChange={(event) => setSection(event.target.value)}>
+              <option>OSai Briefing</option>
+              <option>Portfolio Notes</option>
+              <option>Inside OSai</option>
+              <option>From the Lab</option>
+            </select>
+          </label>
+          <label>
+            Contributor
+            <input value={contributor} onChange={(event) => setContributor(event.target.value)} placeholder="Contributor or editorial desk" maxLength={100} required />
+          </label>
+          <label>
+            Headline
+            <input value={headline} onChange={(event) => setHeadline(event.target.value)} placeholder="Write a clear, specific headline" maxLength={100} required />
+            <span>{headline.length}/100</span>
+          </label>
+          <label>
+            Summary
+            <textarea className="posting-summary" value={summary} onChange={(event) => setSummary(event.target.value)} placeholder="Summarize the story in one or two sentences" maxLength={220} required />
+            <span>{summary.length}/220</span>
+          </label>
+          <label>
+            Story
+            <textarea className="posting-body" value={body} onChange={(event) => setBody(event.target.value)} placeholder="Write the story here…" required />
+          </label>
+          <label>
+            Topics
+            <input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="Separate tags with commas" />
+          </label>
+          <label>
+            Citations
+            <textarea className="posting-citations" value={citations} onChange={(event) => setCitations(event.target.value)} placeholder={"Source name | https://example.com/source\nOne citation per line"} />
+          </label>
+          <fieldset className="posting-distribution">
+            <legend>Distribution settings</legend>
+            <label><input type="checkbox" checked readOnly /> OSai News Network</label>
+            <label>Audience<select value={audience} onChange={(event) => setAudience(event.target.value)}><option value="public">Public</option><option value="members">OSai members</option></select></label>
+          </fieldset>
+        </form>
+        <aside className="posting-preview" aria-label="Post preview">
+          <header><span>Live preview</span><strong>OSai News Network</strong></header>
+          <div className="posting-preview-art" aria-hidden="true"><span>OS</span><i /></div>
+          <div className="posting-preview-copy">
+            <span>{section}</span>
+            <h2>{headline.trim() || "Your headline will appear here"}</h2>
+            <p>{summary.trim() || "Your story summary will appear here as you write."}</p>
+            <small>{contributor.trim() || "Contributor"} · OSai local preview</small>
+            {body.trim() ? <div>{body}</div> : null}
+            {tags.trim() ? <ul>{tags.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag) => <li key={tag}>{tag}</li>)}</ul> : null}
+          </div>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+function PulsePage({ onCreatePost }: { onCreatePost: () => void }) {
+  const pulsePosts = [
+    {
+      id: "pulse-welcome",
+      category: "OSai Briefing",
+      title: "Welcome to Today’s Pulse",
+      summary: "A sample front page for sharing portfolio notes, project updates, and useful signals from across the OSai network.",
+      author: "OSai Editorial",
+      published: "8:30 AM",
+      readTime: "3 min read",
+      tone: "teal",
+    },
+    {
+      id: "portfolio-notes",
+      category: "Portfolio Notes",
+      title: "What we are learning across the portfolio",
+      summary: "A mock roundup showing how The Pulse can connect observations from projects without exposing protected details.",
+      author: "Portfolio Desk",
+      published: "7:45 AM",
+      readTime: "4 min read",
+      tone: "navy",
+    },
+    {
+      id: "work-hub",
+      category: "Inside OSai",
+      title: "A clearer path through project access",
+      summary: "Sample coverage of the member experience, from discovering a project to understanding its access requirements.",
+      author: "Member Experience",
+      published: "Yesterday",
+      readTime: "2 min read",
+      tone: "orange",
+    },
+    {
+      id: "feedback-loop",
+      category: "From the Lab",
+      title: "Keeping every insight connected to its source",
+      summary: "A demonstration story about traceable feedback, human review, and learning across independently deployed products.",
+      author: "Research Desk",
+      published: "Yesterday",
+      readTime: "5 min read",
+      tone: "blue",
+    },
+  ];
   const today = new Date();
   const editionYear = new Intl.DateTimeFormat("en-US", {
     year: "numeric",
@@ -776,6 +968,7 @@ function PulsePage() {
     day: "2-digit",
     timeZone: "America/New_York",
   }).format(today);
+  const [leadPost, ...latestPosts] = pulsePosts;
   return (
     <>
       <PageHead title="Today’s Pulse" intro="" />
@@ -785,6 +978,48 @@ function PulsePage() {
         </time>
         <span>OSai News Network</span>
       </div>
+      <div className="pulse-toolbar">
+        <p>Sample content for layout review</p>
+        <button className="pulse-create-post" type="button" onClick={onCreatePost}>Create Post</button>
+      </div>
+      <section className="pulse-feed" aria-label="Mock news feed">
+        <article className={`pulse-lead pulse-tone-${leadPost.tone}`}>
+          <div className="pulse-story-art" aria-hidden="true">
+            <span>OS</span>
+            <i />
+          </div>
+          <div className="pulse-lead-copy">
+            <span className="pulse-category">{leadPost.category}</span>
+            <h2>{leadPost.title}</h2>
+            <p>{leadPost.summary}</p>
+            <div className="pulse-byline">
+              <strong>{leadPost.author}</strong>
+              <span>{leadPost.published}</span>
+              <span>{leadPost.readTime}</span>
+            </div>
+            <button type="button" aria-label={`Read ${leadPost.title}`}>Read story <ArrowRight /></button>
+          </div>
+        </article>
+        <aside className="pulse-latest" aria-label="Latest sample stories">
+          <header>
+            <h2>Latest</h2>
+            <span>{latestPosts.length} stories</span>
+          </header>
+          <div>
+            {latestPosts.map((post, index) => (
+              <article key={post.id}>
+                <span className={`pulse-story-number pulse-tone-${post.tone}`}>{String(index + 1).padStart(2, "0")}</span>
+                <div>
+                  <span className="pulse-category">{post.category}</span>
+                  <h3>{post.title}</h3>
+                  <p>{post.summary}</p>
+                  <div className="pulse-byline"><span>{post.published}</span><span>{post.readTime}</span></div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </aside>
+      </section>
     </>
   );
 }
@@ -1299,18 +1534,19 @@ function IndustryHoverField({ value, fallback, kind, canEdit, onSave }: { value:
   );
 }
 
-function IndustryDetail({ industry, projects, isAdmin, onSave, onOpenProject }: { industry: string; projects: CatalogProject[]; isAdmin: boolean; onSave: (currentName: string, update: { name?: string; briefDescription?: string; longDescription?: string }) => Promise<void>; onOpenProject?: (project: CatalogProject) => void }) {
+function ClassificationDetail({ name, type, projects, isAdmin, onSave, onOpenProject }: { name: string; type: "industry" | "category" | "subcategory"; projects: CatalogProject[]; isAdmin: boolean; onSave: (currentName: string, update: { name?: string; briefDescription?: string; longDescription?: string }) => Promise<void>; onOpenProject?: (project: CatalogProject) => void }) {
   const record = projects[0];
-  const brief = record?.industryBriefDescription || "";
-  const long = record?.industryLongDescription || "";
+  const brief = type === "industry" ? record?.industryBriefDescription || "" : type === "category" ? record?.categoryBriefDescription || "" : record?.subCategoryBriefDescription || "";
+  const long = type === "industry" ? record?.industryLongDescription || "" : type === "category" ? record?.categoryLongDescription || "" : record?.subCategoryLongDescription || "";
+  const label = type === "subcategory" ? "SubCategory" : `${type[0].toUpperCase()}${type.slice(1)}`;
   return (
-    <section className="industry-page" aria-label={`${industry} industry`}>
+    <section className="industry-page" aria-label={`${name} ${label}`}>
       <header>
-        <IndustryHoverField value={industry} fallback="Industry Title" kind="title" canEdit={isAdmin} onSave={(name) => onSave(industry, { name })} />
-        <IndustryHoverField value={brief} fallback="Brief Description" kind="brief" canEdit={isAdmin} onSave={(briefDescription) => onSave(industry, { briefDescription })} />
-        <IndustryHoverField value={long} fallback="Long Description" kind="long" canEdit={isAdmin} onSave={(longDescription) => onSave(industry, { longDescription })} />
+        <IndustryHoverField value={name} fallback={`${label} Title`} kind="title" canEdit={isAdmin} onSave={(nextName) => onSave(name, { name: nextName })} />
+        <IndustryHoverField value={brief} fallback="Brief Description" kind="brief" canEdit={isAdmin} onSave={(briefDescription) => onSave(name, { briefDescription })} />
+        <IndustryHoverField value={long} fallback="Long Description" kind="long" canEdit={isAdmin} onSave={(longDescription) => onSave(name, { longDescription })} />
       </header>
-      <div className="industry-project-grid" aria-label={`${industry} projects`}>
+      <div className="industry-project-grid" aria-label={`${name} projects`}>
         {projects.map((project) => (
           <article key={project.slug}>
             {isAdmin ? (
@@ -1327,17 +1563,23 @@ function IndustryDetail({ industry, projects, isAdmin, onSave, onOpenProject }: 
   );
 }
 
+const IndustryDetail = (props: Omit<Parameters<typeof ClassificationDetail>[0], "name" | "type"> & { industry: string }) => (
+  <ClassificationDetail {...props} name={props.industry} type="industry" />
+);
+
 function ProjectsPage({ isAdmin }: { isAdmin: boolean }) {
   const initialSlug = window.location.pathname.split("/").filter(Boolean)[2];
   const [catalogProjects, setCatalogProjects] = useState<CatalogProject[]>(projects);
   const [selected, setSelected] = useState<CatalogProject | null>(() => projects.find((project) => project.slug === initialSlug) || null);
   const [filter, setFilter] = useState(isAdmin ? "All projects" : "Industry");
   const [selectedIndustry, setSelectedIndustry] = useState<string | null>(() => new URLSearchParams(window.location.search).get("industry"));
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(() => new URLSearchParams(window.location.search).get("category"));
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(() => new URLSearchParams(window.location.search).get("subcategory"));
   const [searchQuery, setSearchQuery] = useState("");
   const [addingProject, setAddingProject] = useState(false);
   const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
   const [adminEditingProjectId, setAdminEditingProjectId] = useState<string | null>(() => (isAdmin ? new URLSearchParams(window.location.search).get("adminEdit") : null));
-  const [adminDirectoryMode, setAdminDirectoryMode] = useState<"projects" | "industries">("projects");
+  const [adminDirectoryMode, setAdminDirectoryMode] = useState<"projects" | "industries" | "categories" | "subcategories">("projects");
   useEffect(() => {
     let active = true;
     void projectCatalogRequest()
@@ -1358,6 +1600,12 @@ function ProjectsPage({ isAdmin }: { isAdmin: boolean }) {
             industry_image_url?: string;
             industry_brief_description?: string;
             industry_long_description?: string;
+            category_image_url?: string;
+            category_brief_description?: string;
+            category_long_description?: string;
+            subcategory_image_url?: string;
+            subcategory_brief_description?: string;
+            subcategory_long_description?: string;
             milestones?: Milestone[];
           }>
         ).map((project, index) => catalogProjectFromApi(project, index, isAdmin));
@@ -1386,9 +1634,18 @@ function ProjectsPage({ isAdmin }: { isAdmin: boolean }) {
     setSelectedIndustry(industry);
     window.scrollTo(0, 0);
   };
-  const openAdminDirectory = (mode: "projects" | "industries") => {
+  const openClassification = (type: "category" | "subcategory", name: string) => {
+    const query = new URLSearchParams({ [type]: name });
+    window.history.pushState({}, "", `/member/projects?${query.toString()}`);
+    if (type === "category") setSelectedCategory(name);
+    else setSelectedSubCategory(name);
+    window.scrollTo(0, 0);
+  };
+  const openAdminDirectory = (mode: "projects" | "industries" | "categories" | "subcategories") => {
     window.history.pushState({}, "", "/member/projects");
     setSelectedIndustry(null);
+    setSelectedCategory(null);
+    setSelectedSubCategory(null);
     setAdminDirectoryMode(mode);
     window.scrollTo(0, 0);
   };
@@ -1409,6 +1666,8 @@ function ProjectsPage({ isAdmin }: { isAdmin: boolean }) {
       const slug = window.location.pathname.split("/").filter(Boolean)[2];
       setSelected(catalogProjects.find((project) => project.slug === slug) || null);
       setSelectedIndustry(new URLSearchParams(window.location.search).get("industry"));
+      setSelectedCategory(new URLSearchParams(window.location.search).get("category"));
+      setSelectedSubCategory(new URLSearchParams(window.location.search).get("subcategory"));
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -1484,7 +1743,23 @@ function ProjectsPage({ isAdmin }: { isAdmin: boolean }) {
       return groups;
     }, new Map<string, CatalogProject[]>()),
   ).sort(([left], [right]) => left.localeCompare(right));
+  const categoryGroups = Array.from(
+    searchedProjects.reduce((groups, project) => {
+      const category = project.category || "Uncategorized";
+      groups.set(category, [...(groups.get(category) || []), project]);
+      return groups;
+    }, new Map<string, CatalogProject[]>()),
+  ).sort(([left], [right]) => left.localeCompare(right));
+  const subCategoryGroups = Array.from(
+    searchedProjects.reduce((groups, project) => {
+      const subCategory = project.subCategory || "Uncategorized";
+      groups.set(subCategory, [...(groups.get(subCategory) || []), project]);
+      return groups;
+    }, new Map<string, CatalogProject[]>()),
+  ).sort(([left], [right]) => left.localeCompare(right));
   const selectedIndustryProjects = selectedIndustry ? industryGroups.find(([industry]) => industry === selectedIndustry)?.[1] || [] : [];
+  const selectedCategoryProjects = selectedCategory ? categoryGroups.find(([category]) => category === selectedCategory)?.[1] || [] : [];
+  const selectedSubCategoryProjects = selectedSubCategory ? subCategoryGroups.find(([subCategory]) => subCategory === selectedSubCategory)?.[1] || [] : [];
   const saveIndustryImage = async (industry: string, file: File) => {
     if (!isAdmin) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) return;
@@ -1525,6 +1800,37 @@ function ProjectsPage({ isAdmin }: { isAdmin: boolean }) {
       window.history.replaceState({}, "", `/member/projects?${new URLSearchParams({ industry: nextName }).toString()}`);
     }
   };
+  const saveClassificationImage = async (type: "category" | "subcategory", name: string, file: File) => {
+    if (!isAdmin || !["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 2 * 1024 * 1024) return;
+    const imageUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("Could not read the image."));
+      reader.readAsDataURL(file);
+    });
+    await adminRequest("/api/admin/classifications", { method: "PATCH", body: JSON.stringify({ type, name, imageUrl }) });
+    setCatalogProjects((current) => current.map((project) => {
+      const matches = type === "category" ? project.category === name : project.subCategory === name;
+      return matches ? { ...project, ...(type === "category" ? { categoryImageUrl: imageUrl } : { subCategoryImageUrl: imageUrl }) } : project;
+    }));
+  };
+  const saveClassificationDetails = async (type: "category" | "subcategory", currentName: string, update: { name?: string; briefDescription?: string; longDescription?: string }) => {
+    if (!isAdmin) return;
+    const nextName = update.name?.trim() || currentName;
+    const data = await adminRequest("/api/admin/classifications", { method: "PATCH", body: JSON.stringify({ type, currentName, ...update, name: nextName }) });
+    setCatalogProjects((current) => current.map((project) => {
+      const matches = type === "category" ? project.category === currentName : project.subCategory === currentName;
+      if (!matches) return project;
+      return type === "category"
+        ? { ...project, category: data.classification.name, categoryBriefDescription: data.classification.brief_description, categoryLongDescription: data.classification.long_description }
+        : { ...project, subCategory: data.classification.name, subCategoryBriefDescription: data.classification.brief_description, subCategoryLongDescription: data.classification.long_description };
+    }));
+    if (nextName !== currentName) {
+      if (type === "category") setSelectedCategory(nextName);
+      else setSelectedSubCategory(nextName);
+      window.history.replaceState({}, "", `/member/projects?${new URLSearchParams({ [type]: nextName }).toString()}`);
+    }
+  };
   if (isAdmin && adminEditingProjectId) return <AdminProjectDetailPage key={adminEditingProjectId} projectId={adminEditingProjectId} onBack={closeProject} onProjectSaved={syncAdminProject} />;
   if (isAdmin && selectedIndustry)
     return (
@@ -1532,8 +1838,13 @@ function ProjectsPage({ isAdmin }: { isAdmin: boolean }) {
         <PageHead title="Project Directory" intro="" />
         <div className="toolbar admin-project-toolbar industry-toolbar">
           <div className="admin-directory-tabs" aria-label="Project directory views">
-            <button type="button" onClick={() => openAdminDirectory("projects")}>All projects</button>
             <button className="active" type="button" onClick={() => openAdminDirectory("industries")}>Industry</button>
+            <span aria-hidden="true">/</span>
+            <button type="button" onClick={() => openAdminDirectory("categories")}>Category</button>
+            <span aria-hidden="true">/</span>
+            <button type="button" onClick={() => openAdminDirectory("subcategories")}>SubCategory</button>
+            <span aria-hidden="true">/</span>
+            <button type="button" onClick={() => openAdminDirectory("projects")}>Projects</button>
           </div>
           <div className="admin-project-toolbar-actions">
             <button className="admin-add-project" type="button" disabled={addingProject} onClick={() => void addBlankProject()}>
@@ -1544,6 +1855,27 @@ function ProjectsPage({ isAdmin }: { isAdmin: boolean }) {
         <IndustryDetail industry={selectedIndustry} projects={selectedIndustryProjects} isAdmin onSave={saveIndustryDetails} onOpenProject={openAdminProject} />
       </>
     );
+  const selectedClassification = selectedCategory
+    ? { type: "category" as const, name: selectedCategory, projects: selectedCategoryProjects, mode: "categories" as const }
+    : selectedSubCategory
+      ? { type: "subcategory" as const, name: selectedSubCategory, projects: selectedSubCategoryProjects, mode: "subcategories" as const }
+      : null;
+  if (isAdmin && selectedClassification)
+    return (
+      <>
+        <PageHead title="Project Directory" intro="" />
+        <div className="toolbar admin-project-toolbar industry-toolbar">
+          <div className="admin-directory-tabs" aria-label="Project directory views">
+            <button type="button" onClick={() => openAdminDirectory("industries")}>Industry</button><span aria-hidden="true">/</span>
+            <button className={selectedClassification.type === "category" ? "active" : ""} type="button" onClick={() => openAdminDirectory("categories")}>Category</button><span aria-hidden="true">/</span>
+            <button className={selectedClassification.type === "subcategory" ? "active" : ""} type="button" onClick={() => openAdminDirectory("subcategories")}>SubCategory</button><span aria-hidden="true">/</span>
+            <button type="button" onClick={() => openAdminDirectory("projects")}>Projects</button>
+          </div>
+          <div className="admin-project-toolbar-actions"><button className="admin-add-project" type="button" disabled={addingProject} onClick={() => void addBlankProject()}><Plus /> Add Project</button></div>
+        </div>
+        <ClassificationDetail name={selectedClassification.name} type={selectedClassification.type} projects={selectedClassification.projects} isAdmin onSave={(currentName, update) => saveClassificationDetails(selectedClassification.type, currentName, update)} onOpenProject={openAdminProject} />
+      </>
+    );
   if (selected) return <MemberProjectDetailPage project={selected} onBack={closeProject} isAdmin={isAdmin} onProjectChange={updateProject} />;
   if (isAdmin)
     return (
@@ -1551,8 +1883,13 @@ function ProjectsPage({ isAdmin }: { isAdmin: boolean }) {
         <PageHead title="Project Directory" intro="" />
         <div className="toolbar admin-project-toolbar">
           <div className="admin-directory-tabs" aria-label="Project directory views">
-            <button className={adminDirectoryMode === "projects" ? "active" : ""} type="button" onClick={() => setAdminDirectoryMode("projects")}>All projects</button>
             <button className={adminDirectoryMode === "industries" ? "active" : ""} type="button" onClick={() => setAdminDirectoryMode("industries")}>Industry</button>
+            <span aria-hidden="true">/</span>
+            <button className={adminDirectoryMode === "categories" ? "active" : ""} type="button" onClick={() => setAdminDirectoryMode("categories")}>Category</button>
+            <span aria-hidden="true">/</span>
+            <button className={adminDirectoryMode === "subcategories" ? "active" : ""} type="button" onClick={() => setAdminDirectoryMode("subcategories")}>SubCategory</button>
+            <span aria-hidden="true">/</span>
+            <button className={adminDirectoryMode === "projects" ? "active" : ""} type="button" onClick={() => setAdminDirectoryMode("projects")}>Projects</button>
           </div>
           <div className="admin-project-toolbar-actions">
             <button className="admin-add-project" type="button" disabled={addingProject} onClick={() => void addBlankProject()}>
@@ -1589,6 +1926,32 @@ function ProjectsPage({ isAdmin }: { isAdmin: boolean }) {
                     </label>
                   </div>
                 </article>
+              );
+            })}
+          </div>
+        ) : adminDirectoryMode === "categories" || adminDirectoryMode === "subcategories" ? (
+          <div className="industry-directory classification-directory" aria-label={adminDirectoryMode === "categories" ? "Categories" : "Subcategories"}>
+            {(adminDirectoryMode === "categories" ? categoryGroups : subCategoryGroups).map(([label, classificationProjects], index) => {
+              const type = adminDirectoryMode === "categories" ? "category" as const : "subcategory" as const;
+              const imageUrl = type === "category"
+                ? classificationProjects.find((project) => project.categoryImageUrl)?.categoryImageUrl
+                : classificationProjects.find((project) => project.subCategoryImageUrl)?.subCategoryImageUrl;
+              return (
+              <article className="industry-directory-item industry-admin-tile admin-hover-edit" key={label}>
+                <button className={`industry-tile classification-tile ${["teal", "blue", "slate"][index % 3]}${imageUrl ? " has-image" : ""} admin-hover-content`} type="button" onClick={() => openClassification(type, label)} aria-label={`Open ${label} ${type}`}>
+                  {imageUrl && <img className="industry-tile-image" src={imageUrl} alt="" />}
+                </button>
+                <strong className="industry-tile-title">{label}</strong>
+                <div className="admin-hover-actions">
+                  <label className="admin-hover-label"><ImageIcon /> {imageUrl ? "Edit" : "Upload"}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      event.target.value = "";
+                      if (file) void saveClassificationImage(type, label, file);
+                    }} />
+                  </label>
+                </div>
+              </article>
               );
             })}
           </div>
@@ -2108,11 +2471,19 @@ function BetaPage() {
   );
 }
 
-function UpdateList({ limit = updates.length }: { limit?: number }) {
+type MemberUpdate = {
+  title: string;
+  detail: string;
+  date: string;
+  icon: typeof FileText;
+  href: string;
+};
+
+function UpdateList({ updates }: { updates: MemberUpdate[] }) {
   return (
     <div className="update-list">
-      {updates.slice(0, limit).map(({ title, detail, date, icon: Icon }) => (
-        <a href="/member/updates" key={title}>
+      {updates.map(({ title, detail, date, icon: Icon, href }) => (
+        <a href={href} key={title}>
           <span className="mini-icon">
             <Icon />
           </span>
@@ -2128,22 +2499,91 @@ function UpdateList({ limit = updates.length }: { limit?: number }) {
   );
 }
 function UpdatesPage() {
+  const [updates, setUpdates] = useState<MemberUpdate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    const loadUpdates = async () => {
+      try {
+        const headers = await memberAuthHeaders();
+        const [projectResponse, agreementResponse] = await Promise.all([
+          fetch("/api/projects", { cache: "no-store", headers }),
+          fetch("/api/agreements", { cache: "no-store", headers }),
+        ]);
+        const projectData = await projectResponse.json();
+        const agreementData = (await agreementResponse.json()) as AgreementState;
+        if (!projectResponse.ok) throw new Error(projectData.error || "Could not load your project updates.");
+        if (!agreementResponse.ok) throw new Error(agreementData.error || "Could not verify your agreement status.");
+
+        const memberUpdates: MemberUpdate[] = [];
+        if (agreementData.status === "general_nda_signed" && agreementData.completedAt) {
+          memberUpdates.push({
+            title: "General MNDA completed",
+            detail: "Your completed agreement is available in Legal.",
+            date: new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(new Date(agreementData.completedAt)),
+            icon: FileCheck2,
+            href: "/member/legal",
+          });
+        } else if (agreementData.configured !== false && ["general_nda_pending", "general_nda_sent", "general_nda_expired"].includes(agreementData.status)) {
+          memberUpdates.push({
+            title: agreementData.status === "general_nda_sent" ? "General MNDA awaiting completion" : "General MNDA requires your signature",
+            detail: "Review the current agreement in Legal.",
+            date: "Action needed",
+            icon: FileCheck2,
+            href: "/member/legal",
+          });
+        }
+
+        for (const project of (projectData.projects || []) as Array<{ slug: string; name: string; membership_status?: string }>) {
+          const status = project.membership_status || "";
+          if (activeProjectAccess.has(status)) {
+            memberUpdates.push({
+              title: "Project access available",
+              detail: project.name,
+              date: "Current",
+              icon: FileText,
+              href: `/member/projects/${project.slug}`,
+            });
+          } else if (pendingProjectAccess.has(status)) {
+            memberUpdates.push({
+              title: "Project access request pending",
+              detail: project.name,
+              date: "Pending",
+              icon: Hourglass,
+              href: `/member/projects/${project.slug}`,
+            });
+          }
+        }
+        setUpdates(memberUpdates);
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : "Could not load your updates.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    void loadUpdates();
+  }, []);
   return (
     <>
       <PageHead title="Updates" intro="News and changes from the projects and programs you can access." />
       <div className="update-layout">
-        <UpdateList />
+        <section aria-live="polite">
+          {loading ? (
+            <div className="empty-state"><Hourglass /><h3>Loading your updates…</h3></div>
+          ) : error ? (
+            <div className="empty-state"><BookOpen /><h3>Updates are unavailable</h3><p>{error}</p></div>
+          ) : updates.length ? (
+            <UpdateList updates={updates} />
+          ) : (
+            <div className="empty-state"><BookOpen /><h3>No updates available</h3><p>Updates for your agreements and authorized projects will appear here.</p></div>
+          )}
+        </section>
         <aside>
-          <h3>Following</h3>
-          <p>You’re receiving updates for one project.</p>
-          <div className="following">
-            <span className="project-avatar teal">AP</span>
-            <span>
-              <strong>Advanced Predictive Data</strong>
-              <small>Email and in-app updates</small>
-            </span>
-          </div>
-          <button className="secondary-button">Manage preferences</button>
+          <h3>Notification settings</h3>
+          <p>Choose how OSai sends updates that are available to your account.</p>
+          <a className="secondary-button preference-link" href="/member/profile?panel=notifications">
+            Manage preferences
+          </a>
         </aside>
       </div>
     </>
@@ -2254,6 +2694,18 @@ async function adminRequest(path: string, init?: RequestInit) {
   });
   const data = response.status === 204 ? null : await response.json();
   if (!response.ok) throw new Error(data?.error || "The administrator action failed.");
+  return data;
+}
+
+async function memberRequest(path: string, init?: RequestInit) {
+  const headers = await memberAuthHeaders();
+  const response = await fetch(path, {
+    ...init,
+    cache: "no-store",
+    headers: { ...headers, ...(init?.body ? { "content-type": "application/json" } : {}) },
+  });
+  const data = response.status === 204 ? null : await response.json();
+  if (!response.ok) throw new Error(data?.error || "The posting action failed.");
   return data;
 }
 
@@ -3594,7 +4046,9 @@ function ProfilePage({ identity, role, onSaved }: { identity: MemberIdentity; ro
   const [email, setEmail] = useState(identity.email);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [message, setMessage] = useState("");
-  const [securityPanel, setSecurityPanel] = useState<"password" | "notifications" | null>(null);
+  const [securityPanel, setSecurityPanel] = useState<"password" | "notifications" | null>(() =>
+    new URLSearchParams(window.location.search).get("panel") === "notifications" ? "notifications" : null,
+  );
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -4022,14 +4476,218 @@ function PageHead({ title, intro }: { title: string; intro: string }) {
     </>
   );
 }
+function AdminSectionPage({ title, description }: { title: string; description: string }) {
+  return (
+    <>
+      <PageHead title={title} intro="" />
+      <section className="admin-section-empty">
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </section>
+    </>
+  );
+}
+type AdminLabel = { type: "category" | "subcategory"; name: string; parent_name: string };
+function AdminLabelsPage() {
+  const [industries, setIndustries] = useState<string[]>([]);
+  const [classifications, setClassifications] = useState<AdminLabel[]>([]);
+  const [industryName, setIndustryName] = useState("");
+  const [categoryName, setCategoryName] = useState("");
+  const [categoryIndustry, setCategoryIndustry] = useState("");
+  const [subCategoryName, setSubCategoryName] = useState("");
+  const [subCategoryCategory, setSubCategoryCategory] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deletingIndustry, setDeletingIndustry] = useState<string | null>(null);
+  const [deletingCategory, setDeletingCategory] = useState<string | null>(null);
+  const [selectedSubCategoryLabel, setSelectedSubCategoryLabel] = useState("");
+  const [deletingSubCategory, setDeletingSubCategory] = useState<string | null>(null);
+  const categories = useMemo(() => classifications.filter(({ type }) => type === "category"), [classifications]);
+  const visibleCategories = useMemo(() => categories.filter(({ parent_name }) => parent_name.trim().toLowerCase() === categoryIndustry.trim().toLowerCase()), [categories, categoryIndustry]);
+  const subCategories = useMemo(() => classifications.filter(({ type }) => type === "subcategory"), [classifications]);
+  const visibleSubCategories = useMemo(() => subCategories.filter(({ parent_name }) => parent_name.trim().toLowerCase() === subCategoryCategory.trim().toLowerCase()), [subCategories, subCategoryCategory]);
+  const loadLabels = async () => {
+    const data = await adminRequest("/api/admin/labels");
+    setIndustries((data.industries || []).map((item: { name: string }) => item.name));
+    setClassifications((data.classifications || []).map((item: { classification_type: "category" | "subcategory"; name: string; parent_name: string }) => ({ type: item.classification_type, name: item.name, parent_name: item.parent_name })));
+  };
+  useEffect(() => { void loadLabels().catch(() => setError("Could not load labels.")); }, []);
+  useEffect(() => { if (!categoryIndustry && industries[0]) setCategoryIndustry(industries[0]); }, [industries, categoryIndustry]);
+  useEffect(() => {
+    if (!visibleCategories.some(({ name }) => name === subCategoryCategory)) setSubCategoryCategory(visibleCategories[0]?.name || "");
+  }, [categoryIndustry, classifications, subCategoryCategory, visibleCategories]);
+  useEffect(() => {
+    if (!visibleSubCategories.some(({ name }) => name === selectedSubCategoryLabel)) setSelectedSubCategoryLabel("");
+  }, [selectedSubCategoryLabel, visibleSubCategories]);
+  const createLabel = async (type: "industry" | "category" | "subcategory", name: string, parentName = "") => {
+    if (!name.trim() || (type !== "industry" && !parentName.trim()) || saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      await adminRequest("/api/admin/labels", { method: "POST", body: JSON.stringify({ type, name, parentName }) });
+      if (type === "industry") setIndustryName("");
+      if (type === "category") setCategoryName("");
+      if (type === "subcategory") setSubCategoryName("");
+      await loadLabels();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not save the label.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  const deleteIndustry = async (name: string) => {
+    setError("");
+    try {
+      await adminRequest("/api/admin/labels", { method: "DELETE", body: JSON.stringify({ type: "industry", name }) });
+      if (categoryIndustry === name) setCategoryIndustry("");
+      setDeletingIndustry(null);
+      await loadLabels();
+    } catch (caught) {
+      setDeletingIndustry(null);
+      setError(caught instanceof Error && caught.message === "INDUSTRY_IN_USE" ? "This Industry cannot be deleted while it has projects or assigned Categories." : caught instanceof Error ? caught.message : "Could not delete the Industry.");
+    }
+  };
+  const deleteCategory = async (name: string) => {
+    setError("");
+    try {
+      await adminRequest("/api/admin/labels", { method: "DELETE", body: JSON.stringify({ type: "category", name }) });
+      if (subCategoryCategory === name) setSubCategoryCategory("");
+      setDeletingCategory(null);
+      await loadLabels();
+    } catch (caught) {
+      setDeletingCategory(null);
+      setError(caught instanceof Error && caught.message === "CATEGORY_IN_USE" ? "This Category cannot be deleted while it has projects or assigned SubCategories." : caught instanceof Error ? caught.message : "Could not delete the Category.");
+    }
+  };
+  const deleteSubCategory = async (name: string) => {
+    setError("");
+    try {
+      await adminRequest("/api/admin/labels", { method: "DELETE", body: JSON.stringify({ type: "subcategory", name }) });
+      if (selectedSubCategoryLabel === name) setSelectedSubCategoryLabel("");
+      setDeletingSubCategory(null);
+      await loadLabels();
+    } catch (caught) {
+      setDeletingSubCategory(null);
+      setError(caught instanceof Error && caught.message === "SUBCATEGORY_IN_USE" ? "This SubCategory cannot be deleted while projects use it." : caught instanceof Error ? caught.message : "Could not delete the SubCategory.");
+    }
+  };
+  return (
+    <>
+      <PageHead title="Labels" intro="" />
+      <section className="admin-label-manager" aria-label="Industry, category, and subcategory labels">
+        <div className="admin-label-column">
+          <h2>Industry</h2>
+          <p>Create the top-level groups used in the Project Directory, then select one to assign Categories.</p>
+          <form onSubmit={(event) => { event.preventDefault(); void createLabel("industry", industryName); }}>
+            <input
+              aria-label="Add Industry"
+              maxLength={80}
+              placeholder="Add Industry"
+              value={industryName}
+              onChange={(event) => setIndustryName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") event.preventDefault();
+              }}
+            />
+          </form>
+          <ul className="admin-label-selection-list" aria-label="Select an Industry">
+            {industries.map((industry) => (
+              <li key={industry}>
+                <button className={`admin-label-row-name${categoryIndustry === industry ? " selected" : ""}`} type="button" onClick={() => setCategoryIndustry(industry)}>{industry}</button>
+                <span className="admin-label-row-actions">
+                  <button className={`admin-label-select${categoryIndustry === industry ? " selected" : ""}`} type="button" onClick={() => setCategoryIndustry(industry)} aria-label={`Select ${industry}`} aria-pressed={categoryIndustry === industry}><Check /></button>
+                  {deletingIndustry === industry ? (
+                    <button className="admin-label-confirm-delete" type="button" onClick={() => void deleteIndustry(industry)}>Confirm Delete</button>
+                  ) : (
+                    <button className="admin-label-delete" type="button" onClick={() => setDeletingIndustry(industry)} aria-label={`Delete ${industry}`}><X /></button>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="admin-label-column">
+          <h2>Category</h2>
+          <p>Create a Category and assign it to an Industry.</p>
+          <form onSubmit={(event) => { event.preventDefault(); void createLabel("category", categoryName, categoryIndustry); }}>
+            <input aria-label="Add Category" maxLength={80} placeholder="Add Category" value={categoryName} onChange={(event) => setCategoryName(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") event.preventDefault(); }} />
+          </form>
+          <ul className="admin-label-selection-list" aria-label="Select a Category">
+            {visibleCategories.map((category) => (
+              <li key={category.name}>
+                <button className={`admin-label-row-name${subCategoryCategory === category.name ? " selected" : ""}`} type="button" onClick={() => setSubCategoryCategory(category.name)}>{category.name}</button>
+                <span className="admin-label-row-actions">
+                  <button className={`admin-label-select${subCategoryCategory === category.name ? " selected" : ""}`} type="button" onClick={() => setSubCategoryCategory(category.name)} aria-label={`Select ${category.name}`} aria-pressed={subCategoryCategory === category.name}><Check /></button>
+                  {deletingCategory === category.name ? (
+                    <button className="admin-label-confirm-delete" type="button" onClick={() => void deleteCategory(category.name)}>Confirm Delete</button>
+                  ) : (
+                    <button className="admin-label-delete" type="button" onClick={() => setDeletingCategory(category.name)} aria-label={`Delete ${category.name}`}><X /></button>
+                  )}
+                </span>
+              </li>
+            ))}
+            {categoryIndustry && visibleCategories.length === 0 && <li className="admin-label-list-empty">No Categories assigned to this Industry.</li>}
+          </ul>
+        </div>
+        <div className="admin-label-column">
+          <h2>SubCategory</h2>
+          <p>Create a SubCategory and assign it to a Category.</p>
+          <form onSubmit={(event) => { event.preventDefault(); void createLabel("subcategory", subCategoryName, subCategoryCategory); }}>
+            <input aria-label="Add SubCategory" maxLength={80} placeholder="Add SubCategory" value={subCategoryName} onChange={(event) => setSubCategoryName(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") event.preventDefault(); }} />
+          </form>
+          <ul className="admin-label-selection-list" aria-label="Select a SubCategory">
+            {visibleSubCategories.map((subCategory) => (
+              <li key={subCategory.name}>
+                <button className={`admin-label-row-name${selectedSubCategoryLabel === subCategory.name ? " selected" : ""}`} type="button" onClick={() => setSelectedSubCategoryLabel(subCategory.name)}>{subCategory.name}</button>
+                <span className="admin-label-row-actions">
+                  <button className={`admin-label-select${selectedSubCategoryLabel === subCategory.name ? " selected" : ""}`} type="button" onClick={() => setSelectedSubCategoryLabel(subCategory.name)} aria-label={`Select ${subCategory.name}`} aria-pressed={selectedSubCategoryLabel === subCategory.name}><Check /></button>
+                  {deletingSubCategory === subCategory.name ? (
+                    <button className="admin-label-confirm-delete" type="button" onClick={() => void deleteSubCategory(subCategory.name)}>Confirm Delete</button>
+                  ) : (
+                    <button className="admin-label-delete" type="button" onClick={() => setDeletingSubCategory(subCategory.name)} aria-label={`Delete ${subCategory.name}`}><X /></button>
+                  )}
+                </span>
+              </li>
+            ))}
+            {subCategoryCategory && visibleSubCategories.length === 0 && <li className="admin-label-list-empty">No SubCategories assigned to this Category.</li>}
+          </ul>
+        </div>
+      </section>
+      {error && <p className="admin-label-error" role="alert">{error}</p>}
+    </>
+  );
+}
+function AdminHeaderNav({ active, onNavigate }: { active: string; onNavigate: (slug: string) => void }) {
+  return (
+    <nav className="admin-header-nav" aria-label="Admin navigation">
+      {adminNav.map(({ slug, label }) => (
+        <a
+          className={active === slug ? "active" : undefined}
+          href={`/member/${slug}`}
+          key={slug}
+          onClick={(event) => {
+            event.preventDefault();
+            onNavigate(slug);
+          }}
+        >
+          {label}
+        </a>
+      ))}
+    </nav>
+  );
+}
 function MemberHub() {
-  const initial = window.location.pathname.split("/").filter(Boolean)[1] || "dashboard";
+  const pageFromLocation = () => {
+    const segments = window.location.pathname.split("/").filter(Boolean);
+    return segments[1] === "pulse" && segments[2] === "editor" ? "pulse-editor" : segments[1] || "dashboard";
+  };
+  const initial = pageFromLocation();
   const [page, setPage] = useState(initial);
   const [navOpen, setNavOpen] = useState(false);
   const [identity, setIdentity] = useState<MemberIdentity>(() => identityFromUser());
   const [role, setRole] = useState<"member" | "admin">("member");
   useEffect(() => {
-    const onPop = () => setPage(window.location.pathname.split("/").filter(Boolean)[1] || "dashboard");
+    const onPop = () => setPage(pageFromLocation());
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
@@ -4053,7 +4711,7 @@ function MemberHub() {
     });
   }, []);
   const navigate = (slug: string) => {
-    window.history.pushState({}, "", `/member/${slug}`);
+    window.history.pushState({}, "", slug === "pulse-editor" ? "/member/pulse/editor" : `/member/${slug}`);
     setPage(slug);
     setNavOpen(false);
     window.scrollTo(0, 0);
@@ -4063,7 +4721,8 @@ function MemberHub() {
     window.location.assign("/");
   };
   const screens: Record<string, ReactNode> = {
-    pulse: <PulsePage />,
+    pulse: <PulsePage onCreatePost={() => navigate("pulse-editor")} />,
+    "pulse-editor": <UserPostingEditor onBack={() => navigate("pulse")} contributorName={identity.name} />,
     dashboard: <Dashboard />,
     projects: <ProjectsPage isAdmin={role === "admin"} />,
     legal: <AgreementsPage isAdmin={role === "admin"} />,
@@ -4071,11 +4730,23 @@ function MemberHub() {
     updates: <UpdatesPage />,
     notifications: <NotificationsPage />,
     profile: <ProfilePage identity={identity} role={role} onSaved={setIdentity} />,
-    ...(role === "admin" ? { "admin-users": <AdminUsersPage currentAuthUserId={identity.id} /> } : {}),
+    ...(role === "admin" ? {
+      "admin-profile": <ProfilePage identity={identity} role={role} onSaved={setIdentity} />,
+      "admin-users": <AdminUsersPage currentAuthUserId={identity.id} />,
+      "admin-legal": <AgreementsPage isAdmin />,
+      "admin-beta": <BetaPage />,
+      "admin-labels": <AdminLabelsPage />,
+      "admin-teams": <AdminSectionPage title="Teams" description="Organize project teams and review their membership." />,
+      "admin-roles": <AdminSectionPage title="Roles" description="Review administrative and project role definitions." />,
+      "admin-communication": <AdminSectionPage title="Communication" description="Manage administrative communication workflows." />,
+    } : {}),
   };
-  const visibleNav = role === "admin" ? [...memberNav, ...adminNav, ...sidebarUtilityNav] : [...memberNav, ...sidebarUtilityNav];
+  const adminPrimaryNav = memberNav.filter(({ slug }) => !["legal", "beta-programs"].includes(slug));
+  const visibleNav = role === "admin" ? [...adminPrimaryNav, ...sidebarUtilityNav.filter(({ slug }) => slug !== "profile")] : [...memberNav, ...sidebarUtilityNav];
+  const isAdminPage = role === "admin" && adminNav.some(({ slug }) => slug === page);
+  const adminPageTitle = page === "admin-profile" ? "Profile & Security" : adminNav.find(({ slug }) => slug === page)?.label || "Admin";
   const isDashboard = page === "dashboard";
-  const isStructuredPage = ["pulse", "beta-programs", "updates", "admin-users", "profile", "notifications"].includes(page);
+  const isStructuredPage = ["pulse", "pulse-editor", "beta-programs", "updates", "profile", "notifications", ...adminNav.map(({ slug }) => slug)].includes(page);
   const isProjectEdit = page === "projects" && new URLSearchParams(window.location.search).has("adminEdit");
   const isProjectsCatalog = page === "projects" && !window.location.pathname.split("/").filter(Boolean)[2] && !isProjectEdit;
   return (
@@ -4090,7 +4761,7 @@ function MemberHub() {
           {visibleNav.map(({ slug, label, icon: Icon, count }) => (
             <a
               href={`/member/${slug}`}
-              className={page === slug ? "active" : undefined}
+              className={page === slug || (slug === "pulse" && page === "pulse-editor") ? "active" : undefined}
               onClick={(e) => {
                 e.preventDefault();
                 navigate(slug);
@@ -4102,6 +4773,12 @@ function MemberHub() {
               {count ? <b>{count}</b> : null}
             </a>
           ))}
+          {role === "admin" && (
+            <a href="/member/admin-profile" className={isAdminPage ? "active sidebar-admin-link" : "sidebar-admin-link"} onClick={(event) => { event.preventDefault(); navigate("admin-profile"); }}>
+              <UserCog />
+              <span>Admin</span>
+            </a>
+          )}
           <button className="sidebar-signout" type="button" onClick={signOut}>
             <LogOut />
             <span>Sign Out</span>
@@ -4123,7 +4800,15 @@ function MemberHub() {
             <span className="topbar-title">{role === "admin" ? "Admin Hub" : "Member Hub"}</span>
           </header>
         )}
-        <main className={`member-content${isDashboard ? " dashboard-content" : isStructuredPage ? " structured-content" : page === "legal" ? " agreements-content" : isProjectsCatalog ? " projects-content" : isProjectEdit ? " project-details-content" : ""}`}>{screens[page] || <Dashboard />}</main>
+        <main className={`member-content${isDashboard ? " dashboard-content" : isStructuredPage ? " structured-content" : page === "legal" || page === "admin-legal" ? " agreements-content" : isProjectsCatalog ? " projects-content" : isProjectEdit ? " project-details-content" : ""}`}>
+          {isAdminPage && (
+            <div className="admin-page-header">
+              <header className="member-page-head"><h1>{adminPageTitle}</h1></header>
+              <AdminHeaderNav active={page} onNavigate={navigate} />
+            </div>
+          )}
+          {screens[page] || <Dashboard />}
+        </main>
       </div>
       {navOpen && <button className="nav-scrim" onClick={() => setNavOpen(false)} aria-label="Close navigation" />}
     </div>

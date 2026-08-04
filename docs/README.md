@@ -9,6 +9,7 @@ This directory is the canonical reference for the Orbit Systems / OSai website e
 | [Website information architecture](architecture/website-information-architecture.md) | Pages, navigation menus, CTAs, and movement between public, member, project, beta, and admin areas |
 | [Authentication implementation](architecture/authentication-implementation.md) | Current Neon Auth client routes, configuration, verification, and required server authorization boundary |
 | [Administrator authorization](architecture/admin-authorization.md) | Application roles, first-admin bootstrap, role management, and admin-only project mutations |
+| [OSai to ONN publishing integration](architecture/onn-publishing-integration.md) | OSai-owned drafts, author/editor workflow, typed ONN submission contract, validation, status, and retries |
 | [Project access requests](architecture/project-access-requests.md) | Discoverable member project previews, project-specific requests, administrator review, Legal assignment, and email delivery |
 | [Project roles, Legal documents, Teams, and access model](architecture/project-roles-legal-teams-access-model.md) | Proposed role definitions, Team membership, Legal readiness, approval states, authorization rules, edge cases, and owner decisions required before implementation |
 | [DocuSign integration](architecture/docusign-integration.md) | General NDA template setup, embedded signing, envelope status, credentials, and production security boundary |
