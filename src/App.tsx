@@ -173,37 +173,12 @@ const publicNav = [
   { label: "Contact", href: "/contact" },
 ];
 
-type AccountDialog = "sign-in" | "create" | "forgot";
-
-function PublicHeader({ current, initialDialog = null }: { current: string; initialDialog?: AccountDialog | null }) {
+function PublicHeader({ current }: { current: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [accountDialog, setAccountDialog] = useState<AccountDialog | null>(initialDialog);
-  const [email, setEmail] = useState("");
   useEffect(() => {
     document.body.classList.toggle("public-menu-open", menuOpen);
     return () => document.body.classList.remove("public-menu-open");
   }, [menuOpen]);
-  useEffect(() => {
-    document.body.classList.toggle("modal-open", accountDialog !== null);
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setAccountDialog(null);
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.body.classList.remove("modal-open");
-      window.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [accountDialog]);
-  const openDialog = (view: AccountDialog) => {
-    setAccountDialog(view);
-    setMenuOpen(false);
-  };
-  const submitAccount = async (event: FormEvent) => {
-    event.preventDefault();
-    const target = accountDialog === "create" ? "/auth/invitation" : "/auth/sign-in";
-    const query = email.trim() ? `?email_address=${encodeURIComponent(email.trim())}` : "";
-    window.location.assign(`${target}${query}`);
-  };
   return (
     <>
       <header className="public-header">
@@ -215,49 +190,15 @@ function PublicHeader({ current, initialDialog = null }: { current: string; init
                 {item.label}
               </a>
             ))}
-            <button className="nav-sign-in" type="button" onClick={() => openDialog("sign-in")}>
+            <a className="nav-sign-in" href="/auth/sign-in" onClick={() => setMenuOpen(false)}>
               Log in
-            </button>
+            </a>
           </nav>
           <button className="menu-button" type="button" aria-expanded={menuOpen} aria-controls="public-navigation" onClick={() => setMenuOpen((open) => !open)} aria-label={menuOpen ? "Close menu" : "Open menu"}>
             {menuOpen ? <X /> : <Menu />}
           </button>
         </div>
       </header>
-      {accountDialog && (
-        <div
-          className="account-modal-backdrop"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setAccountDialog(null);
-          }}
-        >
-          <section className="account-modal" role="dialog" aria-modal="true" aria-labelledby="account-dialog-title">
-            <button className="account-modal-close" type="button" onClick={() => setAccountDialog(null)} aria-label="Close account dialog">
-              <X />
-            </button>
-            <h2 id="account-dialog-title">{accountDialog === "sign-in" ? "Sign in" : accountDialog === "create" ? "Create Account" : "Recover your account"}</h2>
-            <p>{accountDialog === "sign-in" ? "Continue to your OSai member account." : accountDialog === "create" ? "Create your OSai member account." : "We’ll send recovery instructions to your account email address."}</p>
-            <form onSubmit={submitAccount}>
-                <label>
-                  Email address
-                  <input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
-                </label>
-                {accountDialog === "sign-in" && (
-                  <button className="account-forgot" type="button" onClick={() => openDialog("forgot")}>
-                    Forgot password?
-                  </button>
-                )}
-                <button className="account-submit" type="submit">
-                  {accountDialog === "sign-in" ? "Continue to sign in" : accountDialog === "create" ? "Continue to create account" : "Continue to account recovery"}
-                </button>
-            </form>
-            <button className="account-switch" type="button" onClick={() => openDialog(accountDialog === "sign-in" ? "create" : "sign-in")}>
-              {accountDialog === "sign-in" ? "Create Account" : accountDialog === "create" ? "Already have an account? Sign in" : "Return to sign in"}
-            </button>
-          </section>
-        </div>
-      )}
     </>
   );
 }
