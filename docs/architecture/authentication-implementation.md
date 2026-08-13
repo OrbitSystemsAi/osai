@@ -1,52 +1,54 @@
 # Authentication Implementation
 
-## Outcome
+## Provider and site boundary
 
-The public website now exposes an **Account** navigation control with separate **Sign in** and **Create Account** actions. Each action opens a compact modal without leaving the landing page. Sign-in includes username/email, password, and password-recovery access. Account creation includes full name, email, password, and password confirmation.
+OSai uses a dedicated Clerk application named `osai-auth` for `orbitsystems.ai`. Neon remains the application database but does not establish browser sessions.
 
-As a temporary operating configuration, Neon Auth's **Verify at Sign-up** setting is disabled. Account creation uses Neon Auth's native Better Auth endpoint and then establishes a password session without an email-code step. If an earlier signup already created the user, the invitation flow returns the user to sign-in with their email prefilled.
-
-Successful sign-in or account creation routes to `/member/dashboard`, the current OSai account home. Password confirmation is validated in the browser before the Neon account-creation request is sent.
-
-This is an implementation deviation from the approved access-request flow in `docs/access/access-request-and-approval.md`. Administrator approval remains mandatory, and email verification should be restored before the protected hub is used for confidential materials.
+This Clerk application is connected only to the Vercel project `osai`. Consulting and future Orbit Systems products use separate Clerk applications. Creating an account on one site does not create an account on, or grant access to, another site.
 
 ## Routes
 
-- `/auth/sign-in` — email and password sign-in
-- `/auth/invitation` — account creation for an invited email identity
-- `/auth/forgot-password` — non-enumerating recovery request
-- `/member/*` — client session gate before the existing member hub is rendered
+- `/auth/sign-in` — Clerk sign-in and account recovery
+- `/auth/invitation` — Clerk account creation
+- `/member/*` — authenticated member experience
+
+The public account controls hand off to these Clerk-hosted components. Clerk owns password collection, verification, recovery, and session cookies.
 
 ## Configuration
 
-Set `NEXT_PUBLIC_NEON_AUTH_URL` to the branch-specific Neon Auth URL. The checked-in `.env.example` documents the expected value. When it is absent, the client uses the OSai main-branch Neon Auth endpoint as its default.
+The Vercel Clerk Marketplace integration supplies:
 
-The main branch's Neon Auth trusted domains include `https://osai-pink.vercel.app` and `https://osai-orbit-systems-ai.vercel.app`. Add any future production or preview hostname before using browser-based authentication from that origin.
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+- `CLERK_SECRET_KEY`
 
-## Security boundary
+`ClerkProvider` wraps the App Router tree and `proxy.ts` establishes Clerk request context. Protected APIs call Clerk server helpers and never trust client-supplied identity data.
 
-This repository is now a Next.js App Router application. The current client session gate improves the user flow but is not sufficient authorization for protected content. Before any confidential member data or media is connected, implement server-side authorization that:
+## Authorization and migrated profiles
 
-- validates the Neon session on every protected request;
-- links application records to the immutable Neon Auth user ID;
-- evaluates OSai membership approval, agreement status, project membership, and beta assignment;
-- returns protected data only after that server-side decision;
-- records auditable access and lifecycle events.
+Authentication proves identity; it does not grant OSai membership, administrator rights, legal completion, project membership, or beta access. Those decisions remain in Neon Postgres.
 
-Authentication proves identity. It does not itself grant OSai membership or project access.
+Application authorization is keyed by the immutable ID already stored in `user_profiles`. On a migrated user's first Clerk session, the server checks the Clerk ID and then performs a one-time reconciliation using the verified primary email. This preserves the existing profile ID and therefore preserves roles, agreements, project assignments, and audit relationships. Subsequent authorization uses the stored immutable profile ID, not email. New users are keyed by their Clerk user ID.
+
+Existing members must create a Clerk account with the same email address they previously used. Their previous authentication password is not transferable. Clerk verification confirms control of that address before the existing OSai profile is reconciled.
+
+## Server boundary
+
+Every protected page mutation and API route must:
+
+1. validate the Clerk session server-side;
+2. resolve the corresponding OSai application profile;
+3. evaluate application role, agreement status, project membership, and beta assignment;
+4. return data only after authorization succeeds; and
+5. record required audit events against the immutable application profile ID.
+
+Roles are `member` and `admin`; roles never come from client-editable Clerk metadata. Admin-only APIs revalidate both the Clerk session and application role on every request.
+
+To bootstrap the first administrator, set `OSAI_BOOTSTRAP_ADMIN_USER_IDS` to the immutable Clerk/application identity ID, never an email address. After the profile signs in, administrators can manage subsequent roles through **Users**.
 
 ## Verification
 
-- Production Next.js build
-- Desktop sign-in route inspection at 1440 × 1000
-- Responsive invitation route inspection at the mobile breakpoint
-- Route and accessible-name inspection for all primary controls
-- Missing-configuration and unauthenticated member-route behavior
-
-## Application roles and project administration
-
-Application authorization is stored in `user_profiles`, keyed by the immutable Neon Auth user ID. Roles are `member` or `admin`; the role is never read from client-editable profile metadata. Admin-only API routes revalidate the Neon session and role on every request.
-
-To initialize the first administrator, set `DATABASE_URL`, apply the SQL files in `db/migrations` in numeric order, and put that person's immutable Neon Auth user ID in `OSAI_BOOTSTRAP_ADMIN_USER_IDS`. After the profile signs in, the bootstrap rule creates or promotes its application profile. That administrator can then use **Users** to grant or remove administrator rights for other application profiles.
-
-Administrators can use **Manage Projects** to add, edit, publish, archive, and remove projects. Project and role mutations are recorded in `audit_events`. A user cannot remove their own administrator role through the UI/API, reducing accidental lockout risk.
+- Run lint and a production Next.js build.
+- Verify `/auth/sign-in` and `/auth/invitation` on the production domain.
+- Verify an unauthenticated `/member/*` visit is gated.
+- Verify a migrated email resolves to its existing role and projects.
+- Verify an account created on another Orbit Systems site cannot silently authenticate here.

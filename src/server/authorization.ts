@@ -12,6 +12,32 @@ export async function requireProfile(request: Request): Promise<AppProfile> {
   const member = await requireMember(request)
   const sql = db()
   const bootstrapAdmin = bootstrapAdminIds().has(member.id)
+  // Preserve authorization relationships for accounts that existed before the
+  // Clerk migration. Email is used only once to reconcile the new identity;
+  // all subsequent authorization continues to use the stored immutable ID.
+  const existing = await sql`
+    SELECT auth_user_id, email, display_name, role
+    FROM user_profiles
+    WHERE auth_user_id = ${member.id} OR lower(email) = lower(${member.email})
+    ORDER BY CASE WHEN auth_user_id = ${member.id} THEN 0 ELSE 1 END
+    LIMIT 1
+  `
+  if (existing[0]) {
+    const profile = existing[0]
+    const promoted = bootstrapAdmin && profile.role !== 'admin'
+    if (member.hasExplicitName || promoted) await sql`
+      UPDATE user_profiles SET
+        display_name = CASE WHEN ${member.hasExplicitName} THEN ${member.name} ELSE display_name END,
+        role = CASE WHEN ${bootstrapAdmin} THEN 'admin' ELSE role END,
+        updated_at = now()
+      WHERE auth_user_id = ${String(profile.auth_user_id)}
+    `
+    return {
+      authUserId: String(profile.auth_user_id), email: member.email,
+      displayName: member.hasExplicitName ? member.name : String(profile.display_name),
+      role: (promoted ? 'admin' : profile.role) as AppRole,
+    }
+  }
   const rows = await sql`
     INSERT INTO user_profiles (auth_user_id, email, display_name, role)
     VALUES (${member.id}, ${member.email}, ${member.name}, ${bootstrapAdmin ? 'admin' : 'member'})

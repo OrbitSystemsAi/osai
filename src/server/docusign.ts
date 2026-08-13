@@ -1,16 +1,7 @@
 import { createHmac, createSign, timingSafeEqual } from 'node:crypto'
-import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose'
+import { auth, currentUser } from '@clerk/nextjs/server'
 
 type Member = { id: string; name: string; email: string; hasExplicitName: boolean }
-
-const neonJwks = new Map<string, ReturnType<typeof createRemoteJWKSet>>()
-
-function memberFromClaims(claims: JWTPayload): Member | null {
-  const email = typeof claims.email === 'string' ? claims.email : null
-  if (!claims.sub || !email) return null
-  const explicitName = typeof claims.name === 'string' ? claims.name.trim() : ''
-  return { id: claims.sub, email, name: explicitName || email.split('@')[0], hasExplicitName: Boolean(explicitName) }
-}
 
 const required = ['DOCUSIGN_INTEGRATION_KEY', 'DOCUSIGN_USER_ID', 'DOCUSIGN_ACCOUNT_ID', 'DOCUSIGN_PRIVATE_KEY', 'DOCUSIGN_GENERAL_NDA_TEMPLATE_ID', 'DOCUSIGN_STATE_SECRET'] as const
 
@@ -18,51 +9,17 @@ export function docusignConfigured() {
   return required.every((key) => Boolean(process.env[key]?.trim()))
 }
 
-export async function requireMember(request: Request): Promise<Member> {
-  const authUrl = process.env.NEXT_PUBLIC_NEON_AUTH_URL?.trim()
-  if (!authUrl) throw new Error('NEON_AUTH_NOT_CONFIGURED')
-  const authorization = request.headers.get('authorization')
-  const bearerToken = authorization?.match(/^Bearer\s+(.+)$/i)?.[1]
-  if (bearerToken) {
-    try {
-      const jwksUrl = `${authUrl.replace(/\/$/, '')}/.well-known/jwks.json`
-      let jwks = neonJwks.get(jwksUrl)
-      if (!jwks) {
-        jwks = createRemoteJWKSet(new URL(jwksUrl))
-        neonJwks.set(jwksUrl, jwks)
-      }
-      const { payload } = await jwtVerify(bearerToken, jwks)
-      const member = memberFromClaims(payload)
-      if (member) return member
-      if (process.env.NODE_ENV !== 'production') console.warn('Verified Neon token did not include member claims', { keys: Object.keys(payload) })
-    } catch (error) {
-      if (process.env.NODE_ENV !== 'production') console.warn('Neon token verification failed', {
-        reason: error instanceof Error ? error.name : 'unknown',
-        message: error instanceof Error ? error.message : 'unknown',
-      })
-    }
-    throw new Error('UNAUTHENTICATED')
-  }
-  const sessionCookie = request.headers.get('cookie') || ''
-  const response = await fetch(`${authUrl.replace(/\/$/, '')}/get-session`, {
-    headers: {
-      cookie: sessionCookie,
-      origin: new URL(request.url).origin,
-    },
-    cache: 'no-store',
-  })
-  if (!response.ok) {
-    if (process.env.NODE_ENV !== 'production') console.warn('Neon session verification failed', { status: response.status })
-    throw new Error('UNAUTHENTICATED')
-  }
-  const payload = await response.json()
-  const user = payload?.user || payload?.data?.user || payload?.session?.user || payload?.data?.session?.user
-  if (!user?.id || !user?.email) {
-    if (process.env.NODE_ENV !== 'production') console.warn('Neon session response did not include a user', { keys: Object.keys(payload || {}) })
-    throw new Error('UNAUTHENTICATED')
-  }
-  const explicitName = typeof user.name === 'string' ? user.name.trim() : ''
-  return { id: user.id, email: user.email, name: explicitName || user.email.split('@')[0], hasExplicitName: Boolean(explicitName) }
+export async function requireMember(request?: Request): Promise<Member> {
+  void request
+  const { userId } = await auth()
+  if (!userId) throw new Error('UNAUTHENTICATED')
+  const user = await currentUser()
+  const email = user?.primaryEmailAddress?.emailAddress
+  if (!user || !email) throw new Error('UNAUTHENTICATED')
+  const explicitName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim()
+  // Imported identities may retain the former application ID in externalId.
+  // Otherwise authorization reconciles the verified email once on first use.
+  return { id: user.externalId || user.id, email, name: explicitName || email.split('@')[0], hasExplicitName: Boolean(explicitName) }
 }
 
 function base64url(value: string | Buffer) {

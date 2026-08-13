@@ -68,7 +68,7 @@ Access should be derived from durable records: user identity, role, invitation, 
 
 ### Hub responsibilities
 
-- Neon Auth integration, application profiles, invitations, roles, and account recovery
+- Clerk integration, application profiles, invitations, roles, and account recovery
 - General and project-specific agreement orchestration
 - Project catalog, access policy, and protected content
 - Beta program registry and cross-project feedback analysis
@@ -85,9 +85,9 @@ Access should be derived from durable records: user identity, role, invitation, 
 ### Recommended boundaries
 
 - **Web application:** responsive hub with a public surface and authenticated portal
-- **Authentication:** Neon Auth for sign-up, sign-in, email verification, sessions, and account recovery; protected pages and APIs must validate the Neon session server-side
+- **Authentication:** a dedicated Clerk application for sign-up, sign-in, email verification, sessions, and account recovery; protected pages and APIs must validate the Clerk session server-side
 - **Backend/API:** server-side authorization for every protected resource
-- **Relational database:** Neon Postgres for application profiles, projects, access grants, agreements, content, beta programs, feedback, and audit events; Neon Auth data remains in its dedicated `neon_auth` schema
+- **Relational database:** Neon Postgres for application profiles, projects, access grants, agreements, content, beta programs, feedback, and audit events
 - **Object storage:** decks, thumbnails, feedback attachments, and other files
 - **Video provider:** private playback using signed or expiring access rather than public video URLs
 - **DocuSign integration:** embedded or remote signing, Connect webhooks, envelope reconciliation, and signed-document retention policy
@@ -96,8 +96,8 @@ Access should be derived from durable records: user identity, role, invitation, 
 
 ## 6. Foundational domain model
 
-- **AuthUser** — Neon Auth-owned identity, credentials, verification, and sessions
-- **UserProfile** — Orbit Systems-owned profile linked to the immutable Neon Auth user ID; never use email as the relational key
+- **AuthUser** — Clerk-owned identity, credentials, verification, and sessions
+- **UserProfile** — Orbit Systems-owned profile linked to an immutable application identity; never use email as the ongoing relational key
 - **Organization** — Orbit Systems initially; supports future partners or ventures
 - **Project** — portfolio entry, stage, visibility, and access policy
 - **ProjectMembership** — a user's role and access state for a project
@@ -132,13 +132,13 @@ Access should be derived from durable records: user identity, role, invitation, 
 **Goal:** safely onboard a trusted person, obtain the General NDA, and reveal appropriate project content.
 
 - Public home, OSai story, portfolio teaser, privacy notice, and terms
-- Invitation-based account creation, email verification, login, sessions, and recovery through Neon Auth
+- Invitation-based account creation, email verification, login, sessions, and recovery through Clerk
 - Member dashboard with agreement and project-access status
 - DocuSign General NDA flow with a clear pre-sign explanation
 - Webhook-driven agreement status plus periodic reconciliation
 - Project catalog and protected project detail pages
 - Admin tools for invitations, people, projects, access, and agreement status
-- A server-side authorization layer that combines the Neon Auth user ID with Orbit Systems roles, NDA status, project membership, and beta assignment
+- A server-side authorization layer that combines the immutable application identity with Orbit Systems roles, NDA status, project membership, and beta assignment
 - Immutable audit events for signature, grant, revocation, and protected-content access
 - Baseline accessibility, responsive design, security headers, rate limiting, backups, monitoring, and error reporting
 
@@ -230,8 +230,8 @@ Access should be derived from durable records: user identity, role, invitation, 
 ## 9. Security, privacy, and legal checklist
 
 - Server-side authorization and least-privilege administrator roles
-- Neon Auth session validation on every protected page, API route, media grant, and mutation; UI visibility is never treated as authorization
-- Multi-factor authentication for administrators when supported by the selected Neon Auth configuration; passkeys or MFA option for members
+- Clerk session validation on every protected page, API route, media grant, and mutation; UI visibility is never treated as authorization
+- Multi-factor authentication for administrators when supported by the selected Clerk configuration; passkeys or MFA option for members
 - Separate Neon branches for development, preview, and production; verify that branched auth data and application data follow the intended test-data policy
 - Encryption in transit and at rest; secrets stored outside source control
 - DocuSign webhook signature validation, idempotency, replay protection, and reconciliation
@@ -279,8 +279,8 @@ The MVP should optimize first for **correct access, comprehensible consent, and 
 
 - Validate DocuSign development-account flow, embedded versus email signing, webhooks, and reconciliation.
 - Prototype protected content authorization and expiring media access.
-- Establish Neon Postgres and Neon Auth branches/configuration for development, preview, and production, plus storage, email, monitoring, and deployment environments.
-- Prototype the Neon Auth invitation, email-verification, server-session, recovery, and user-profile linking flows.
+- Establish Neon Postgres and Clerk configuration for development, preview, and production, plus storage, email, monitoring, and deployment environments.
+- Prototype the Clerk invitation, email-verification, server-session, recovery, and user-profile linking flows.
 - Define the threat model and test strategy.
 
 ### Week 4 — Build-ready baseline

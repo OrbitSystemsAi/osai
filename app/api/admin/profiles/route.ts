@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { apiError, requireAdmin, type AppRole } from '../../../../src/server/authorization'
 import { db } from '../../../../src/server/database'
+import { clerkClient } from '@clerk/nextjs/server'
 
 export const runtime = 'nodejs'
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -154,12 +155,23 @@ export async function DELETE(request: Request) {
 
     await sql.transaction(transaction => [
       transaction`DELETE FROM user_profiles WHERE auth_user_id = ${body.authUserId}`,
-      transaction`DELETE FROM neon_auth."user" WHERE id = ${body.authUserId}`,
       transaction`
         INSERT INTO audit_events (actor_auth_user_id, action, target_type, target_id, metadata)
         VALUES (${actor.authUserId}, 'profile.deleted', 'user_profile', ${body.authUserId}, ${JSON.stringify({ formerRole: profiles[0].role })}::jsonb)
       `,
     ])
+    const client = await clerkClient()
+    const users = await client.users.getUserList({ externalId: [body.authUserId], limit: 1 })
+    if (users.data[0]) {
+      await client.users.deleteUser(users.data[0].id)
+    } else {
+      try {
+        await client.users.deleteUser(body.authUserId)
+      } catch {
+        // A reconciled legacy profile can exist before its replacement Clerk
+        // identity is created. In that case there is no Clerk record to remove.
+      }
+    }
     return new NextResponse(null, { status: 204 })
   } catch (error) {
     const result = apiError(error, 'PROFILE_DELETE_FAILED')

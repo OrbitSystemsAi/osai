@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
+import { useAuth, useClerk, useUser } from "@clerk/nextjs";
 import { ArrowLeft, ArrowRight, Bell, BellRing, BookOpen, CalendarDays, Check, ChevronRight, Clock3, FileCheck2, FileText, FlaskConical, FolderKanban, Hourglass, KeyRound, LayoutDashboard, LockKeyhole, Mail, Menu, Activity, DollarSign, ImageIcon, ListTodo, MessageSquareText, Orbit, Pencil, Plus, Search, LogOut, ShieldCheck, Tags, Target, Trash2, TrendingUp, Upload, User, UserCog, Users, X } from "lucide-react";
 import AuthPage from "./AuthPage";
-import { authClient, emailAuthClient } from "./auth";
 
 const PROJECT_TITLE_MAX = 40;
 const PROJECT_DESCRIPTION_MAX = 300;
@@ -178,14 +178,7 @@ type AccountDialog = "sign-in" | "create" | "forgot";
 function PublicHeader({ current, initialDialog = null }: { current: string; initialDialog?: AccountDialog | null }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountDialog, setAccountDialog] = useState<AccountDialog | null>(initialDialog);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [verifyPassword, setVerifyPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [recoverySent, setRecoverySent] = useState(false);
   useEffect(() => {
     document.body.classList.toggle("public-menu-open", menuOpen);
     return () => document.body.classList.remove("public-menu-open");
@@ -204,41 +197,12 @@ function PublicHeader({ current, initialDialog = null }: { current: string; init
   const openDialog = (view: AccountDialog) => {
     setAccountDialog(view);
     setMenuOpen(false);
-    setError("");
-    setRecoverySent(false);
   };
   const submitAccount = async (event: FormEvent) => {
     event.preventDefault();
-    setBusy(true);
-    setError("");
-    try {
-      if (accountDialog === "forgot") {
-        const { error: recoveryError } = await authClient.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/auth/reset-password` });
-        if (recoveryError) throw recoveryError;
-        setRecoverySent(true);
-        return;
-      }
-      if (accountDialog === "create") {
-        if (password !== verifyPassword) throw new Error("Passwords do not match.");
-        const name = `${firstName.trim()} ${lastName.trim()}`.trim();
-        const { error: signUpError } = await emailAuthClient.signUp.email({
-          email,
-          password,
-          name,
-        });
-        if (signUpError) throw signUpError;
-      }
-      const { error: signInError } = await authClient.signInWithPassword({
-        email,
-        password,
-      });
-      if (signInError) throw signInError;
-      window.location.assign("/member/dashboard");
-    } catch (accountError) {
-      setError(accountError instanceof Error ? accountError.message : "We could not complete that request. Please try again.");
-    } finally {
-      setBusy(false);
-    }
+    const target = accountDialog === "create" ? "/auth/invitation" : "/auth/sign-in";
+    const query = email.trim() ? `?email_address=${encodeURIComponent(email.trim())}` : "";
+    window.location.assign(`${target}${query}`);
   };
   return (
     <>
@@ -274,65 +238,23 @@ function PublicHeader({ current, initialDialog = null }: { current: string; init
             </button>
             <h2 id="account-dialog-title">{accountDialog === "sign-in" ? "Sign in" : accountDialog === "create" ? "Create Account" : "Recover your account"}</h2>
             <p>{accountDialog === "sign-in" ? "Continue to your OSai member account." : accountDialog === "create" ? "Create your OSai member account." : "We’ll send recovery instructions to your account email address."}</p>
-            {accountDialog === "forgot" && recoverySent ? (
-              <div className="account-recovery-success" role="status">
-                <Mail />
-                <h3>Check your email</h3>
-                <p>If an account exists for {email}, recovery instructions are on the way.</p>
-                <button className="account-submit" type="button" onClick={() => openDialog("sign-in")}>
-                  Return to sign in
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={submitAccount}>
-                {accountDialog === "create" && (
-                  <div className="account-name-fields">
-                    <label>
-                      First Name
-                      <input required autoComplete="given-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} />
-                    </label>
-                    <label>
-                      Last Name
-                      <input required autoComplete="family-name" value={lastName} onChange={(event) => setLastName(event.target.value)} />
-                    </label>
-                  </div>
-                )}
+            <form onSubmit={submitAccount}>
                 <label>
                   Email address
                   <input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} />
                 </label>
-                {accountDialog !== "forgot" && (
-                  <label>
-                    Password
-                    <input required type="password" minLength={8} autoComplete={accountDialog === "sign-in" ? "current-password" : "new-password"} value={password} onChange={(event) => setPassword(event.target.value)} />
-                  </label>
-                )}
-                {accountDialog === "create" && (
-                  <label>
-                    Verify password
-                    <input required type="password" minLength={8} autoComplete="new-password" value={verifyPassword} onChange={(event) => setVerifyPassword(event.target.value)} />
-                  </label>
-                )}
                 {accountDialog === "sign-in" && (
                   <button className="account-forgot" type="button" onClick={() => openDialog("forgot")}>
                     Forgot password?
                   </button>
                 )}
-                {error && (
-                  <div className="account-error" role="alert">
-                    {error}
-                  </div>
-                )}
-                <button className="account-submit" disabled={busy} type="submit">
-                  {busy ? "Please wait…" : accountDialog === "sign-in" ? "Sign in" : accountDialog === "create" ? "Create Account" : "Send recovery email"}
+                <button className="account-submit" type="submit">
+                  {accountDialog === "sign-in" ? "Continue to sign in" : accountDialog === "create" ? "Continue to create account" : "Continue to account recovery"}
                 </button>
-              </form>
-            )}
-            {!recoverySent && (
-              <button className="account-switch" type="button" onClick={() => openDialog(accountDialog === "sign-in" ? "create" : "sign-in")}>
-                {accountDialog === "sign-in" ? "Create Account" : accountDialog === "create" ? "Already have an account? Sign in" : "Return to sign in"}
-              </button>
-            )}
+            </form>
+            <button className="account-switch" type="button" onClick={() => openDialog(accountDialog === "sign-in" ? "create" : "sign-in")}>
+              {accountDialog === "sign-in" ? "Create Account" : accountDialog === "create" ? "Already have an account? Sign in" : "Return to sign in"}
+            </button>
           </section>
         </div>
       )}
@@ -359,26 +281,6 @@ function HomePage() {
         </div>
       </div>
     </section>
-  );
-}
-
-function SignedOutPage() {
-  return (
-    <div className="public-site signed-out-site">
-      <PublicHeader current="" initialDialog="sign-in" />
-      <section className="hero public-page-hero">
-        <div className="hero-art" aria-hidden="true" />
-        <div className="hero-content page-wrap">
-          <div className="hero-copy">
-            <h1>You forgot to sign in.</h1>
-            <p>Sign in to continue to your OSai member account and protected project access.</p>
-            <button className="button button-orange" type="button" onClick={() => window.location.reload()}>
-              Sign in
-            </button>
-          </div>
-        </div>
-      </section>
-    </div>
   );
 }
 
@@ -2105,9 +2007,7 @@ type LegalProjectGroup = {
 };
 
 async function memberAuthHeaders() {
-  const { data, error } = await authClient.getSession();
-  if (error || !data.session?.access_token) throw new Error("Your OSai session could not be verified. Please sign in again.");
-  return { authorization: `Bearer ${data.session.access_token}` };
+  return {};
 }
 
 async function projectCatalogRequest() {
@@ -4040,6 +3940,7 @@ function identityFromUser(user?: { id?: string | null; name?: string | null; ema
 }
 
 function ProfilePage({ identity, role, onSaved }: { identity: MemberIdentity; role: "member" | "admin"; onSaved: (identity: MemberIdentity) => void }) {
+  const { user } = useUser();
   const nameParts = identity.name.split(/\s+/);
   const [firstName, setFirstName] = useState(nameParts[0] || "");
   const [lastName, setLastName] = useState(nameParts.slice(1).join(" "));
@@ -4144,10 +4045,11 @@ function ProfilePage({ identity, role, onSaved }: { identity: MemberIdentity; ro
       return;
     }
     const name = `${first} ${last}`;
-    const nameResult = await emailAuthClient.updateUser({ name });
-    if (nameResult.error || !nameResult.data?.status) {
+    try {
+      await user?.update({ firstName: first, lastName: last });
+    } catch (profileError) {
       setStatus("error");
-      setMessage(nameResult.error?.message || "We could not save your name. Please try again.");
+      setMessage(profileError instanceof Error ? profileError.message : "We could not save your name. Please try again.");
       return;
     }
     const updatedIdentity = identityFromUser({
@@ -4157,13 +4059,12 @@ function ProfilePage({ identity, role, onSaved }: { identity: MemberIdentity; ro
     });
     onSaved(updatedIdentity);
     if (nextEmail !== identity.email.toLowerCase()) {
-      const emailResult = await emailAuthClient.changeEmail({
-        newEmail: nextEmail,
-        callbackURL: `${window.location.origin}/member/profile`,
-      });
-      if (emailResult.error || !emailResult.data?.status) {
+      try {
+        const address = await user?.createEmailAddress({ email: nextEmail });
+        await address?.prepareVerification({ strategy: "email_code" });
+      } catch (emailError) {
         setStatus("error");
-        setMessage(`Your name was saved, but we could not start the email change. ${emailResult.error?.message || "Please try again."}`);
+        setMessage(`Your name was saved, but we could not start the email change. ${emailError instanceof Error ? emailError.message : "Please try again."}`);
         return;
       }
       setStatus("saved");
@@ -4191,14 +4092,11 @@ function ProfilePage({ identity, role, onSaved }: { identity: MemberIdentity; ro
     }
     setPasswordStatus("saving");
     setPasswordMessage("");
-    const result = await emailAuthClient.changePassword({
-      currentPassword,
-      newPassword,
-      revokeOtherSessions: false,
-    });
-    if (result.error || !result.data?.user) {
+    try {
+      await user?.updatePassword({ currentPassword, newPassword, signOutOfOtherSessions: false });
+    } catch (passwordError) {
       setPasswordStatus("error");
-      setPasswordMessage(result.error?.message || "We could not update your password.");
+      setPasswordMessage(passwordError instanceof Error ? passwordError.message : "We could not update your password.");
       return;
     }
     setCurrentPassword("");
@@ -4677,6 +4575,8 @@ function AdminHeaderNav({ active, onNavigate }: { active: string; onNavigate: (s
   );
 }
 function MemberHub() {
+  const { user } = useUser();
+  const { signOut } = useClerk();
   const pageFromLocation = () => {
     const segments = window.location.pathname.split("/").filter(Boolean);
     return segments[1] === "pulse" && segments[2] === "editor" ? "pulse-editor" : segments[1] || "dashboard";
@@ -4692,34 +4592,21 @@ function MemberHub() {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
   useEffect(() => {
-    authClient.getSession().then(async ({ data }) => {
-      if (data?.session?.user) setIdentity(identityFromUser(data.session.user));
-      if (data?.session?.access_token) {
-        const response = await fetch("/api/me", {
-          headers: { authorization: `Bearer ${data.session.access_token}` },
-        });
-        const result = await response.json();
-        if (response.ok && result.profile) {
-          setIdentity(identityFromUser({
-            id: result.profile.authUserId,
-            name: result.profile.displayName,
-            email: result.profile.email,
-          }));
-          if (result.profile.role === "admin") setRole("admin");
-        }
+    if (user) setIdentity(identityFromUser({ id: user.externalId || user.id, name: user.fullName, email: user.primaryEmailAddress?.emailAddress }));
+    fetch("/api/me").then(async (response) => ({ response, result: await response.json() })).then(({ response, result }) => {
+      if (response.ok && result.profile) {
+        setIdentity(identityFromUser({ id: result.profile.authUserId, name: result.profile.displayName, email: result.profile.email }));
+        if (result.profile.role === "admin") setRole("admin");
       }
-    });
-  }, []);
+    }).catch(() => undefined);
+  }, [user]);
   const navigate = (slug: string) => {
     window.history.pushState({}, "", slug === "pulse-editor" ? "/member/pulse/editor" : `/member/${slug}`);
     setPage(slug);
     setNavOpen(false);
     window.scrollTo(0, 0);
   };
-  const signOut = async () => {
-    await authClient.signOut();
-    window.location.assign("/");
-  };
+  const leave = async () => { await signOut({ redirectUrl: "/" }); };
   const screens: Record<string, ReactNode> = {
     pulse: <PulsePage onCreatePost={() => navigate("pulse-editor")} />,
     "pulse-editor": <UserPostingEditor onBack={() => navigate("pulse")} contributorName={identity.name} />,
@@ -4779,7 +4666,7 @@ function MemberHub() {
               <span>Admin</span>
             </a>
           )}
-          <button className="sidebar-signout" type="button" onClick={signOut}>
+          <button className="sidebar-signout" type="button" onClick={leave}>
             <LogOut />
             <span>Sign Out</span>
           </button>
@@ -4816,29 +4703,20 @@ function MemberHub() {
 }
 
 function ProtectedMemberHub() {
-  const [state, setState] = useState<"checking" | "signed-in" | "signed-out">("checking");
+  const { isLoaded, isSignedIn } = useAuth();
   const isDevelopmentPreview = process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_MEMBER_PREVIEW === "true";
   useEffect(() => {
-    if (isDevelopmentPreview) return;
-    const client = authClient;
-    if (!client) {
-      setState("signed-out");
-      return;
-    }
-    client.getSession().then(({ data }) => setState(data?.session ? "signed-in" : "signed-out"));
-  }, [isDevelopmentPreview]);
-  useEffect(() => {
-    if (state === "signed-out") window.location.replace("/auth/sign-in");
-  }, [state]);
+    if (isLoaded && !isSignedIn && !isDevelopmentPreview) window.location.replace("/auth/sign-in");
+  }, [isDevelopmentPreview, isLoaded, isSignedIn]);
   if (isDevelopmentPreview) return <MemberHub />;
-  if (state === "checking")
+  if (!isLoaded)
     return (
       <main className="session-check">
         <ShieldCheck />
         <p>Checking your secure session…</p>
       </main>
     );
-  if (state === "signed-out")
+  if (!isSignedIn)
     return (
       <main className="session-check">
         <ShieldCheck />
@@ -4849,7 +4727,6 @@ function ProtectedMemberHub() {
 }
 
 export default function App() {
-  if (window.location.pathname === "/auth/sign-in") return <SignedOutPage />;
   if (window.location.pathname.startsWith("/auth/")) return <AuthPage />;
   return window.location.pathname.startsWith("/member") ? <ProtectedMemberHub /> : <PublicSite />;
 }

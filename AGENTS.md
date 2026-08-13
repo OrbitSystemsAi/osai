@@ -74,7 +74,7 @@ Primary goals:
 
 Primary goals:
 
-- Authenticate users through Neon Auth
+- Authenticate users through the dedicated OSai Clerk application
 - Track application profiles and business data in Neon Postgres
 - Orchestrate the General NDA and project agreements through DocuSign
 - Apply server-side, agreement-aware project authorization
@@ -90,7 +90,7 @@ Public visitors must not be forced through portfolio or NDA concepts merely to u
 - Trace proposed pages and features through the approved process and page flows.
 - Preserve clear boundaries between public, member, General NDA, project NDA, beta, and internal access levels.
 - Validate authorization on the server for every protected route, mutation, file, video, and API response.
-- Use the immutable Neon Auth user ID to relate an authenticated identity to OSai application data; do not use email as the relational key.
+- Use the immutable application profile ID to relate an authenticated identity to OSai application data; email is permitted only for one-time verified migration reconciliation, never as the ongoing relational key.
 - Treat DocuSign as the agreement system of record while retaining the application records needed for access decisions, reconciliation, and auditability.
 - Keep AI-generated feedback summaries traceable to original submissions and subject to human review.
 - Design individual OSai projects so they can remain independently deployable while securely integrating with the hub.
