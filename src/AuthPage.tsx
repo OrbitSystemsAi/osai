@@ -12,7 +12,9 @@ function AuthBrand() {
 }
 
 export default function AuthPage() {
-  const invitation = window.location.pathname.startsWith('/auth/invitation')
+  const pathname = window.location.pathname
+  const signingUp = pathname.startsWith('/auth/sign-up') || pathname.startsWith('/auth/invitation')
+  const signUpPath = pathname.startsWith('/auth/invitation') ? '/auth/invitation' : '/auth/sign-up'
   return <main className="auth-shell">
     <aside className="auth-story">
       <AuthBrand />
@@ -22,9 +24,9 @@ export default function AuthPage() {
     <section className="auth-panel">
       <a className="back-link" href="/">Back to OSai</a>
       <div className="auth-content clerk-auth-content">
-        {invitation
-          ? <SignUp routing="path" path="/auth/invitation" signInUrl="/auth/sign-in" forceRedirectUrl="/member/dashboard" />
-          : <SignIn routing="path" path="/auth/sign-in" signUpUrl="/auth/invitation" forceRedirectUrl="/member/dashboard" />}
+        {signingUp
+          ? <SignUp routing="path" path={signUpPath} signInUrl="/auth/sign-in" forceRedirectUrl="/member/dashboard" />
+          : <SignIn routing="path" path="/auth/sign-in" signUpUrl="/auth/sign-up" forceRedirectUrl="/member/dashboard" />}
       </div>
       <footer className="auth-footer"><a href="/privacy">Privacy</a><span /> <a href="/terms">Terms</a></footer>
     </section>
