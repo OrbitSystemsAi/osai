@@ -191,7 +191,8 @@ function PublicHeader({ current }: { current: string }) {
               </a>
             ))}
             <a className="nav-sign-in" href="/auth/sign-in" onClick={() => setMenuOpen(false)}>
-              Log in
+              <LockKeyhole aria-hidden="true" />
+              Client Portal
             </a>
           </nav>
           <button className="menu-button" type="button" aria-expanded={menuOpen} aria-controls="public-navigation" onClick={() => setMenuOpen((open) => !open)} aria-label={menuOpen ? "Close menu" : "Open menu"}>

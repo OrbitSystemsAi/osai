@@ -27,7 +27,8 @@ a { color:inherit; }
 .site-header nav { justify-self:end; display:flex; align-items:center; gap:52px; height:100%; }
 .site-header nav a { color:#fff; text-decoration:none; font-size:16px; font-weight:500; position:relative; }
 .site-header nav a:first-child:after { content:''; height:2px; background:var(--orange); position:absolute; left:0; right:0; bottom:-13px; }
-.site-header nav .nav-sign-in { padding:11px 18px; border:1px solid var(--orange); color:#fff; font-weight:700; transition:background .2s; }
+.site-header nav .nav-sign-in { padding:11px 18px; border:1px solid var(--orange); color:#fff; display:inline-flex; align-items:center; gap:8px; font-weight:700; white-space:nowrap; transition:background .2s; }
+.site-header nav .nav-sign-in svg { width:17px; height:17px; flex:none; }
 .site-header nav .nav-sign-in:hover { background:var(--orange); }
 .account-entry { position:relative; display:inline-flex; }
 .account-entry > .nav-sign-in { background:transparent; cursor:pointer; font-size:16px; }

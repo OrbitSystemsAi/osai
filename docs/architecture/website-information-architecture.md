@@ -210,7 +210,7 @@ flowchart TD
 - Consulting
 - Insights
 - Contact
-- Log in (opens the Sign in / Create Account dialog)
+- Client Portal (lock icon; opens the sign-in route)
 - Primary CTA: **Start a conversation**
 
 The public logo and navigation remain fixed while a page scrolls. Desktop uses the full navigation; mobile uses a hamburger-triggered full-screen menu. Public pages do not use a footer.
