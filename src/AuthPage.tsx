@@ -1,6 +1,7 @@
 'use client'
 
 import { SignIn, SignUp } from '@clerk/nextjs'
+import { usePathname } from 'next/navigation'
 
 function AuthBrand() {
   return <a className="auth-brand" href="/" aria-label="Orbit Systems home">
@@ -12,7 +13,7 @@ function AuthBrand() {
 }
 
 export default function AuthPage() {
-  const pathname = window.location.pathname
+  const pathname = usePathname()
   const signingUp = pathname.startsWith('/auth/sign-up') || pathname.startsWith('/auth/invitation')
   const signUpPath = pathname.startsWith('/auth/invitation') ? '/auth/invitation' : '/auth/sign-up'
   return <main className="auth-shell">

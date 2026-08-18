@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
+import { usePathname } from "next/navigation";
 import { ArrowLeft, ArrowRight, Bell, BellRing, BookOpen, CalendarDays, Check, ChevronRight, Clock3, FileCheck2, FileText, FlaskConical, FolderKanban, Hourglass, KeyRound, LayoutDashboard, LockKeyhole, Mail, Menu, Activity, DollarSign, ImageIcon, ListTodo, MessageSquareText, Orbit, Pencil, Plus, Search, LogOut, ShieldCheck, Tags, Target, Trash2, TrendingUp, Upload, User, UserCog, Users, X } from "lucide-react";
 import AuthPage from "./AuthPage";
 
@@ -4669,6 +4670,7 @@ function ProtectedMemberHub() {
 }
 
 export default function App() {
-  if (window.location.pathname.startsWith("/auth/")) return <AuthPage />;
-  return window.location.pathname.startsWith("/member") ? <ProtectedMemberHub /> : <PublicSite />;
+  const pathname = usePathname();
+  if (pathname.startsWith("/auth/")) return <AuthPage />;
+  return pathname.startsWith("/member") ? <ProtectedMemberHub /> : <PublicSite />;
 }
