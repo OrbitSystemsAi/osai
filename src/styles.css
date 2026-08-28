@@ -466,6 +466,7 @@ body.modal-open { overflow:hidden; }
 .detail-hero .page-wrap{position:relative;z-index:1}
 .detail-hero h1{max-width:880px;font-size:clamp(48px,6vw,82px)}
 .detail-hero h1.consulting-title{max-width:none;white-space:pre-line}
+.detail-hero h1.contact-title{max-width:none;white-space:nowrap}
 .detail-hero p{max-width:760px;margin:28px 0 0;color:#c9d8df;font-size:20px;line-height:1.65}
 .detail-body{min-height:470px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:11%;align-items:center;padding-top:76px;padding-bottom:76px}
 .detail-body>div>p{max-width:700px;margin:24px 0 32px;color:var(--slate);font-size:17px;line-height:1.8}
@@ -621,6 +622,7 @@ body.modal-open { overflow:hidden; }
   .public-detail .detail-hero{min-height:0;padding-top:88px}
   .public-detail .detail-hero h1{font-size:clamp(32px,9vw,42px)}
   .public-detail .detail-hero h1.consulting-title{white-space:normal}
+  .public-detail .detail-hero h1.contact-title{white-space:normal}
   .public-detail .detail-hero p{margin-top:14px;font-size:14px;line-height:1.45}
   .public-detail .detail-body,.public-detail .contact-body{min-height:0;gap:14px;padding-top:16px;padding-bottom:16px}
   .public-detail .detail-body h2,.public-detail .contact-body h2{font-size:26px;line-height:1.08}

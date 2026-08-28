@@ -311,7 +311,7 @@ function ContactPage() {
     <main className="public-detail contact-page">
       <section className="detail-hero">
         <div className="page-wrap">
-          <h1>Let’s move a worthwhile idea forward.</h1>
+          <h1 className="contact-title">Let&apos;s move your idea<br />from Concept to market</h1>
           <p>Tell us what you’re building, where you’re stuck, or what opportunity you want to explore.</p>
         </div>
       </section>
