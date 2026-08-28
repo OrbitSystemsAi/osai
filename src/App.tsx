@@ -231,6 +231,7 @@ const pageContent: Record<
   string,
   {
     title: string;
+    titleClassName?: string;
     intro: string;
     heading: string;
     body: string;
@@ -258,7 +259,8 @@ const pageContent: Record<
     actionHref: "/contact",
   },
   "/consulting": {
-    title: "Clarity for complex business and technology decisions.",
+    title: "Provide clarity for complex business\nand technology decisions",
+    titleClassName: "consulting-title",
     intro: "OSai Consulting helps leaders connect strategy, operations, product, and technology around outcomes that matter.",
     heading: "Focused expertise, connected execution.",
     body: "We work across the decisions that frequently become disconnected—market direction, operating models, product priorities, and technology roadmaps.",
@@ -282,7 +284,7 @@ function DetailPage({ content }: { content: (typeof pageContent)[string] }) {
     <main className="public-detail">
       <section className="detail-hero">
         <div className="page-wrap">
-          <h1>{content.title}</h1>
+          <h1 className={content.titleClassName}>{content.title}</h1>
           <p>{content.intro}</p>
         </div>
       </section>
