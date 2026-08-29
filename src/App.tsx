@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
+import Script from "next/script";
 import { ArrowLeft, ArrowRight, Bell, BellRing, BookOpen, CalendarDays, Check, ChevronRight, Clock3, FileCheck2, FileText, FlaskConical, FolderKanban, Hourglass, KeyRound, LayoutDashboard, LockKeyhole, Mail, Menu, Activity, DollarSign, ImageIcon, ListTodo, MessageSquareText, Orbit, Pencil, Plus, Search, LogOut, ShieldCheck, Tags, Target, Trash2, TrendingUp, Upload, User, UserCog, Users, X } from "lucide-react";
 import AuthPage from "./AuthPage";
 
@@ -308,6 +309,9 @@ function DetailPage({ content }: { content: (typeof pageContent)[string] }) {
 }
 
 function ContactPage() {
+  const tawkPropertyId = process.env.NEXT_PUBLIC_TAWK_PROPERTY_ID;
+  const tawkWidgetId = process.env.NEXT_PUBLIC_TAWK_WIDGET_ID;
+
   return (
     <main className="public-detail contact-page">
       <section className="detail-hero">
@@ -321,12 +325,40 @@ function ContactPage() {
           <h2>Start a conversation.</h2>
           <p>Share a short description of the opportunity and the kind of help you are looking for. We’ll respond with the most useful next step.</p>
         </div>
-        <a className="contact-email" href="mailto:hello@osai.com">
-          <span>Email OSai</span>
-          <strong>hello@osai.com</strong>
-          <ArrowRight />
-        </a>
       </section>
+      {tawkPropertyId && tawkWidgetId ? (
+        <>
+          <Script id="tawk-to-contact-position" strategy="afterInteractive">
+            {`window.Tawk_API = window.Tawk_API || {};
+var contactText = document.querySelector('.contact-body p');
+var contactTextBottomOffset = contactText
+  ? Math.max(16, Math.round(window.innerHeight - contactText.getBoundingClientRect().bottom))
+  : Math.round(window.innerHeight * 0.03);
+window.Tawk_API.onLoad = function () {
+  window.Tawk_API.maximize();
+};
+window.Tawk_API.customStyle = {
+  visibility: {
+    desktop: {
+      position: 'br',
+      xOffset: Math.round(window.innerWidth * 0.27),
+      yOffset: contactTextBottomOffset
+    },
+    mobile: {
+      position: 'br',
+      xOffset: 16,
+      yOffset: 16
+    }
+  }
+};`}
+          </Script>
+          <Script
+            id="tawk-to-contact-widget"
+            src={`https://embed.tawk.to/${encodeURIComponent(tawkPropertyId)}/${encodeURIComponent(tawkWidgetId)}`}
+            strategy="lazyOnload"
+          />
+        </>
+      ) : null}
     </main>
   );
 }

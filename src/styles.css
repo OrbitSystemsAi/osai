@@ -473,12 +473,8 @@ body.modal-open { overflow:hidden; }
 .detail-body>div>p{max-width:700px;margin:24px 0 32px;color:var(--slate);font-size:17px;line-height:1.8}
 .detail-body ul{margin:0;padding:0;list-style:none;border-top:1px solid var(--line)}
 .detail-body li{padding:22px 4px;border-bottom:1px solid var(--line);font-size:17px;font-weight:700}
-.contact-body{min-height:430px;display:grid;grid-template-columns:1fr 1fr;gap:12%;align-items:center;padding-top:76px;padding-bottom:76px}
+.contact-body{min-height:430px;display:grid;grid-template-columns:1fr;align-items:center;padding-top:76px;padding-bottom:76px}
 .contact-body p{max-width:620px;color:var(--slate);font-size:17px;line-height:1.8}
-.contact-email{min-height:170px;display:grid;grid-template-columns:1fr auto;align-content:center;gap:12px;padding:36px;color:#fff;background:#008d94;text-decoration:none}
-.contact-email span{grid-column:1/-1;font-size:14px;font-weight:700}
-.contact-email strong{font-size:clamp(24px,3vw,38px);overflow-wrap:anywhere}
-.contact-email svg{align-self:center}
 @media(max-width:1180px){.public-header .site-header{grid-template-columns:260px 1fr}.public-header .site-header nav{gap:24px}.public-header .brand-logo-image{width:250px}}
 @media(min-width:901px) and (max-width:1180px){
   .public-header,.public-header .site-header{height:92px}
@@ -513,7 +509,7 @@ body.modal-open { overflow:hidden; }
   .public-page-hero .hero-art:after{background:linear-gradient(180deg,rgba(0,26,46,.12) 0%,rgba(0,26,46,.82) 42%,#001a2e 78%)}
   .services h2{font-size:34px}.public-service-link{padding:38px 0}.public-service-link .service-link{margin-top:20px}
   .public-detail{padding-top:88px}.detail-hero{min-height:430px}.detail-hero h1{font-size:43px}.detail-hero p{font-size:17px;line-height:1.6}
-  .detail-body,.contact-body{padding-top:56px;padding-bottom:56px}.detail-body{grid-template-columns:1fr}.detail-body ul{min-width:0}.contact-email{min-height:150px;padding:26px}
+  .detail-body,.contact-body{padding-top:56px;padding-bottom:56px}.detail-body{grid-template-columns:1fr}.detail-body ul{min-width:0}
 }
 
 /* Profile identity and server-derived clearance. */
@@ -595,7 +591,6 @@ body.modal-open { overflow:hidden; }
 .public-detail .detail-body>div>p{margin:16px 0 22px;font-size:15px;line-height:1.55}
 .public-detail .detail-body li{padding:14px 4px;font-size:14px}
 .public-detail .contact-body p{font-size:15px;line-height:1.55}
-.public-detail .contact-email{min-height:140px;padding:28px}
 @media(max-height:760px) and (min-width:901px){
   .public-header,.public-header .site-header{height:88px}
   .public-header .brand-logo-image{width:240px}
@@ -630,5 +625,4 @@ body.modal-open { overflow:hidden; }
   .public-detail .detail-body>div>p,.public-detail .contact-body p{margin:10px 0 13px;font-size:12px;line-height:1.4}
   .public-detail .detail-body .button{min-height:42px;padding:0 17px;width:auto;font-size:12px}
   .public-detail .detail-body li{padding:8px 2px;font-size:12px}
-  .public-detail .contact-email{min-height:104px;padding:18px}.public-detail .contact-email strong{font-size:22px}
 }
