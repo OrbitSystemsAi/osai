@@ -235,6 +235,7 @@ const pageContent: Record<
     titleClassName?: string;
     intro: string;
     heading: string;
+    headingClassName?: string;
     body: string;
     points: string[];
     action: string;
@@ -242,7 +243,8 @@ const pageContent: Record<
   }
 > = {
   "/venture": {
-    title: "Build the right venture—with conviction.",
+    title: "Build the right Venture\n- with Passion",
+    titleClassName: "venture-title",
     intro: "OSai Ventures works alongside founders to move promising ideas from first conviction toward a durable, market-ready business.",
     heading: "A hands-on partner for the venture journey.",
     body: "We connect strategy, product decisions, technology, and commercialization so the venture stays focused on evidence, momentum, and the next meaningful milestone.",
@@ -253,7 +255,8 @@ const pageContent: Record<
   "/innovation": {
     title: "Turn bold ideas into practical innovation.",
     intro: "OSai Innovation helps organizations explore opportunities, test assumptions, and create solutions grounded in real customer and business needs.",
-    heading: "Innovation designed to become real.",
+    heading: "Innovation designed to become\nreal products.",
+    headingClassName: "innovation-heading",
     body: "Our programs bring strategy, design, and emerging technology into one disciplined process—from discovery through tested concepts and implementation direction.",
     points: ["Opportunity discovery", "Rapid concept development", "Customer-centered validation", "Implementation roadmaps"],
     action: "Explore an innovation program",
@@ -292,7 +295,7 @@ function DetailPage({ content }: { content: (typeof pageContent)[string] }) {
       </section>
       <section className="detail-body page-wrap">
         <div>
-          <h2>{content.heading}</h2>
+          <h2 className={content.headingClassName}>{content.heading}</h2>
           <p>{content.body}</p>
           <a className="button button-orange" href={content.actionHref}>
             {content.action}

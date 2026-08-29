@@ -465,12 +465,13 @@ body.modal-open { overflow:hidden; }
 .detail-hero:after{width:520px;height:520px;right:8%;top:-350px;border-style:dashed}
 .detail-hero .page-wrap{position:relative;z-index:1}
 .detail-hero h1{max-width:880px;font-size:clamp(48px,6vw,82px)}
-.detail-hero h1.consulting-title{max-width:none;white-space:pre-line}
+.detail-hero h1.venture-title,.detail-hero h1.consulting-title{max-width:none;white-space:pre-line}
 .detail-hero h1.insights-title{white-space:pre-line}
 .detail-hero h1.contact-title{max-width:none;white-space:nowrap}
 .detail-hero p{max-width:760px;margin:28px 0 0;color:#c9d8df;font-size:20px;line-height:1.65}
 .detail-body{min-height:470px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:11%;align-items:center;padding-top:76px;padding-bottom:76px}
 .detail-body>div>p{max-width:700px;margin:24px 0 32px;color:var(--slate);font-size:17px;line-height:1.8}
+.detail-body h2.innovation-heading{white-space:pre-line}
 .detail-body ul{margin:0;padding:0;list-style:none;border-top:1px solid var(--line)}
 .detail-body li{padding:22px 4px;border-bottom:1px solid var(--line);font-size:17px;font-weight:700}
 .contact-body{min-height:430px;display:grid;grid-template-columns:1fr;align-items:center;padding-top:76px;padding-bottom:76px}
