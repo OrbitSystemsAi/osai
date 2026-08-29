@@ -466,6 +466,7 @@ body.modal-open { overflow:hidden; }
 .detail-hero .page-wrap{position:relative;z-index:1}
 .detail-hero h1{max-width:880px;font-size:clamp(48px,6vw,82px)}
 .detail-hero h1.consulting-title{max-width:none;white-space:pre-line}
+.detail-hero h1.insights-title{white-space:pre-line}
 .detail-hero h1.contact-title{max-width:none;white-space:nowrap}
 .detail-hero p{max-width:760px;margin:28px 0 0;color:#c9d8df;font-size:20px;line-height:1.65}
 .detail-body{min-height:470px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:11%;align-items:center;padding-top:76px;padding-bottom:76px}
