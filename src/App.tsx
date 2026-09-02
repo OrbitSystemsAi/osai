@@ -324,10 +324,14 @@ function ContactPage() {
         </div>
       </section>
       <section className="contact-body page-wrap">
-        <div>
+        <div className="contact-copy">
           <h2>Start a conversation.</h2>
           <p>Share a short description of the opportunity and the kind of help you are looking for. We’ll respond with the most useful next step.</p>
         </div>
+        <a className="contact-terms-link" href="/legal/orbit-systems-ai-terms-of-service.docx" target="_blank" rel="noreferrer">
+          <FileText aria-hidden="true" />
+          Terms of Service
+        </a>
       </section>
       {tawkPropertyId && tawkWidgetId ? (
         <>

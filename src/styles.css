@@ -474,8 +474,13 @@ body.modal-open { overflow:hidden; }
 .detail-body h2.innovation-heading{white-space:pre-line}
 .detail-body ul{margin:0;padding:0;list-style:none;border-top:1px solid var(--line)}
 .detail-body li{padding:22px 4px;border-bottom:1px solid var(--line);font-size:17px;font-weight:700}
-.contact-body{min-height:430px;display:grid;grid-template-columns:1fr;align-items:center;padding-top:76px;padding-bottom:76px}
+.contact-body{min-height:430px;display:grid;grid-template-columns:1fr;grid-template-rows:1fr auto;align-items:center;padding-top:76px;padding-bottom:34px}
+.contact-copy{align-self:center}
 .contact-body p{max-width:620px;color:var(--slate);font-size:17px;line-height:1.8}
+.contact-terms-link{width:max-content;display:inline-flex;align-items:center;gap:8px;color:#52677a;font-size:13px;font-weight:700;text-decoration:none}
+.contact-terms-link svg{width:16px;height:16px;color:#008b93}
+.contact-terms-link:hover,.contact-terms-link:focus-visible{color:#dc5e20;text-decoration:underline;text-underline-offset:4px}
+.contact-terms-link:focus-visible{outline:2px solid #008b93;outline-offset:5px}
 @media(max-width:1180px){.public-header .site-header{grid-template-columns:260px 1fr}.public-header .site-header nav{gap:24px}.public-header .brand-logo-image{width:250px}}
 @media(min-width:901px) and (max-width:1180px){
   .public-header,.public-header .site-header{height:92px}
@@ -624,6 +629,8 @@ body.modal-open { overflow:hidden; }
   .public-detail .detail-body,.public-detail .contact-body{min-height:0;gap:14px;padding-top:16px;padding-bottom:16px}
   .public-detail .detail-body h2,.public-detail .contact-body h2{font-size:26px;line-height:1.08}
   .public-detail .detail-body>div>p,.public-detail .contact-body p{margin:10px 0 13px;font-size:12px;line-height:1.4}
+  .public-detail .contact-body{padding-bottom:18px}
+  .contact-terms-link{font-size:12px}
   .public-detail .detail-body .button{min-height:42px;padding:0 17px;width:auto;font-size:12px}
   .public-detail .detail-body li{padding:8px 2px;font-size:12px}
 }
