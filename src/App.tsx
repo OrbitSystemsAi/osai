@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import Script from "next/script";
 import { ArrowLeft, ArrowRight, Bell, BellRing, BookOpen, CalendarDays, Check, ChevronRight, Clock3, FileCheck2, FileText, FlaskConical, FolderKanban, Hourglass, KeyRound, LayoutDashboard, LockKeyhole, Mail, Menu, Activity, DollarSign, ImageIcon, ListTodo, MessageSquareText, Orbit, Pencil, Plus, Search, LogOut, ShieldCheck, Tags, Target, Trash2, TrendingUp, Upload, User, UserCog, Users, X } from "lucide-react";
 import AuthPage from "./AuthPage";
+import legalPoliciesData from "./legalPolicies.json";
 
 const PROJECT_TITLE_MAX = 40;
 const PROJECT_DESCRIPTION_MAX = 300;
@@ -328,10 +329,20 @@ function ContactPage() {
           <h2>Start a conversation.</h2>
           <p>Share a short description of the opportunity and the kind of help you are looking for. We’ll respond with the most useful next step.</p>
         </div>
-        <a className="contact-terms-link" href="/terms">
-          <FileText aria-hidden="true" />
-          Terms of Service
-        </a>
+        <nav className="contact-policy-links" aria-label="Policies and terms">
+          <a className="contact-policy-link" href="/terms">
+            <FileText aria-hidden="true" />
+            Terms of Service
+          </a>
+          <a className="contact-policy-link" href="/privacy">
+            <FileText aria-hidden="true" />
+            Privacy Policy
+          </a>
+          <a className="contact-policy-link" href="/customer-support-policy">
+            <FileText aria-hidden="true" />
+            Customer Support Policy
+          </a>
+        </nav>
       </section>
       {tawkPropertyId && tawkWidgetId ? (
         <>
@@ -370,24 +381,76 @@ window.Tawk_API.customStyle = {
   );
 }
 
-function TermsPage() {
+type LegalPolicyBlock =
+  | { type: "heading"; level: number; text: string }
+  | { type: "listItem"; text: string }
+  | { type: "subtitle"; text: string }
+  | { type: "notice"; text: string }
+  | { type: "paragraph"; text: string }
+  | { type: "table"; rows: string[][] };
+
+type LegalPolicy = {
+  slug: string;
+  title: string;
+  downloadHref: string;
+  blocks: LegalPolicyBlock[];
+};
+
+const legalPolicies = legalPoliciesData as LegalPolicy[];
+const legalPolicyBySlug = Object.fromEntries(legalPolicies.map((policy) => [policy.slug, policy])) as Record<string, LegalPolicy>;
+
+function PolicyBlocks({ blocks }: { blocks: LegalPolicyBlock[] }) {
+  const rendered: ReactNode[] = [];
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index];
+    if (block.type === "listItem") {
+      const items: string[] = [];
+      while (index < blocks.length && blocks[index].type === "listItem") {
+        const listItem = blocks[index];
+        if (listItem.type !== "listItem") break;
+        items.push(listItem.text);
+        index += 1;
+      }
+      index -= 1;
+      rendered.push(<ul key={`list-${index}`}>{items.map((item) => <li key={item}>{item}</li>)}</ul>);
+    } else if (block.type === "heading") {
+      const Heading = block.level <= 1 ? "h2" : block.level === 2 ? "h3" : "h4";
+      rendered.push(<Heading key={`heading-${index}`}>{block.text}</Heading>);
+    } else if (block.type === "table") {
+      rendered.push(
+        <div className="policy-table-wrap" key={`table-${index}`}>
+          <table>
+            <thead><tr>{block.rows[0].map((cell, cellIndex) => <th key={`${cell}-${cellIndex}`}>{cell}</th>)}</tr></thead>
+            <tbody>{block.rows.slice(1).map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}</tr>)}</tbody>
+          </table>
+        </div>,
+      );
+    } else {
+      rendered.push(<p className={`policy-${block.type}`} key={`${block.type}-${index}`}>{block.text}</p>);
+    }
+  }
+  return rendered;
+}
+
+function PolicyDownloadPage({ policy }: { policy: LegalPolicy }) {
+  const subtitle = policy.blocks.find((block) => block.type === "subtitle") as Extract<LegalPolicyBlock, { type: "subtitle" }> | undefined;
+  const bodyBlocks = policy.blocks.filter((block) => block !== subtitle);
   return (
     <main className="public-detail terms-page">
       <section className="detail-hero terms-hero">
         <div className="page-wrap">
-          <h1>Terms of Service</h1>
-          <p>Review the terms governing access to and use of the OSai Work Hub.</p>
+          <h1>{policy.title}</h1>
+          {subtitle ? <p>{subtitle.text}</p> : null}
         </div>
       </section>
-      <section className="terms-body page-wrap">
-        <div>
-          <h2>Download the Terms of Service</h2>
-          <p>Download a copy for your records.</p>
-          <a className="button button-orange terms-download" href="/legal/orbit-systems-ai-terms-of-service.docx" download>
-            <FileText aria-hidden="true" />
-            Download Terms of Service
-          </a>
-        </div>
+      <section className="policy-content page-wrap">
+        <a className="button button-orange terms-download" href={policy.downloadHref} download>
+          <FileText aria-hidden="true" />
+          Download {policy.title}
+        </a>
+        <article className="policy-document" aria-label={policy.title}>
+          <PolicyBlocks blocks={bodyBlocks} />
+        </article>
       </section>
     </main>
   );
@@ -396,10 +459,21 @@ function TermsPage() {
 function PublicSite() {
   const path = window.location.pathname.replace(/\/$/, "") || "/";
   const content = pageContent[path];
+  const legalPolicy = legalPolicyBySlug[path];
   return (
     <div className="public-site">
       <PublicHeader current={path} />
-      {path === "/" ? <HomePage /> : path === "/contact" ? <ContactPage /> : path === "/terms" ? <TermsPage /> : content ? <DetailPage content={content} /> : <HomePage />}
+      {path === "/" ? (
+        <HomePage />
+      ) : path === "/contact" ? (
+        <ContactPage />
+      ) : legalPolicy ? (
+        <PolicyDownloadPage policy={legalPolicy} />
+      ) : content ? (
+        <DetailPage content={content} />
+      ) : (
+        <HomePage />
+      )}
     </div>
   );
 }

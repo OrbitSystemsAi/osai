@@ -1,0 +1,1168 @@
+[
+  {
+    "slug": "/terms",
+    "title": "Terms of Service",
+    "downloadHref": "/legal/orbit-systems-ai-terms-of-service.docx",
+    "blocks": [
+      {
+        "type": "subtitle",
+        "text": "Digital Employees, AI Voice Services, and Phone Numbers"
+      },
+      {
+        "type": "table",
+        "rows": [
+          [
+            "Provider",
+            "Orbit Systems AI, LLC (\"Orbit,\" \"we,\" \"us,\" or \"our\")"
+          ],
+          [
+            "Effective date",
+            "September 2, 2026"
+          ],
+          [
+            "Applies to",
+            "Website, platform, Digital Employees, telephony, messaging, integrations, support, and related services"
+          ],
+          [
+            "Contact",
+            "admin@orbitsystems.ai | 7901 4th St N STE 300, St. Petersburg, FL 33702"
+          ]
+        ]
+      },
+      {
+        "type": "notice",
+        "text": "IMPORTANT: These Terms form a binding agreement. They contain warranty disclaimers, limits of liability, customer compliance duties, suspension rights, and a dispute-resolution provision. Phone numbers are licensed for use and are not sold as property."
+      },
+      {
+        "type": "paragraph",
+        "text": "Please read these Terms of Service (the “Terms”) carefully. By creating an account, signing an Order Form, clicking to accept, paying an invoice, or accessing or using the Services, the individual accepting these Terms confirms that they have authority to bind the Customer and agrees that Customer will comply with these Terms. If Customer does not agree, Customer must not access or use the Services."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "1. Definitions"
+      },
+      {
+        "type": "paragraph",
+        "text": "“Affiliate” means an entity that controls, is controlled by, or is under common control with a party. “Authorized User” means an employee, contractor, agent, or other person Customer permits to use the Services. “Customer,” “you,” or “your” means the person or entity ordering or using the Services. “Customer Data” means information, content, prompts, recordings, transcripts, contact data, business rules, credentials, and other materials submitted to or processed through the Services on Customer’s behalf."
+      },
+      {
+        "type": "paragraph",
+        "text": "“Digital Employee” means an AI-enabled software agent configured to perform approved tasks, which may include answering or placing calls, responding to messages, routing communications, scheduling appointments, collecting information, and interacting with approved systems. “Order Form” means an ordering document, online checkout, statement of work, proposal, or similar transaction record identifying Services, fees, usage allowances, and any special terms. “Services” means Orbit’s website, software, Digital Employees, phone numbers, voice or messaging functionality, integrations, professional services, support, and related offerings."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "2. Eligibility, Accounts, and Business Use"
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer must be legally capable of entering into a contract and, if accepting for an entity, authorized to bind that entity. Unless an Order Form expressly states otherwise, the Services are offered for legitimate business use and not for personal, family, or household use. Customer must provide accurate, complete, and current account, billing, tax, ownership, and contact information."
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer is responsible for all activity under its accounts and credentials, for maintaining appropriate administrative controls and strong authentication, and for promptly notifying Orbit at admin@orbitsystems.ai of suspected unauthorized access. Customer may not share accounts except with Authorized Users and may not allow access by a competitor for benchmarking or reverse engineering."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "3. Orders; Service Configuration"
+      },
+      {
+        "type": "paragraph",
+        "text": "Each Order Form is incorporated into these Terms. If documents conflict, the following order applies unless an Order Form expressly states otherwise: (a) a signed data processing addendum for privacy matters; (b) the Order Form; (c) these Terms; and (d) documentation or policies referenced here. A purchase order is for administrative convenience only and does not modify this agreement."
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer is responsible for reviewing and approving its Digital Employee’s identity, greeting, disclosures, knowledge sources, scripts, workflows, escalation paths, allowed actions, integrations, call-routing rules, and test results before production use. Customer must keep that configuration accurate and must use human review and fallback procedures appropriate to the risk of each use case."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "4. Digital Employees and AI Limitations"
+      },
+      {
+        "type": "paragraph",
+        "text": "Digital Employees use probabilistic technology and may produce inaccurate, incomplete, delayed, unexpected, or offensive output; misunderstand speakers; fail to complete a task; or take an unintended action within configured permissions. Customer must independently evaluate outputs and must not treat a Digital Employee as a human or licensed professional."
+      },
+      {
+        "type": "paragraph",
+        "text": "Unless Orbit expressly agrees in a signed Order Form, Customer will not use the Services to make final decisions concerning employment, housing, lending, insurance, healthcare diagnosis or treatment, legal rights, education admissions, government benefits, public safety, or another high-impact or regulated determination. Customer must provide meaningful human oversight where required by law or reasonably necessary to prevent harm."
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer must ensure that callers and message recipients receive any disclosures required by law, which may include disclosure that they are interacting with an automated or AI system and that a communication may be recorded or monitored. Customer may not falsely present a Digital Employee as a particular real person or use a voice, likeness, identity, or other personal attribute without all required rights and permissions."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "5. Telephony, Phone Numbers, Messaging, and Emergency Services"
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "5.1 Limited right to use numbers"
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit or its communications providers may provision, host, port, or assign telephone numbers for Customer’s use with the Services. A number is not sold to Customer and Customer acquires no ownership, property, or perpetual right in it. Customer receives only a limited, revocable right to use an assigned number during the applicable Subscription Term, subject to law, numbering rules, carrier requirements, availability, and these Terms."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "5.2 Provisioning, reassignment, and continuity"
+      },
+      {
+        "type": "paragraph",
+        "text": "Number availability is not guaranteed. Regulators, carriers, upstream providers, or Orbit may reclaim, replace, suspend, or reassign numbers where required by law, to address fraud or abuse, after nonpayment or termination, or for technical or operational reasons. Orbit will use commercially reasonable efforts to provide notice when practicable but does not guarantee continuous availability, geographic identity, caller-name display, reputation, deliverability, or compatibility with every carrier or destination."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "5.3 Porting"
+      },
+      {
+        "type": "paragraph",
+        "text": "Port-in and port-out requests require complete and accurate documentation, account standing, cooperation, and compliance with carrier procedures. Customer authorizes Orbit and its providers to submit and process porting documentation on Customer’s behalf. Customer remains responsible for fees and usage until a port is completed. Orbit does not guarantee that a number can be ported or retained. Orbit will not unreasonably prevent a lawful port-out requested before termination, but may require payment of undisputed past-due amounts and completion of required verification, except where law prohibits those conditions."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "5.4 Customer’s communications responsibility"
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer is the initiator, sender, and party responsible for communications made or received through its account, even when a Digital Employee generates, selects, routes, or delivers content. Customer must maintain and be able to produce legally sufficient evidence of consent, opt-in, opt-out, suppression, and campaign records. Customer must honor revocation and do-not-call requests promptly and maintain appropriate internal suppression lists."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "5.5 Registration and carrier programs"
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer must complete all required identity, know-your-customer, caller-ID, branded calling, toll-free verification, A2P or campaign registration, and similar carrier or industry processes. Customer may not provide false registration information, rotate numbers to avoid enforcement, alter caller ID deceptively, or use numbers that Customer is not authorized to use. Registration or approval does not establish legal compliance or guarantee call completion or message delivery."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "5.6 Emergency services"
+      },
+      {
+        "type": "paragraph",
+        "text": "THE SERVICES ARE NOT A REPLACEMENT FOR 911, E911, 988, EMERGENCY DISPATCH, ALARM MONITORING, OR ANY OTHER EMERGENCY SERVICE UNLESS AN ORDER FORM EXPRESSLY IDENTIFIES A SPECIFIC EMERGENCY-CALLING FEATURE AND ITS TERMS. CUSTOMER MUST NOT ROUTE OR RELY ON EMERGENCY COMMUNICATIONS THROUGH THE SERVICES OTHERWISE. CUSTOMER MUST INFORM AUTHORIZED USERS OF THIS LIMITATION AND MAINTAIN AN INDEPENDENT, RELIABLE MEANS TO CONTACT EMERGENCY SERVICES."
+      },
+      {
+        "type": "paragraph",
+        "text": "If an Order Form expressly includes emergency calling, Customer must provide and maintain accurate registered-location information and comply with all testing, labeling, notification, and use instructions. Emergency calling may have limitations described in the applicable Order Form or provider terms, including limitations during internet, power, device, configuration, or service outages. Nothing in these Terms waives a nonwaivable legal obligation."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "6. Acceptable Use and Communications Compliance"
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer will comply with all laws, regulations, codes, carrier rules, and industry requirements applicable to Customer, its content, and its communications, including as applicable the Telephone Consumer Protection Act, Telemarketing Sales Rule, state mini-TCPA and recording laws, National Do Not Call rules, caller-ID and anti-spoofing requirements, CAN-SPAM, privacy and biometric laws, and messaging program requirements."
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer must not use or permit use of the Services to:"
+      },
+      {
+        "type": "listItem",
+        "text": "make calls or send messages without legally sufficient consent, required identification, or a working opt-out mechanism; contact a person after consent is revoked or contrary to an applicable do-not-call or suppression list;"
+      },
+      {
+        "type": "listItem",
+        "text": "send spam, unlawful marketing, scams, phishing, deceptive solicitations, fraudulent offers, or content that misrepresents the caller, sender, purpose, price, material terms, or relationship with Orbit or another party;"
+      },
+      {
+        "type": "listItem",
+        "text": "engage in unlawful debt collection, harassment, threats, hate, exploitation, trafficking, illegal gambling, controlled-substance transactions, weapons trafficking, or the promotion or facilitation of illegal goods or services;"
+      },
+      {
+        "type": "listItem",
+        "text": "impersonate a person or organization; spoof or manipulate caller identification; mislead a recipient about the use of AI; or use a voice, recording, likeness, trademark, or other protected material without authorization;"
+      },
+      {
+        "type": "listItem",
+        "text": "generate or distribute malware; probe, scan, disrupt, overload, or bypass security or usage controls; scrape or exfiltrate data without authorization; or interfere with networks, carriers, recipients, or other customers;"
+      },
+      {
+        "type": "listItem",
+        "text": "use the Services for emergency dispatch, safety-critical control, or a high-impact decision except under a signed Order Form expressly permitting the use case and allocating compliance responsibilities;"
+      },
+      {
+        "type": "listItem",
+        "text": "resell, sublicense, transfer, or provide access to a phone number or Service except as expressly permitted in an Order Form; or"
+      },
+      {
+        "type": "listItem",
+        "text": "violate the acceptable-use rules of an upstream communications, cloud, AI, payment, or integration provider made available to Customer or reasonably communicated by Orbit."
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit may investigate suspected violations and may block traffic, disable features or numbers, preserve evidence, or cooperate with carriers, platforms, regulators, or law enforcement where reasonably necessary. Customer must provide information reasonably requested to verify consent, identity, campaign purpose, data sources, or compliance."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "7. Customer Data; Privacy; Call Recording"
+      },
+      {
+        "type": "paragraph",
+        "text": "As between the parties, Customer retains its rights in Customer Data. Customer grants Orbit and its subprocessors a nonexclusive, worldwide right to host, copy, transmit, modify, create technical derivatives from, and otherwise process Customer Data only as reasonably necessary to provide, secure, support, improve, and comply with law regarding the Services, subject to any applicable data processing addendum and privacy policy."
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer represents and warrants that it has provided all notices and obtained all rights, permissions, consents, and lawful bases necessary for Orbit and its providers to process Customer Data as contemplated. Customer is solely responsible for deciding whether, when, and how calls or messages are recorded, transcribed, analyzed, or retained, and for giving all required one-party, all-party, employee, consumer, biometric, and AI notices and obtaining all required consents."
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer will not submit payment-card data, government identification numbers, authentication secrets, protected health information, or other highly sensitive data unless an Order Form expressly authorizes that data type and identifies applicable safeguards. Customer must configure collection and retention to minimize data and limit access. Orbit may delete Customer Data after termination in accordance with its retention practices, legal obligations, and any Order Form."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "7.1 Children’s Privacy"
+      },
+      {
+        "type": "paragraph",
+        "text": "The Services are intended for business use and are not directed to children under 13. Customer must not configure or use the Services to solicit or knowingly collect personal information from children under 13 unless Orbit has expressly approved the use case in a written Order Form and the parties have implemented all legally required notices, verifiable parental-consent procedures, security measures, retention limits, and parental rights. Customer must promptly notify Orbit at legal@orbitsystems.ai if Customer believes a child’s personal information was collected improperly."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "8. Third-Party Services and Subprocessors"
+      },
+      {
+        "type": "paragraph",
+        "text": "The Services may depend on telecommunications carriers, messaging aggregators, cloud hosts, AI-model providers, scheduling tools, customer relationship management systems, payment processors, and other third parties. Third-party services are governed by their own terms and privacy practices. Orbit does not control and is not responsible for third-party services, carrier filtering, recipient devices, internet connectivity, or changes made by a third party. Customer authorizes Orbit to use subprocessors reasonably necessary to provide the Services."
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer is responsible for accounts, licenses, instructions, content, and permissions associated with Customer-selected integrations. Orbit may suspend or remove an integration if the provider withdraws access, changes its requirements, or the integration creates a security, legal, or operational risk."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "9. Fees, Billing, Taxes, and Payment"
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer will pay the subscription, setup, usage, number, carrier, messaging, professional-service, and other fees stated in the Order Form. Unless stated otherwise, recurring fees are billed in advance and metered or pass-through usage is billed in arrears. Fees are stated in U.S. dollars, non-cancelable during the committed Subscription Term, and nonrefundable except as expressly provided in these Terms or an Order Form."
+      },
+      {
+        "type": "paragraph",
+        "text": "Each invoice will itemize, as applicable, recurring subscription charges, setup or professional-service fees, telephone-number charges, metered voice usage, messaging usage, other usage-based charges, carrier or provider pass-through charges, regulatory assessments, surcharges, credits, and taxes. Usage details may be summarized by service, number, billing period, or usage category, with supporting records made available upon reasonable request to the extent available from Orbit’s systems and upstream providers."
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer authorizes Orbit and its payment processor, including Stripe, to charge Customer’s payment method for all amounts due, including recurring subscription fees, metered usage, taxes, and approved overages. Customer must maintain a valid payment method and accurate billing information. A card statement descriptor may identify Orbit Systems AI or a substantially similar business name."
+      },
+      {
+        "type": "paragraph",
+        "text": "Invoices are due on receipt unless the Order Form states another period. Undisputed past-due amounts may accrue interest at the lesser of 1.5% per month or the maximum lawful rate, plus reasonable collection costs. Customer must dispute an invoice in writing within 30 days after its date and provide reasonable detail; otherwise, the invoice is deemed accepted to the extent permitted by law. Customer may not initiate a chargeback for a good-faith contractual dispute without first contacting Orbit at finance@orbitsystems.ai and allowing at least 10 business days to investigate, but this does not waive any nonwaivable cardholder right."
+      },
+      {
+        "type": "paragraph",
+        "text": "Fees exclude sales, use, excise, telecommunications, communications-services, 911 or E911, universal-service, regulatory-recovery, value-added, withholding, and similar taxes, fees, or assessments. Customer is responsible for all such amounts arising from the telephony, phone-number, messaging, and related Services, except taxes based on Orbit’s net income. Orbit may calculate, collect, invoice, or pass through applicable taxes, regulatory assessments, carrier surcharges, and government-imposed fees, including amounts imposed or adjusted after the applicable usage occurred."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "10. Trials, Subscription Term, Renewal, and Cancellation"
+      },
+      {
+        "type": "paragraph",
+        "text": "A trial or pilot is governed by these Terms and any stated limits and may be changed or ended at any time unless an Order Form says otherwise. The initial subscription term begins on the date stated in the Order Form or, if none, when paid access begins. Unless the Order Form says otherwise, subscriptions renew automatically for successive periods equal to the initial term until either party gives written nonrenewal notice at least 30 days before the current term ends."
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer may cancel renewal through the account settings, if available, or by emailing finance@orbitsystems.ai. Cancellation takes effect at the end of the paid Subscription Term; Customer remains responsible for charges incurred through that date. Orbit may change fees for a renewal term by providing at least 30 days’ notice. Any consumer cancellation right required by applicable law remains unaffected, although the Services are intended for business use."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "11. Suspension and Termination"
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit may suspend some or all Services immediately if: (a) fees are overdue; (b) Customer’s use presents a security, legal, fraud, safety, carrier, payment-network, or operational risk; (c) a regulator, carrier, upstream provider, court, or law-enforcement authority requests or requires action; (d) Customer violates Sections 5, 6, or 7; or (e) suspension is reasonably necessary to prevent material harm. Where practicable and lawful, Orbit will provide notice and an opportunity to cure."
+      },
+      {
+        "type": "paragraph",
+        "text": "Either party may terminate an Order Form for an uncured material breach after 30 days’ written notice, except a breach incapable of cure may permit immediate termination. Orbit may terminate immediately for unlawful or fraudulent use, repeated policy violations, insolvency, or loss of a necessary carrier or provider relationship. Upon termination, Customer must stop using the Services and numbers, pay all accrued amounts, and export Customer Data before the applicable access or retention period ends. Sections that by nature should survive will survive, including payment obligations, intellectual property, disclaimers, indemnification, liability limits, confidentiality, dispute terms, and general provisions."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "12. Ownership; Feedback; Publicity"
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit and its licensors own the Services, software, models, workflows, documentation, templates, improvements, and all related intellectual property, excluding Customer Data. Subject to payment and compliance, Orbit grants Customer a limited, nonexclusive, nontransferable, nonsublicensable right during the Subscription Term to access and use the Services for Customer’s internal business purposes and authorized customer interactions."
+      },
+      {
+        "type": "paragraph",
+        "text": "If Customer provides feedback, Customer grants Orbit a perpetual, irrevocable, worldwide, royalty-free right to use it without restriction or attribution. Orbit will use Customer’s name or logo in public marketing only with Customer’s prior written consent. Orbit may identify Customer privately to service providers as necessary to deliver the Services."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "13. Confidentiality"
+      },
+      {
+        "type": "paragraph",
+        "text": "Each party may receive nonpublic information designated as confidential or that reasonably should be understood as confidential. The receiving party will use it only to perform or exercise rights under the agreement, protect it using at least reasonable care, and disclose it only to personnel and providers who need to know and are bound by confidentiality duties. These duties do not apply to information lawfully known without restriction, independently developed, rightfully received from another source, or public through no breach. A party may disclose information when legally required after giving notice where permitted."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "14. Warranties and Disclaimers"
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit warrants that it will perform paid professional services in a professional and workmanlike manner. Customer’s exclusive remedy for breach of this warranty is re-performance if Customer gives written notice within 30 days after performance; if Orbit cannot reasonably re-perform, Customer may terminate the affected professional service and receive a refund of prepaid fees for the nonconforming portion."
+      },
+      {
+        "type": "paragraph",
+        "text": "EXCEPT FOR THE EXPRESS WARRANTY ABOVE AND TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SERVICES ARE PROVIDED “AS IS” AND “AS AVAILABLE.” ORBIT DISCLAIMS ALL IMPLIED OR STATUTORY WARRANTIES, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT, ACCURACY, QUIET ENJOYMENT, AND WARRANTIES ARISING FROM COURSE OF DEALING OR USAGE OF TRADE. ORBIT DOES NOT WARRANT THAT THE SERVICES, DIGITAL EMPLOYEE OUTPUTS, PHONE NUMBERS, CALL COMPLETION, MESSAGE DELIVERY, TRANSCRIPTIONS, INTEGRATIONS, OR THIRD-PARTY SERVICES WILL BE UNINTERRUPTED, ERROR-FREE, SECURE, ACCURATE, OR SUITABLE FOR CUSTOMER’S LEGAL OR BUSINESS PURPOSES."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "15. Indemnification"
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer will defend, indemnify, and hold harmless Orbit, its Affiliates, providers, and their personnel from third-party claims, investigations, fines, penalties, damages, losses, costs, and reasonable attorneys’ fees arising from or relating to: (a) Customer Data, scripts, campaigns, products, or instructions; (b) Customer’s or an Authorized User’s use of the Services; (c) calls, recordings, texts, email, or other communications initiated, received, or processed for Customer; (d) Customer’s violation of law, consent or disclosure obligations, carrier rules, or these Terms; or (e) infringement, misappropriation, fraud, impersonation, or harmful conduct attributable to Customer."
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit will defend Customer against a third-party claim that Orbit’s unmodified proprietary software, when used as authorized, directly infringes a U.S. patent, copyright, or trademark, and will pay finally awarded damages or settlements approved by Orbit. Orbit may modify or replace the affected Service or terminate it and refund prepaid unused subscription fees for the terminated portion. Orbit has no obligation for claims arising from Customer Data, instructions, combinations not supplied by Orbit, modifications, continued use after notice, or third-party services. This paragraph states Customer’s exclusive remedy for intellectual-property infringement claims."
+      },
+      {
+        "type": "paragraph",
+        "text": "The indemnified party must promptly notify the indemnifying party, allow it to control the defense and settlement, and provide reasonable cooperation. A settlement may not admit fault by or impose a nonmonetary obligation on the indemnified party without written consent."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "16. Limitation of Liability"
+      },
+      {
+        "type": "paragraph",
+        "text": "TO THE MAXIMUM EXTENT PERMITTED BY LAW, NEITHER PARTY WILL BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, PUNITIVE, OR CONSEQUENTIAL DAMAGES, OR FOR LOST PROFITS, REVENUE, GOODWILL, BUSINESS OPPORTUNITIES, OR DATA, EVEN IF ADVISED OF THE POSSIBILITY. ORBIT’S TOTAL AGGREGATE LIABILITY ARISING OUT OF OR RELATING TO THE SERVICES OR THIS AGREEMENT WILL NOT EXCEED THE FEES CUSTOMER PAID OR PAYABLE TO ORBIT FOR THE AFFECTED SERVICES DURING THE SIX MONTHS BEFORE THE EVENT FIRST GIVING RISE TO LIABILITY."
+      },
+      {
+        "type": "paragraph",
+        "text": "The exclusions and cap do not limit Customer’s payment obligations; Customer’s breach of Sections 5, 6, 7, 12, or 13; either party’s indemnification obligations; fraud or willful misconduct; or liability that cannot lawfully be limited. Multiple claims do not enlarge the cap. The parties agree that these limitations allocate risk and are a material basis of the bargain."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "17. Disputes; Governing Law"
+      },
+      {
+        "type": "paragraph",
+        "text": "Before filing a claim, a party must send a written notice describing the dispute and requested relief. Authorized representatives will attempt in good faith to resolve it for at least 30 days. Either party may seek temporary or injunctive relief to protect security, confidential information, or intellectual property without completing that process."
+      },
+      {
+        "type": "paragraph",
+        "text": "These Terms and each Order Form are governed by the laws of the State of Florida, without regard to conflict-of-laws rules. The state and federal courts located in Pinellas County, Florida will have exclusive jurisdiction, and each party consents to personal jurisdiction and venue there. EACH PARTY KNOWINGLY AND VOLUNTARILY WAIVES TRIAL BY JURY TO THE MAXIMUM EXTENT PERMITTED BY LAW. The United Nations Convention on Contracts for the International Sale of Goods does not apply."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "18. Changes to the Services or Terms"
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit may modify the Services as technology, law, carrier requirements, or business needs change. Orbit will not materially reduce core paid functionality during a current committed term except where required for security, legal compliance, provider changes, or prevention of harm. Orbit may update these Terms by posting a revised version and changing the effective date. If a change materially reduces Customer’s rights during a current paid term, Orbit will provide reasonable advance notice unless urgent legal or security circumstances require earlier effect. Continued use after the effective date constitutes acceptance. Changes to a signed Order Form require a writing signed by both parties."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "19. Notices"
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit may provide operational or legal notices by email to Customer’s account contact, in-product notice, or posting to the Services. Notice is effective when sent or posted, except a notice of material breach or indemnification claim must be sent by email and nationally recognized overnight courier to the other party’s designated legal contact. Notices to Orbit must be sent to legal@orbitsystems.ai and 7901 4th St N STE 300, St. Petersburg, FL 33702. Customer must keep its notice details current."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "20. General Terms"
+      },
+      {
+        "type": "paragraph",
+        "text": "Neither party is liable for delay or failure caused by events beyond its reasonable control, including internet or carrier outages, provider failures, labor disputes, natural disasters, epidemics, war, terrorism, civil disturbance, government action, or utility failures, except Customer’s payment obligations for Services already provided. Customer may not assign this agreement without Orbit’s written consent; Orbit may assign it to an Affiliate or in connection with a merger, reorganization, financing, or sale of substantially all relevant assets. Any prohibited assignment is void."
+      },
+      {
+        "type": "paragraph",
+        "text": "The parties are independent contractors. This agreement creates no partnership, franchise, fiduciary, employment, agency, or exclusive relationship. No person other than the parties and stated indemnified parties is a third-party beneficiary. If a provision is unenforceable, it will be modified to the minimum extent necessary and the remainder will remain effective. A waiver must be in writing and applies only to the specific instance. Headings are for convenience. “Including” means “including without limitation.” Electronic signatures and counterparts are effective. These Terms and incorporated Order Forms are the entire agreement concerning their subject matter and supersede prior or contemporaneous proposals and discussions."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "21. Contact Information"
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit Systems AI, LLC"
+      },
+      {
+        "type": "paragraph",
+        "text": "7901 4th St N STE 300, St. Petersburg, FL 33702"
+      },
+      {
+        "type": "paragraph",
+        "text": "Business: admin@orbitsystems.ai"
+      },
+      {
+        "type": "paragraph",
+        "text": "Support: support@orbitsystems.ai"
+      },
+      {
+        "type": "paragraph",
+        "text": "Billing: finance@orbitsystems.ai"
+      },
+      {
+        "type": "paragraph",
+        "text": "Legal notices: legal@orbitsystems.ai"
+      },
+      {
+        "type": "paragraph",
+        "text": "Website: www.orbitsystems.ai"
+      }
+    ]
+  },
+  {
+    "slug": "/privacy",
+    "title": "Privacy Policy",
+    "downloadHref": "/legal/orbit-systems-ai-privacy-policy.docx",
+    "blocks": [
+      {
+        "type": "subtitle",
+        "text": "Orbit Systems AI, LLC | Effective September 4, 2026"
+      },
+      {
+        "type": "table",
+        "rows": [
+          [
+            "Plain-language summary. We provide AI-powered digital employee, communications, and telephony services, including provisioned phone numbers. We process information to operate those services, support customers, secure our systems, and process payments. Calls may be recorded or transcribed only when enabled and subject to applicable notice and consent requirements. We do not sell personal information for money."
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "This Privacy Policy explains how Orbit Systems Ai, LLC (\"Orbit,\" \"we,\" \"us,\" or \"our\") collects, uses, discloses, and protects personal information when you visit our websites, communicate with us, purchase or use our services, or interact with an AI-powered digital employee operated by or through Orbit (collectively, the \"Services\")."
+      },
+      {
+        "type": "paragraph",
+        "text": "This Policy does not replace a customer’s own privacy notice. When Orbit processes calls, messages, recordings, transcripts, contact data, or other content for a business customer, that customer generally determines why and how the information is processed, and Orbit acts as its service provider or processor. Direct privacy requests about those interactions should normally be sent to the business you contacted."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "1. Scope and Our Role"
+      },
+      {
+        "type": "paragraph",
+        "text": "This Policy applies to visitors, prospective and current customers, authorized users, vendors, business contacts, callers, message senders, and other people whose information is processed through the Services."
+      },
+      {
+        "type": "paragraph",
+        "text": "Depending on the context, Orbit may act as:"
+      },
+      {
+        "type": "listItem",
+        "text": "a controller or business for information used to administer our websites, accounts, billing, sales, security, and direct customer relationships; or"
+      },
+      {
+        "type": "listItem",
+        "text": "a processor or service provider for Customer Content processed on a customer’s documented instructions, subject to the applicable services agreement, order form, or data processing addendum."
+      },
+      {
+        "type": "paragraph",
+        "text": "If a customer configures a Digital Employee for a regulated or sensitive workflow, the customer is responsible for determining whether the use is lawful, providing required notices, obtaining required permissions, and configuring appropriate retention, access, and escalation rules."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "2. Information We Collect"
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Information you provide"
+      },
+      {
+        "type": "listItem",
+        "text": "Contact and business information, such as name, email address, telephone number, job title, company name, billing address, and support details."
+      },
+      {
+        "type": "listItem",
+        "text": "Account and transaction information, such as plan, subscription, invoice, payment status, and limited payment-related details. Payment card information is generally collected and processed by Stripe, not stored directly by Orbit."
+      },
+      {
+        "type": "listItem",
+        "text": "Customer configuration and content, such as business knowledge, scripts, greetings, calendars, routing rules, escalation contacts, appointment information, integrations, prompts, and files."
+      },
+      {
+        "type": "listItem",
+        "text": "Communications, including emails, support requests, meeting notes, survey responses, and other information you choose to provide."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Telephony, messaging, and AI interaction data"
+      },
+      {
+        "type": "listItem",
+        "text": "Phone numbers, caller and recipient numbers, message addresses, timestamps, call duration, routing data, carrier data, delivery status, and similar communications metadata."
+      },
+      {
+        "type": "listItem",
+        "text": "Audio recordings, voicemail, call or message content, transcripts, summaries, sentiment or intent labels, extracted fields, and AI-generated responses, when the feature is enabled."
+      },
+      {
+        "type": "listItem",
+        "text": "Contact details or appointment information provided during an interaction, such as name, email, reason for calling, preferred time, and confirmation status."
+      },
+      {
+        "type": "listItem",
+        "text": "Quality, safety, and operational signals, such as interruptions, transfers, failed tool calls, abuse indicators, and human-review outcomes."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Website, device, and automatically collected data"
+      },
+      {
+        "type": "listItem",
+        "text": "IP address, browser and device type, operating system, pages viewed, referring URL, approximate location derived from IP, timestamps, identifiers, and diagnostic logs."
+      },
+      {
+        "type": "listItem",
+        "text": "Cookies and similar technologies used for essential operation, preferences, security, performance, and—where permitted—analytics or marketing."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Information from other sources"
+      },
+      {
+        "type": "paragraph",
+        "text": "We may receive information from our customers, authorized users, integration partners, telecommunications carriers, number providers, payment processors, identity or fraud-prevention providers, public sources, and vendors that support the Services."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "3. Phone Numbers and Telecommunications Services"
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit may obtain, provision, assign, port, host, or administer telephone numbers and related communications capabilities for customers. A phone number is a communications resource governed by carrier, numbering, portability, emergency-service, anti-fraud, and regulatory requirements; it is not sold as personal property. Availability and continued use may depend on the applicable order, carrier rules, lawful-use requirements, account status, and regulatory eligibility."
+      },
+      {
+        "type": "paragraph",
+        "text": "To provision or manage a number, we and our providers may process customer identity and business information, service address, authorized representative details, emergency-service information, porting records, letters of authorization, tax or registration details, call and message metadata, and compliance documentation. We may disclose this information to carriers, numbering administrators, verification providers, emergency-service vendors, or authorities when reasonably necessary to activate, transfer, secure, or lawfully operate the service."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "4. Call Recording, Transcription, and AI Disclosure"
+      },
+      {
+        "type": "paragraph",
+        "text": "Depending on the customer’s configuration, telephone or online voice interactions may be recorded, transcribed, summarized, analyzed, or reviewed by automated systems or authorized personnel. An AI voice or Digital Employee may participate in the interaction."
+      },
+      {
+        "type": "paragraph",
+        "text": "Recording and consent laws vary by jurisdiction. Orbit’s customer is responsible for choosing a lawful configuration and for providing notices and obtaining consent when required. Orbit may provide technical controls or sample disclosures, but those tools do not constitute legal advice or guarantee compliance. Where Orbit controls the interaction directly, we use notices or consent mechanisms appropriate to the circumstances and applicable law."
+      },
+      {
+        "type": "paragraph",
+        "text": "If you do not wish to be recorded or interact with an automated system, follow the instructions presented during the interaction, request a human or alternate channel where available, or end the call. A requested alternative may not be available for every service."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "5. How We Use Information"
+      },
+      {
+        "type": "paragraph",
+        "text": "We use personal information to:"
+      },
+      {
+        "type": "listItem",
+        "text": "provide, configure, maintain, route, and improve the Services, including Digital Employees, phone numbers, calls, messages, appointments, integrations, and customer dashboards;"
+      },
+      {
+        "type": "listItem",
+        "text": "authenticate users, administer accounts, provide support, communicate about service events, and fulfill customer instructions;"
+      },
+      {
+        "type": "listItem",
+        "text": "process subscriptions, invoices, payments, refunds, taxes, and related financial records;"
+      },
+      {
+        "type": "listItem",
+        "text": "monitor availability, diagnose failures, prevent spam, fraud, abuse, unlawful communications, and security incidents, and enforce our agreements;"
+      },
+      {
+        "type": "listItem",
+        "text": "evaluate quality and performance, develop features, and conduct research using aggregated or de-identified data where feasible;"
+      },
+      {
+        "type": "listItem",
+        "text": "comply with law, carrier and numbering obligations, valid legal process, and regulatory requests; and"
+      },
+      {
+        "type": "listItem",
+        "text": "send product or marketing communications where permitted, subject to applicable choices and consent requirements."
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit does not use Customer Content to train a generalized AI model for unrelated customers unless the customer agreement expressly permits it or the customer provides authorization. We may use de-identified or aggregated information that cannot reasonably identify an individual to operate, secure, analyze, and improve the Services."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "6. Legal Bases for Processing"
+      },
+      {
+        "type": "paragraph",
+        "text": "Where a legal basis is required, we process personal information as necessary to perform a contract, comply with legal obligations, protect vital interests, pursue legitimate interests that are not overridden by applicable rights (such as operating, securing, and improving the Services), or with consent. A customer may rely on different legal bases for Customer Content and is responsible for documenting them."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "7. How We Disclose Information"
+      },
+      {
+        "type": "paragraph",
+        "text": "We may disclose personal information to:"
+      },
+      {
+        "type": "listItem",
+        "text": "service providers and subprocessors that support cloud hosting, AI and speech processing, telecommunications, phone-number provisioning, messaging, email, analytics, customer support, security, identity verification, and professional services;"
+      },
+      {
+        "type": "listItem",
+        "text": "Stripe and other financial partners for payment processing, fraud prevention, authentication, analytics, and related business services. Stripe processes information under its own privacy policy;"
+      },
+      {
+        "type": "listItem",
+        "text": "the customer on whose behalf a Digital Employee or communications workflow operates, including its authorized users and connected systems;"
+      },
+      {
+        "type": "listItem",
+        "text": "carriers, numbering administrators, emergency-service providers, communications registries, and compliance vendors;"
+      },
+      {
+        "type": "listItem",
+        "text": "government authorities, courts, regulators, law enforcement, or other parties where we believe disclosure is required or permitted by law, needed to protect rights or safety, or necessary to address fraud or abuse; and"
+      },
+      {
+        "type": "listItem",
+        "text": "a buyer, investor, lender, adviser, or successor in connection with an actual or proposed merger, financing, acquisition, reorganization, or sale of assets, subject to appropriate confidentiality protections."
+      },
+      {
+        "type": "paragraph",
+        "text": "We do not sell personal information for money. We also do not knowingly share personal information for cross-context behavioral advertising. If our practices change, we will provide legally required notices and choices."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "8. Stripe and Payments"
+      },
+      {
+        "type": "paragraph",
+        "text": "We use Stripe for payments and related business services. Stripe may collect personal data, including transaction data, contact and billing information, device identifiers, and information collected through cookies or similar technologies. Stripe uses this information to process transactions, authenticate users, prevent and detect fraud, provide analytics, and operate and improve its services. Stripe’s handling of personal information is governed by its own privacy policy at https://stripe.com/privacy."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "9. Data Retention"
+      },
+      {
+        "type": "paragraph",
+        "text": "We retain personal information for the period reasonably necessary for the purposes described in this Policy, including to provide the Services, follow customer instructions, maintain security, resolve disputes, enforce agreements, and satisfy legal, accounting, carrier, tax, and compliance obligations. Retention depends on the type of information, sensitivity, customer configuration, contractual commitments, legal requirements, and whether the information is needed for fraud prevention or service continuity."
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer Content, including recordings and transcripts, is retained according to the customer’s configured settings or contract and may be deleted or de-identified after the applicable period. Deletion from active systems may not immediately remove information from encrypted backups, logs, legal holds, or records that must be retained by law. Customers should set retention periods appropriate to their use case and jurisdiction."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "10. Security"
+      },
+      {
+        "type": "paragraph",
+        "text": "We use administrative, technical, and physical safeguards designed to protect personal information, such as access controls, authentication, encryption in transit and where appropriate at rest, logging, vendor review, tenant separation, least-privilege access, and incident-response procedures. No system, transmission, or storage method is completely secure, and we cannot guarantee absolute security. Customers are responsible for securing their credentials, endpoints, integrations, and authorized-user access."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "11. Cookies and Online Choices"
+      },
+      {
+        "type": "paragraph",
+        "text": "You can control cookies through browser settings and, where offered, our consent tools. Blocking essential cookies may prevent parts of the Services from functioning. You may unsubscribe from marketing email using the link in the message; we may still send transactional or service communications. Browser-based \"Do Not Track\" signals are not interpreted consistently across the industry. Where required, we honor legally recognized opt-out preference signals for covered processing."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "12. Your Privacy Rights"
+      },
+      {
+        "type": "paragraph",
+        "text": "Depending on where you live and subject to exceptions, you may have the right to request access to or a copy of personal information; correction; deletion; restriction or objection; portability; withdrawal of consent; or an appeal of a denied request. You may also have rights concerning targeted advertising, sale or sharing, profiling, and sensitive personal information. Orbit does not discriminate against individuals for exercising applicable privacy rights."
+      },
+      {
+        "type": "paragraph",
+        "text": "To submit a request concerning information Orbit controls, email legal@orbitsystems.ai with the subject \"Privacy Request.\" Describe the request and your relationship with Orbit. We may verify your identity and authority before acting. Authorized agents must provide proof of authority where required. If your information was processed for one of our customers, we may direct the request to that customer or assist it as required by contract and law."
+      },
+      {
+        "type": "paragraph",
+        "text": "You may appeal a decision by replying to our response with the subject \"Privacy Appeal.\" You may also lodge a complaint with the privacy or data-protection authority in your jurisdiction."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "13. U.S. State Privacy Notice"
+      },
+      {
+        "type": "paragraph",
+        "text": "For residents of U.S. states with comprehensive privacy laws, the categories of personal information we may have collected during the preceding 12 months are described in Section 2. We collect them from the sources described there, use them for the purposes in Section 5, and disclose them to the recipients in Section 7. These categories may include identifiers; customer records; commercial information; internet or electronic-network activity; geolocation approximated from IP; audio, electronic, and similar information; professional or employment-related information; and inferences derived from interactions."
+      },
+      {
+        "type": "paragraph",
+        "text": "Sensitive information may include account credentials, precise location only if a feature requires it, contents of communications where Orbit is not the intended recipient, and information a caller voluntarily reveals. We use sensitive information only as reasonably necessary to provide, secure, and administer the Services, comply with law, or as otherwise permitted with appropriate notice or consent. We do not use or disclose sensitive personal information to infer characteristics about individuals for unrelated purposes."
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit does not knowingly sell personal information or share it for cross-context behavioral advertising. We therefore do not offer a \"Do Not Sell or Share\" link for current practices. If this changes, we will update this notice and provide required opt-out methods."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "14. International Data Transfers"
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit and its providers may process information in the United States and other countries that may have different data-protection laws. Where required, we use appropriate transfer mechanisms and contractual safeguards. Customers requiring specific data residency or transfer terms should address them in the applicable order form or data processing addendum."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "15. Children’s Privacy"
+      },
+      {
+        "type": "paragraph",
+        "text": "The Services are intended for business use and are not directed to children under 13. Orbit does not knowingly collect personal information online from children under 13 except where a Customer’s use case has been expressly approved by Orbit in a written Order Form and the parties have implemented all legally required notices, verifiable parental consent procedures, security measures, retention limits, and parental rights."
+      },
+      {
+        "type": "paragraph",
+        "text": "When Orbit processes children’s personal information on behalf of a Customer, the Customer determines the purposes and means of that processing and is responsible for establishing a lawful basis, providing required notices, obtaining verifiable parental consent, and honoring applicable parental rights. Orbit processes such information only as authorized by the applicable agreement and Customer instructions."
+      },
+      {
+        "type": "paragraph",
+        "text": "If we learn that a child’s personal information was collected without legally sufficient authorization, we will take reasonable steps to delete or appropriately restrict that information and, where applicable, assist the relevant Customer. A parent or legal guardian may request access to, correction of, or deletion of a child’s information by contacting legal@orbitsystems.ai. Customers must promptly report suspected improper collection to legal@orbitsystems.ai."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "16. Third-Party Services and Customer Integrations"
+      },
+      {
+        "type": "paragraph",
+        "text": "The Services may connect to third-party calendars, customer relationship management systems, communications providers, websites, or applications. Their privacy practices are governed by their own notices. Customers are responsible for choosing and authorizing integrations and for providing any notices or permissions required for data exchanged through them."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "17. Changes to This Policy"
+      },
+      {
+        "type": "paragraph",
+        "text": "We may update this Policy to reflect changes in our Services, practices, or law. We will post the revised version with a new effective date and provide additional notice when required. Material changes apply prospectively unless otherwise permitted by law."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "18. Contact Us"
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit Systems AI, LLC"
+      },
+      {
+        "type": "paragraph",
+        "text": "7901 4th St N STE 300"
+      },
+      {
+        "type": "paragraph",
+        "text": "St. Petersburg, FL 33702"
+      },
+      {
+        "type": "paragraph",
+        "text": "Website: https://www.orbitsystems.ai"
+      },
+      {
+        "type": "paragraph",
+        "text": "Business inquiries: admin@orbitsystems.ai"
+      },
+      {
+        "type": "paragraph",
+        "text": "Customer support: support@orbitsystems.ai"
+      },
+      {
+        "type": "paragraph",
+        "text": "Billing inquiries: finance@orbitsystems.ai"
+      },
+      {
+        "type": "paragraph",
+        "text": "Privacy requests and legal notices: legal@orbitsystems.ai"
+      }
+    ]
+  },
+  {
+    "slug": "/customer-support-policy",
+    "title": "Customer Support Policy",
+    "downloadHref": "/legal/orbit-systems-ai-customer-support-policy.docx",
+    "blocks": [
+      {
+        "type": "subtitle",
+        "text": "Digital Employees, AI voice services, and business telephone numbers"
+      },
+      {
+        "type": "table",
+        "rows": [
+          [
+            "COMPANY Orbit Systems AI, LLC",
+            "EFFECTIVE DATE September 4, 2026"
+          ],
+          [
+            "SUPPORT EMAIL support@orbitsystems.ai",
+            "SUPPORT PHONE [INSERT SUPPORT PHONE]"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "PUBLISHING NOTE Replace every bracketed field and confirm the refund/cancellation terms match your customer agreements before posting this policy or submitting its URL to Stripe."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "1. Purpose and scope"
+      },
+      {
+        "type": "paragraph",
+        "text": "This Customer Support Policy explains how Orbit Systems AI, LLC (\"Orbit,\" \"we,\" \"us,\" or \"our\") supports customers that purchase or subscribe to Digital Employees, AI-enabled voice and workflow services, telephone-number provisioning, call routing, messaging capabilities, integrations, and related professional services (collectively, the \"Services\")."
+      },
+      {
+        "type": "paragraph",
+        "text": "This policy applies to customer-service, technical-support, service-delivery, cancellation, refund, billing, and complaint requests. A signed order form, master services agreement, service-level agreement, acceptable use policy, or carrier/provider requirement may contain additional or different terms. If there is a conflict, the signed agreement controls to the extent permitted by law."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "2. How to contact support"
+      },
+      {
+        "type": "paragraph",
+        "text": "Customers may contact Orbit through the channels below. Please do not send passwords, API secrets, full payment-card numbers, or sensitive personal information through ordinary email."
+      },
+      {
+        "type": "table",
+        "rows": [
+          [
+            "Channel",
+            "Contact",
+            "Best for"
+          ],
+          [
+            "Email",
+            "support@orbitsystems.ai",
+            "General, technical, cancellation, and written complaints"
+          ],
+          [
+            "Telephone",
+            "[INSERT SUPPORT PHONE]",
+            "Urgent service-impacting issues and accessibility support"
+          ],
+          [
+            "Support portal",
+            "[INSERT SUPPORT URL]",
+            "Ticket tracking, attachments, and account-specific requests"
+          ],
+          [
+            "Abuse / security",
+            "[INSERT ABUSE EMAIL]",
+            "Suspected fraud, unlawful calling, compromised credentials, or security incidents"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "Standard support hours: [INSERT DAYS, HOURS, AND TIME ZONE]. Requests received outside standard hours are logged on the next business day unless the customer has contracted for 24/7 or after-hours support."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "3. Information to include"
+      },
+      {
+        "type": "paragraph",
+        "text": "To help us respond quickly, include:"
+      },
+      {
+        "type": "listItem",
+        "text": "your name, organization, account email, and a callback number;"
+      },
+      {
+        "type": "listItem",
+        "text": "the affected telephone number(s), Digital Employee, workflow, location, or integration;"
+      },
+      {
+        "type": "listItem",
+        "text": "a concise description of the issue, when it began, and whether it is ongoing;"
+      },
+      {
+        "type": "listItem",
+        "text": "examples such as call IDs, timestamps with time zone, error messages, or screenshots; and"
+      },
+      {
+        "type": "listItem",
+        "text": "the business impact and any troubleshooting already performed."
+      },
+      {
+        "type": "paragraph",
+        "text": "Do not include call recordings, transcripts, protected health information, financial-account data, or other regulated information unless Orbit has authorized a secure method for that data and the applicable agreement permits it."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "4. Support priorities and response targets"
+      },
+      {
+        "type": "paragraph",
+        "text": "Response targets are goals for an initial human acknowledgment, not guaranteed resolution times, unless a signed service-level agreement states otherwise."
+      },
+      {
+        "type": "table",
+        "rows": [
+          [
+            "Priority",
+            "Level",
+            "Examples",
+            "Initial response target"
+          ],
+          [
+            "P1",
+            "Critical",
+            "Widespread service outage; inbound or outbound calling unavailable; suspected account compromise or active fraud.",
+            "Within 1 hour, 24/7 only where contracted; otherwise during support hours"
+          ],
+          [
+            "P2",
+            "High",
+            "Major feature impaired; repeated call failures; number-porting issue near a committed cutover.",
+            "Within 4 business hours"
+          ],
+          [
+            "P3",
+            "Normal",
+            "Single-user issue; configuration question; intermittent or limited-impact defect.",
+            "Within 1 business day"
+          ],
+          [
+            "P4",
+            "Request",
+            "How-to question; planned change; feature request; documentation or billing inquiry.",
+            "Within 2 business days"
+          ]
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "5. Telephone numbers and telephony support"
+      },
+      {
+        "type": "paragraph",
+        "text": "Telephone numbers are provisioned or assigned for use with the Services; they are not sold as property. Number availability, activation, portability, messaging registration, caller-ID presentation, emergency-service capability, and continued use may depend on underlying carriers, numbering administrators, regulators, and third-party providers."
+      },
+      {
+        "type": "listItem",
+        "text": "Activation and configuration. Orbit will provide reasonable status updates for number ordering, verification, routing, messaging registration, and cutover activities."
+      },
+      {
+        "type": "listItem",
+        "text": "Porting. Customers must provide accurate ownership records, letters of authorization, service addresses, account numbers, and other carrier-required information. Estimated port dates are not guaranteed until confirmed by the losing and gaining providers."
+      },
+      {
+        "type": "listItem",
+        "text": "Number continuity. Orbit will use commercially reasonable efforts to preserve assigned numbers, but cannot guarantee indefinite availability where a carrier, regulator, law, customer nonpayment, misuse, or provider termination requires suspension, reclamation, or reassignment."
+      },
+      {
+        "type": "listItem",
+        "text": "Unauthorized use. Customers must report suspected spoofing, credential compromise, fraudulent calling, unlawful messaging, or other abuse immediately. Orbit may suspend affected functionality while investigating and protecting users or networks."
+      },
+      {
+        "type": "listItem",
+        "text": "Customer configuration. Customers are responsible for maintaining current routing destinations, authorized users, business hours, escalation contacts, and legally required caller or message disclosures."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "6. Emergency calling and service limitations"
+      },
+      {
+        "type": "paragraph",
+        "text": "Unless Orbit expressly confirms emergency-calling capability in writing for a specific deployment and location, the Services and Digital Employees must not be relied upon to contact 911 or other emergency services. AI responses, call routing, carrier networks, internet connections, power, integrations, and third-party platforms may be unavailable, delayed, or inaccurate. Customers must maintain an independent means of emergency communication and follow all emergency-address registration and testing instructions supplied by Orbit or an underlying provider."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "7. AI service support and customer responsibilities"
+      },
+      {
+        "type": "listItem",
+        "text": "Orbit investigates reported failures involving approved knowledge, prompts, routing, integrations, appointment workflows, and escalation logic."
+      },
+      {
+        "type": "listItem",
+        "text": "AI outputs can be probabilistic. Customers should define prohibited topics, escalation rules, approved content, and human-review requirements appropriate to their business and industry."
+      },
+      {
+        "type": "listItem",
+        "text": "Customers are responsible for obtaining required consents and providing required disclosures for call recording, transcription, automated or prerecorded communications, telemarketing, messaging, and use of personal data."
+      },
+      {
+        "type": "listItem",
+        "text": "Customers must not use the Services for deceptive caller identification, illegal robocalling, harassment, fraud, impersonation, or any activity prohibited by law, contract, carrier policy, or Orbit's Acceptable Use Policy."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "8. Maintenance, outages, and third-party dependencies"
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit may perform planned maintenance and will provide advance notice when commercially reasonable. Emergency maintenance may occur without advance notice. Some incidents originate with carriers, cloud platforms, payment processors, internet providers, customer systems, or other third parties. Orbit will coordinate and communicate material updates when practical, but third-party restoration timelines are outside Orbit's control."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "9. Billing questions and disputes"
+      },
+      {
+        "type": "paragraph",
+        "text": "Customers should send billing questions to finance@orbitsystems.ai promptly and, where possible, before initiating a payment-card dispute. Include the invoice or receipt number, charge date and amount, and the reason for the inquiry. Orbit will acknowledge billing inquiries within two business days and review account records, contracted fees, usage records, credits, and payment status."
+      },
+      {
+        "type": "paragraph",
+        "text": "Contacting Orbit does not extend a payment deadline unless Orbit agrees in writing. Customers remain responsible for undisputed charges. Orbit will not request or accept a full payment-card number by email or support ticket."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "10. Cancellations"
+      },
+      {
+        "type": "paragraph",
+        "text": "Customers may request cancellation through the support email or support portal listed above. For account security, Orbit may require verification by an authorized account contact. Unless a signed agreement states otherwise:"
+      },
+      {
+        "type": "listItem",
+        "text": "month-to-month subscriptions may be canceled before the next renewal date and remain active through the end of the paid billing period;"
+      },
+      {
+        "type": "listItem",
+        "text": "fixed-term commitments, minimum usage commitments, professional-services projects, porting orders, and third-party charges remain subject to the applicable order form or agreement;"
+      },
+      {
+        "type": "listItem",
+        "text": "usage-based charges incurred before the effective cancellation date remain payable; and"
+      },
+      {
+        "type": "listItem",
+        "text": "customers should export needed data and submit number-porting requests before termination. Orbit may be unable to recover a number after release to a carrier or numbering pool."
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit will send written confirmation of the cancellation date and any remaining steps or charges. Deleting an application, ceasing use, or disputing a charge does not by itself cancel the Services."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "11. Refunds and credits"
+      },
+      {
+        "type": "paragraph",
+        "text": "Unless a signed agreement states otherwise, fees for completed setup, implementation work, activated or ported numbers, registration, third-party services, and measured usage are non-refundable once incurred. Subscription fees are generally non-refundable after a billing period begins, except where required by law or where Orbit confirms a duplicate charge, billing error, or material failure to deliver the purchased Service."
+      },
+      {
+        "type": "paragraph",
+        "text": "Refund requests must be submitted within 14 days after the charge and must identify the account, charge, and reason. Orbit will normally decide a complete request within 10 business days. Approved refunds are issued to the original payment method; financial institutions may require additional time to post the credit. Service credits, when offered, apply to future invoices and have no cash value unless required by law."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "12. Complaints and escalation"
+      },
+      {
+        "type": "paragraph",
+        "text": "If a customer is dissatisfied with a support outcome, the customer may reply to the ticket and request escalation to a support manager. The request should state the desired resolution and why the prior response was insufficient. Orbit will acknowledge an escalated complaint within two business days and provide a written outcome or status update after review."
+      },
+      {
+        "type": "paragraph",
+        "text": "Nothing in this policy limits rights or remedies that cannot lawfully be waived. Customers may also contact applicable consumer-protection or telecommunications authorities where they have jurisdiction."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "13. Accessibility and language assistance"
+      },
+      {
+        "type": "paragraph",
+        "text": "Customers who need a reasonable communication accommodation or language assistance should contact support@orbitsystems.ai. Orbit will make reasonable efforts to provide an accessible support method."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "14. Privacy and records"
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit uses support communications and diagnostic records to authenticate users, provide and improve support, secure the Services, prevent abuse, meet legal obligations, and document account activity. Handling of personal information is also governed by Orbit's Privacy Policy at [INSERT PRIVACY POLICY URL]. Call recordings or transcripts are accessed only when authorized and reasonably necessary for support, security, quality, or legal purposes."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "15. Changes to this policy"
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit may update this policy as its Services, support practices, provider requirements, or applicable laws change. The current version will be posted at [INSERT CUSTOMER SUPPORT POLICY URL] with its effective date. Material changes will apply prospectively unless immediate changes are needed for security, legal, carrier, or fraud-prevention reasons."
+      },
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "16. Contact"
+      },
+      {
+        "type": "paragraph",
+        "text": "Orbit Systems AI, LLC | 7901 4th St N STE 300, St. Petersburg, FL 33702 Business: admin@orbitsystems.ai | Support: support@orbitsystems.ai Billing: finance@orbitsystems.ai | Legal notices: legal@orbitsystems.ai Telephone: [INSERT SUPPORT PHONE] | Website: https://www.orbitsystems.ai"
+      }
+    ]
+  }
+]
