@@ -482,7 +482,8 @@ body.modal-open { overflow:hidden; }
 .contact-policy-link svg{width:16px;height:16px;color:#008b93}
 .contact-policy-link:hover,.contact-policy-link:focus-visible{color:#dc5e20;text-decoration:underline;text-underline-offset:4px}
 .contact-policy-link:focus-visible{outline:2px solid #008b93;outline-offset:5px}
-.policy-content{max-width:1040px;padding-top:64px;padding-bottom:96px}
+.public-detail.terms-page{height:auto;min-height:100dvh;display:block;overflow:visible}
+.policy-content{max-width:1040px;padding-top:64px;padding-bottom:10px}
 .terms-download{display:inline-flex;align-items:center;gap:10px;text-decoration:none}
 .terms-download svg{width:19px;height:19px}
 .policy-document{margin-top:52px;color:#263a4c;font-size:17px;line-height:1.75}
@@ -644,7 +645,7 @@ body.modal-open { overflow:hidden; }
   .public-detail .detail-hero h1.contact-title{white-space:normal}
   .public-detail .detail-hero p{margin-top:14px;font-size:14px;line-height:1.45}
   .public-detail .detail-body,.public-detail .contact-body{min-height:0;gap:14px;padding-top:16px;padding-bottom:16px}
-  .public-detail .policy-content{padding-top:28px;padding-bottom:58px}
+  .public-detail .policy-content{padding-top:28px;padding-bottom:10px}
   .policy-document{margin-top:32px;font-size:14px;line-height:1.65}
   .policy-document h2{margin-top:38px;font-size:25px}
   .policy-document h3{margin-top:28px;font-size:20px}
