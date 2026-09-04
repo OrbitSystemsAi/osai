@@ -481,6 +481,11 @@ body.modal-open { overflow:hidden; }
 .contact-terms-link svg{width:16px;height:16px;color:#008b93}
 .contact-terms-link:hover,.contact-terms-link:focus-visible{color:#dc5e20;text-decoration:underline;text-underline-offset:4px}
 .contact-terms-link:focus-visible{outline:2px solid #008b93;outline-offset:5px}
+.terms-body{min-height:430px;display:flex;align-items:center;padding-top:76px;padding-bottom:76px}
+.terms-body h2{font-size:clamp(32px,4vw,54px)}
+.terms-body p{margin:18px 0 30px;color:var(--slate);font-size:17px;line-height:1.7}
+.terms-download{display:inline-flex;align-items:center;gap:10px;text-decoration:none}
+.terms-download svg{width:19px;height:19px}
 @media(max-width:1180px){.public-header .site-header{grid-template-columns:260px 1fr}.public-header .site-header nav{gap:24px}.public-header .brand-logo-image{width:250px}}
 @media(min-width:901px) and (max-width:1180px){
   .public-header,.public-header .site-header{height:92px}
@@ -627,6 +632,9 @@ body.modal-open { overflow:hidden; }
   .public-detail .detail-hero h1.contact-title{white-space:normal}
   .public-detail .detail-hero p{margin-top:14px;font-size:14px;line-height:1.45}
   .public-detail .detail-body,.public-detail .contact-body{min-height:0;gap:14px;padding-top:16px;padding-bottom:16px}
+  .public-detail .terms-body{min-height:0;padding-top:24px;padding-bottom:24px}
+  .public-detail .terms-body h2{font-size:28px;line-height:1.1}
+  .public-detail .terms-body p{margin:12px 0 20px;font-size:14px}
   .public-detail .detail-body h2,.public-detail .contact-body h2{font-size:26px;line-height:1.08}
   .public-detail .detail-body>div>p,.public-detail .contact-body p{margin:10px 0 13px;font-size:12px;line-height:1.4}
   .public-detail .contact-body{padding-bottom:18px}

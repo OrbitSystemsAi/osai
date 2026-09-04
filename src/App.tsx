@@ -328,7 +328,7 @@ function ContactPage() {
           <h2>Start a conversation.</h2>
           <p>Share a short description of the opportunity and the kind of help you are looking for. We’ll respond with the most useful next step.</p>
         </div>
-        <a className="contact-terms-link" href="/legal/orbit-systems-ai-terms-of-service.docx" target="_blank" rel="noreferrer">
+        <a className="contact-terms-link" href="/terms">
           <FileText aria-hidden="true" />
           Terms of Service
         </a>
@@ -370,13 +370,36 @@ window.Tawk_API.customStyle = {
   );
 }
 
+function TermsPage() {
+  return (
+    <main className="public-detail terms-page">
+      <section className="detail-hero terms-hero">
+        <div className="page-wrap">
+          <h1>Terms of Service</h1>
+          <p>Review the terms governing access to and use of the OSai Work Hub.</p>
+        </div>
+      </section>
+      <section className="terms-body page-wrap">
+        <div>
+          <h2>Download the Terms of Service</h2>
+          <p>Download a copy for your records.</p>
+          <a className="button button-orange terms-download" href="/legal/orbit-systems-ai-terms-of-service.docx" download>
+            <FileText aria-hidden="true" />
+            Download Terms of Service
+          </a>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 function PublicSite() {
   const path = window.location.pathname.replace(/\/$/, "") || "/";
   const content = pageContent[path];
   return (
     <div className="public-site">
       <PublicHeader current={path} />
-      {path === "/" ? <HomePage /> : path === "/contact" ? <ContactPage /> : content ? <DetailPage content={content} /> : <HomePage />}
+      {path === "/" ? <HomePage /> : path === "/contact" ? <ContactPage /> : path === "/terms" ? <TermsPage /> : content ? <DetailPage content={content} /> : <HomePage />}
     </div>
   );
 }
