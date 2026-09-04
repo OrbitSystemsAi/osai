@@ -434,6 +434,16 @@ function PolicyBlocks({ blocks }: { blocks: LegalPolicyBlock[] }) {
 }
 
 function PolicyDownloadPage({ policy }: { policy: LegalPolicy }) {
+  const visibleBlocks = policy.blocks.filter((block) => {
+    if (policy.slug === "/terms") return block.type !== "table";
+    if (policy.slug === "/privacy") return block.type !== "table";
+    if (policy.slug === "/customer-support-policy") {
+      return block.type !== "subtitle"
+        && block.type !== "table"
+        && !(block.type === "paragraph" && block.text.startsWith("PUBLISHING NOTE"));
+    }
+    return true;
+  });
   return (
     <main className="public-detail terms-page">
       <section className="policy-content page-wrap">
@@ -443,7 +453,7 @@ function PolicyDownloadPage({ policy }: { policy: LegalPolicy }) {
             <FileText aria-hidden="true" />
             Download {policy.title}
           </a>
-          <PolicyBlocks blocks={policy.blocks} />
+          <PolicyBlocks blocks={visibleBlocks} />
         </article>
       </section>
     </main>
