@@ -36,3 +36,31 @@ export async function sendProjectAccessRequestEmail(input: ProjectAccessEmail): 
     return 'failed'
   }
 }
+
+export async function sendSupportQuestionEmail(input: { memberName: string; memberEmail: string; question: string }): Promise<EmailDelivery> {
+  const apiKey = process.env.RESEND_API_KEY?.trim()
+  const from = process.env.OSAI_NOTIFICATION_FROM_EMAIL?.trim()
+  const to = process.env.OSAI_SUPPORT_EMAIL?.trim() || 'support@orbitsystems.ai'
+  if (!apiKey || !from) return 'not_configured'
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        reply_to: input.memberEmail,
+        subject: `Support question from ${input.memberName}`,
+        text: `${input.memberName} (${input.memberEmail}) submitted this question:\n\n${input.question}`,
+      }),
+      cache: 'no-store',
+    })
+    return response.ok ? 'sent' : 'failed'
+  } catch {
+    return 'failed'
+  }
+}

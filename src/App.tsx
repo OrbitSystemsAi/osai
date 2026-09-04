@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormE
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import Script from "next/script";
-import { ArrowLeft, ArrowRight, Bell, BellRing, BookOpen, CalendarDays, Check, ChevronRight, Clock3, FileCheck2, FileText, FlaskConical, FolderKanban, Hourglass, KeyRound, LayoutDashboard, LockKeyhole, Mail, Menu, Activity, DollarSign, ImageIcon, ListTodo, MessageSquareText, Orbit, Pencil, Plus, Search, LogOut, ShieldCheck, Tags, Target, Trash2, TrendingUp, Upload, User, UserCog, Users, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bell, BellRing, BookOpen, CalendarDays, Check, ChevronRight, CircleHelp, Clock3, FileCheck2, FileText, FlaskConical, FolderKanban, Hourglass, KeyRound, LayoutDashboard, LockKeyhole, Mail, Menu, Activity, DollarSign, ImageIcon, ListTodo, MessageSquareText, Orbit, Pencil, Plus, Search, Send, LogOut, ShieldCheck, Tags, Target, Trash2, TrendingUp, Upload, User, UserCog, Users, X } from "lucide-react";
 import AuthPage from "./AuthPage";
 import legalPoliciesData from "./legalPolicies.json";
 
@@ -4471,6 +4471,62 @@ function AdminSectionPage({ title, description }: { title: string; description: 
     </>
   );
 }
+
+const supportFaqs = [
+  ["How do I update my profile?", "Open Profile in the navigation to update your name and notification preferences."],
+  ["Where can I review my agreements?", "Open Legal to review the agreements and documents available to your account."],
+  ["How do I request access to a project?", "Open Projects, select the project, and use the available access request option."],
+  ["What should I do if I cannot sign in?", "Confirm that you are using the invited email address. If the problem continues, submit the question below with the error message you see."],
+];
+
+function SupportPage() {
+  const [question, setQuestion] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const submitQuestion = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (question.trim().length < 10 || status === "sending") return;
+    setStatus("sending");
+    try {
+      const response = await fetch("/api/support/questions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ question: question.trim() }),
+      });
+      if (!response.ok) throw new Error("QUESTION_NOT_SENT");
+      setQuestion("");
+      setStatus("sent");
+    } catch {
+      setStatus("error");
+    }
+  };
+  return (
+    <>
+      <PageHead title="Support Page" intro="" />
+      <section className="support-page" aria-labelledby="support-faq-title">
+        <div className="support-faq">
+          <h2 id="support-faq-title">Frequently Asked Questions</h2>
+          {supportFaqs.map(([questionText, answer]) => (
+            <details key={questionText}>
+              <summary>{questionText}<ChevronRight aria-hidden="true" /></summary>
+              <p>{answer}</p>
+            </details>
+          ))}
+        </div>
+        <form className="support-question-form" onSubmit={submitQuestion}>
+          <h2>Submit your question</h2>
+          <label htmlFor="support-question">How can we help?</label>
+          <textarea id="support-question" value={question} onChange={(event) => { setQuestion(event.target.value); setStatus("idle"); }} minLength={10} maxLength={2000} required />
+          <button className="primary-button" type="submit" disabled={status === "sending" || question.trim().length < 10}>
+            <Send aria-hidden="true" />
+            {status === "sending" ? "Submitting…" : "Submit question"}
+          </button>
+          {status === "sent" && <p className="support-form-message" role="status">Your question has been submitted.</p>}
+          {status === "error" && <p className="support-form-message error" role="alert">Your question could not be submitted. Please try again.</p>}
+        </form>
+      </section>
+    </>
+  );
+}
 type AdminLabel = { type: "category" | "subcategory"; name: string; parent_name: string };
 function AdminLabelsPage() {
   const [industries, setIndustries] = useState<string[]>([]);
@@ -4702,6 +4758,7 @@ function MemberHub() {
     "beta-programs": <BetaPage />,
     updates: <UpdatesPage />,
     notifications: <NotificationsPage />,
+    support: <SupportPage />,
     profile: <ProfilePage identity={identity} role={role} onSaved={setIdentity} />,
     ...(role === "admin" ? {
       "admin-profile": <ProfilePage identity={identity} role={role} onSaved={setIdentity} />,
@@ -4719,7 +4776,7 @@ function MemberHub() {
   const isAdminPage = role === "admin" && adminNav.some(({ slug }) => slug === page);
   const adminPageTitle = page === "admin-profile" ? "Profile & Security" : adminNav.find(({ slug }) => slug === page)?.label || "Admin";
   const isDashboard = page === "dashboard";
-  const isStructuredPage = ["pulse", "pulse-editor", "beta-programs", "updates", "profile", "notifications", ...adminNav.map(({ slug }) => slug)].includes(page);
+  const isStructuredPage = ["pulse", "pulse-editor", "beta-programs", "updates", "profile", "notifications", "support", ...adminNav.map(({ slug }) => slug)].includes(page);
   const isProjectEdit = page === "projects" && new URLSearchParams(window.location.search).has("adminEdit");
   const isProjectsCatalog = page === "projects" && !window.location.pathname.split("/").filter(Boolean)[2] && !isProjectEdit;
   return (
@@ -4752,6 +4809,10 @@ function MemberHub() {
               <span>Admin</span>
             </a>
           )}
+          <a href="/member/support" className={`${page === "support" ? "active " : ""}sidebar-support-link${role === "member" ? " client-support-link" : ""}`} onClick={(event) => { event.preventDefault(); navigate("support"); }}>
+            <CircleHelp />
+            <span>Support</span>
+          </a>
           <button className="sidebar-signout" type="button" onClick={leave}>
             <LogOut />
             <span>Sign Out</span>
