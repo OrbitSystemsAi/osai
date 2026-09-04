@@ -418,11 +418,12 @@ function PolicyBlocks({ blocks }: { blocks: LegalPolicyBlock[] }) {
       rendered.push(<Heading key={`heading-${index}`}>{block.text}</Heading>);
     } else if (block.type === "table") {
       rendered.push(
-        <div className="policy-table-wrap" key={`table-${index}`}>
-          <table>
-            <thead><tr>{block.rows[0].map((cell, cellIndex) => <th key={`${cell}-${cellIndex}`}>{cell}</th>)}</tr></thead>
-            <tbody>{block.rows.slice(1).map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, cellIndex) => <td key={cellIndex}>{cell}</td>)}</tr>)}</tbody>
-          </table>
+        <div className="policy-fields" key={`table-${index}`}>
+          {block.rows.map((row, rowIndex) => (
+            <p key={rowIndex}>
+              {row.map((cell, cellIndex) => <span key={cellIndex}>{cell}</span>)}
+            </p>
+          ))}
         </div>,
       );
     } else {
@@ -433,23 +434,16 @@ function PolicyBlocks({ blocks }: { blocks: LegalPolicyBlock[] }) {
 }
 
 function PolicyDownloadPage({ policy }: { policy: LegalPolicy }) {
-  const subtitle = policy.blocks.find((block) => block.type === "subtitle") as Extract<LegalPolicyBlock, { type: "subtitle" }> | undefined;
-  const bodyBlocks = policy.blocks.filter((block) => block !== subtitle);
   return (
     <main className="public-detail terms-page">
-      <section className="detail-hero terms-hero">
-        <div className="page-wrap">
-          <h1>{policy.title}</h1>
-          {subtitle ? <p>{subtitle.text}</p> : null}
-        </div>
-      </section>
       <section className="policy-content page-wrap">
-        <a className="button button-orange terms-download" href={policy.downloadHref} download>
-          <FileText aria-hidden="true" />
-          Download {policy.title}
-        </a>
         <article className="policy-document" aria-label={policy.title}>
-          <PolicyBlocks blocks={bodyBlocks} />
+          <h1>{policy.title}</h1>
+          <a className="button button-orange terms-download" href={policy.downloadHref} download>
+            <FileText aria-hidden="true" />
+            Download {policy.title}
+          </a>
+          <PolicyBlocks blocks={policy.blocks} />
         </article>
       </section>
     </main>
@@ -461,7 +455,7 @@ function PublicSite() {
   const content = pageContent[path];
   const legalPolicy = legalPolicyBySlug[path];
   return (
-    <div className="public-site">
+    <div className={`public-site${legalPolicy ? " policy-site" : ""}`}>
       <PublicHeader current={path} />
       {path === "/" ? (
         <HomePage />

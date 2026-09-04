@@ -483,22 +483,22 @@ body.modal-open { overflow:hidden; }
 .contact-policy-link:hover,.contact-policy-link:focus-visible{color:#dc5e20;text-decoration:underline;text-underline-offset:4px}
 .contact-policy-link:focus-visible{outline:2px solid #008b93;outline-offset:5px}
 .public-detail.terms-page{height:auto;min-height:100dvh;display:block;overflow:visible}
-.policy-content{max-width:1040px;padding-top:64px;padding-bottom:10px}
-.terms-download{display:inline-flex;align-items:center;gap:10px;text-decoration:none}
+.policy-content{max-width:1040px;padding-top:152px;padding-bottom:10px}
+.terms-download{display:inline-flex;align-items:center;gap:10px;margin:18px 0 32px;text-decoration:none}
 .terms-download svg{width:19px;height:19px}
-.policy-document{margin-top:52px;color:#263a4c;font-size:17px;line-height:1.75}
+.policy-document{color:#263a4c;font-size:17px;line-height:1.75}
+.policy-document>h1{margin:0 0 18px;color:var(--ink);font-size:clamp(42px,6vw,68px);line-height:1.08}
 .policy-document h2{margin:56px 0 18px;color:var(--ink);font-size:32px;line-height:1.2}
 .policy-document h3{margin:36px 0 14px;color:var(--ink);font-size:23px;line-height:1.3}
 .policy-document h4{margin:30px 0 12px;color:var(--ink);font-size:19px;line-height:1.35}
 .policy-document p{margin:0 0 19px}
-.policy-document .policy-notice{padding:20px 24px;border-left:4px solid var(--orange);background:#fff5ed;color:#6b351c;font-weight:700}
+.policy-document .policy-subtitle{font-size:20px;color:var(--slate)}
+.policy-document .policy-notice{font-weight:700}
 .policy-document ul{margin:0 0 24px;padding-left:26px}
 .policy-document li{margin:0 0 10px;padding-left:6px}
-.policy-table-wrap{margin:28px 0 34px;overflow-x:auto}
-.policy-document table{width:100%;border-collapse:collapse;font-size:15px;line-height:1.5}
-.policy-document th,.policy-document td{padding:14px 16px;border:1px solid #d5dde2;text-align:left;vertical-align:top}
-.policy-document th{background:var(--navy);color:#fff;font-weight:700}
-.policy-document tbody tr:nth-child(even){background:#f4f7f8}
+.policy-fields{margin:28px 0 34px}
+.policy-fields p{display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:22px}
+.policy-fields span:first-child{font-weight:700;color:var(--ink)}
 @media(max-width:1180px){.public-header .site-header{grid-template-columns:260px 1fr}.public-header .site-header nav{gap:24px}.public-header .brand-logo-image{width:250px}}
 @media(min-width:901px) and (max-width:1180px){
   .public-header,.public-header .site-header{height:92px}
@@ -600,6 +600,8 @@ body.modal-open { overflow:hidden; }
 /* Keep every public route within one viewport. */
 .public-site{height:100dvh;overflow:hidden}
 .public-header{background:transparent;box-shadow:none;backdrop-filter:none}
+.public-site.policy-site{height:auto;min-height:100dvh;overflow:visible}
+.public-site.policy-site .public-header{background:rgba(0,26,46,.96);box-shadow:0 1px 0 rgba(255,255,255,.1);backdrop-filter:blur(12px)}
 .public-page-hero{height:100dvh;min-height:0}
 .public-page-hero .hero-content{height:calc(100dvh - 104px)}
 .public-site>.services{height:238px;padding-top:24px;padding-bottom:18px;overflow:hidden}
@@ -645,12 +647,12 @@ body.modal-open { overflow:hidden; }
   .public-detail .detail-hero h1.contact-title{white-space:normal}
   .public-detail .detail-hero p{margin-top:14px;font-size:14px;line-height:1.45}
   .public-detail .detail-body,.public-detail .contact-body{min-height:0;gap:14px;padding-top:16px;padding-bottom:16px}
-  .public-detail .policy-content{padding-top:28px;padding-bottom:10px}
+  .public-detail .policy-content{padding-top:116px;padding-bottom:10px}
   .policy-document{margin-top:32px;font-size:14px;line-height:1.65}
+  .policy-document>h1{font-size:clamp(34px,11vw,48px)}
   .policy-document h2{margin-top:38px;font-size:25px}
   .policy-document h3{margin-top:28px;font-size:20px}
-  .policy-document .policy-notice{padding:16px}
-  .policy-document th,.policy-document td{min-width:150px;padding:11px 12px;font-size:12px}
+  .policy-fields p{grid-template-columns:1fr;gap:2px}
   .public-detail .detail-body h2,.public-detail .contact-body h2{font-size:26px;line-height:1.08}
   .public-detail .detail-body>div>p,.public-detail .contact-body p{margin:10px 0 13px;font-size:12px;line-height:1.4}
   .public-detail .contact-body{padding-bottom:18px}
