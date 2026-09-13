@@ -1,8 +1,9 @@
 import { clerkMiddleware } from '@clerk/nextjs/server'
-import { NextResponse, type NextFetchEvent, type NextRequest } from 'next/server'
+import { NextResponse, type NextFetchEvent, type NextMiddleware, type NextRequest } from 'next/server'
 
 const passkeyPages = new Set(['/validate', '/admin/passkeys'])
-const existingSiteAuthentication = clerkMiddleware()
+const publicLegalPages = new Set(['/privacy', '/terms'])
+let existingSiteAuthentication: NextMiddleware | undefined
 
 function passkeyPageResponse(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
@@ -31,7 +32,9 @@ function passkeyPageResponse(request: NextRequest) {
 
 export default function proxy(request: NextRequest, event: NextFetchEvent) {
   if (passkeyPages.has(request.nextUrl.pathname)) return passkeyPageResponse(request)
+  if (publicLegalPages.has(request.nextUrl.pathname)) return NextResponse.next()
   if (request.nextUrl.pathname.startsWith('/api/osai/passkey/')) return NextResponse.next()
+  existingSiteAuthentication ??= clerkMiddleware()
   return existingSiteAuthentication(request, event)
 }
 
