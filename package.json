@@ -6,15 +6,17 @@
     "dev": "next dev -p 3003",
     "build": "next build",
     "start": "next start -p 3003",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:passkeys": "node --experimental-strip-types --test --test-concurrency=1 tests/sophia-passkeys.test.mts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.7.4",
     "@neondatabase/neon-js": "^0.6.2-beta",
     "@neondatabase/serverless": "^1.1.0",
+    "@simplewebauthn/browser": "^14.0.0",
     "jose": "^6.2.4",
     "lucide-react": "latest",
-    "next": "latest",
+    "next": "^16.3.5",
     "react": "latest",
     "react-dom": "latest",
     "typescript": "latest"
@@ -24,7 +26,7 @@
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "eslint": "^9.39.5",
-    "eslint-config-next": "latest"
+    "eslint-config-next": "^16.3.5"
   },
   "overrides": {
     "better-auth": "1.6.25"
