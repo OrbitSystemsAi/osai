@@ -5,6 +5,7 @@ import { browserSupportsWebAuthn, startRegistration, type PublicKeyCredentialCre
 import { ArrowLeft, KeyRound, LogOut, Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import Script from 'next/script'
+import { enrollmentOptionsBody, enrollmentVerificationBody } from './enrollment-contract'
 import './passkeys.css'
 import './google-passkeys.css'
 
@@ -89,12 +90,14 @@ export default function SophiaPasskeyAdminPage({ googleClientId }: { googleClien
     setBusy('add'); setMessage(''); setError('')
     try {
       if (!browserSupportsWebAuthn()) throw new Error('This browser does not support passkeys.')
-      const optionsResponse = await authenticatedFetch('/api/osai/passkey/enrollment/options', { method: 'POST' })
-      const optionsResult = await optionsResponse.json().catch(() => ({})) as { public_key_options?: PublicKeyCredentialCreationOptionsJSON }
-      if (!optionsResponse.ok || !optionsResult.public_key_options) throw new Error('Passkey enrollment is temporarily unavailable.')
+      const optionsResponse = await authenticatedFetch('/api/osai/passkey/enrollment/options', {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(enrollmentOptionsBody(label)),
+      })
+      const optionsResult = await optionsResponse.json().catch(() => ({})) as { registration_transaction?: string; public_key_options?: PublicKeyCredentialCreationOptionsJSON }
+      if (!optionsResponse.ok || !optionsResult.registration_transaction || !optionsResult.public_key_options) throw new Error('Passkey enrollment is temporarily unavailable.')
       const credential = await startRegistration({ optionsJSON: optionsResult.public_key_options })
       const verifyResponse = await authenticatedFetch('/api/osai/passkey/enrollment/verify', {
-        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ credential, label: label.trim() }),
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(enrollmentVerificationBody(optionsResult.registration_transaction, credential)),
       })
       const result = await verifyResponse.json().catch(() => ({})) as { status?: string }
       if (!verifyResponse.ok || result.status !== 'registered') throw new Error('Passkey enrollment was not completed.')

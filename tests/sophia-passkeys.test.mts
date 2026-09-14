@@ -10,6 +10,7 @@ import {
   safeCredentialMetadata,
   safeValidationStatus,
 } from '../src/server/sophia-passkeys.ts'
+import { enrollmentOptionsBody, enrollmentVerificationBody } from '../src/passkeys/enrollment-contract.ts'
 
 const originalFetch = globalThis.fetch
 const originalBaseUrl = process.env.SOPHIA_API_BASE_URL
@@ -71,10 +72,22 @@ test('responses are explicitly non-cacheable', () => {
   assert.equal(noStoreHeaders().Pragma, 'no-cache')
 })
 
+test('browser enrollment binds the label at options time and transaction at verification time', () => {
+  const registrationTransaction = randomUUID()
+  const credential = { id: randomUUID(), response: {} }
+  assert.deepEqual(enrollmentOptionsBody('  Recovery key  '), { label: 'Recovery key' })
+  assert.deepEqual(enrollmentVerificationBody(registrationTransaction, credential), {
+    registration_transaction: registrationTransaction,
+    credential,
+  })
+  assert.equal('label' in enrollmentVerificationBody(registrationTransaction, credential), false)
+})
+
 test('Next.js routes proxy the approved contracts and fail closed', async (context) => {
   const testSessionCode = String(randomInt(0, 1_000_000)).padStart(6, '0')
   const testChallenge = randomBytes(24).toString('base64url')
   const testRegistrationChallenge = randomBytes(24).toString('base64url')
+  const testRegistrationTransaction = randomUUID()
   const testTransaction = randomUUID()
   const testAuthorization = `Bearer ${randomUUID()}`
   const requests: Array<{ url: string; authorization: string; body: string }> = []
@@ -86,7 +99,7 @@ test('Next.js routes proxy the approved contracts and fail closed', async (conte
       response.setHeader('content-type', 'application/json')
       if (request.url === '/api/osai/passkey/validation/options') response.end(JSON.stringify({ validation_transaction: testTransaction, action_label: 'Approve requested Sophia action', public_key_options: { challenge: testChallenge }, internal_field: randomUUID() }))
       else if (request.url === '/api/osai/passkey/validation/verify') response.end(JSON.stringify({ status: 'validated', internal_authorization: 'private' }))
-      else if (request.url === '/api/osai/passkey/enrollment/options') response.end(JSON.stringify({ public_key_options: { challenge: testRegistrationChallenge }, internal_field: randomUUID() }))
+      else if (request.url === '/api/osai/passkey/enrollment/options') response.end(JSON.stringify({ registration_transaction: testRegistrationTransaction, public_key_options: { challenge: testRegistrationChallenge }, internal_field: randomUUID() }))
       else if (request.url === '/api/osai/passkey/enrollment/verify') response.end(JSON.stringify({ status: 'registered', credential_id: 'private' }))
       else if (request.url === '/api/osai/passkey/credentials' && request.method === 'GET') response.end(JSON.stringify({ administrator: { display_name: 'Approved administrator', internal_field: randomUUID() }, credentials: [{ credential_ref: 'safe_ref', label: 'Laptop', created_at: '2026-09-13', internal_field: randomUUID() }] }))
       else if (request.url === '/api/osai/passkey/credentials/safe_ref' && request.method === 'PATCH') response.end(JSON.stringify({ status: 'updated', public_key: 'private' }))
@@ -143,15 +156,21 @@ test('Next.js routes proxy the approved contracts and fail closed', async (conte
   assert.deepEqual(await credentials.json(), { administrator: { display_name: 'Approved administrator' }, credentials: [{ credential_ref: 'safe_ref', label: 'Laptop', created_at: '2026-09-13', last_used_at: null }] })
   assert.equal(requests[2]?.authorization, testAuthorization)
 
-  const enrollmentOptions = await fetch(`http://127.0.0.1:${applicationPort}/api/osai/passkey/enrollment/options`, { method: 'POST', headers: { origin: 'https://orbitsystems.ai', authorization: testAuthorization } })
+  const enrollmentOptions = await fetch(`http://127.0.0.1:${applicationPort}/api/osai/passkey/enrollment/options`, { method: 'POST', headers: { origin: 'https://orbitsystems.ai', authorization: testAuthorization, 'content-type': 'application/json' }, body: JSON.stringify({ label: 'Security key' }) })
   assert.equal(enrollmentOptions.status, 200)
-  assert.deepEqual(await enrollmentOptions.json(), { public_key_options: { challenge: testRegistrationChallenge } })
+  assert.deepEqual(await enrollmentOptions.json(), { registration_transaction: testRegistrationTransaction, public_key_options: { challenge: testRegistrationChallenge } })
   assert.equal(requests[3]?.authorization, testAuthorization)
-  assert.deepEqual(JSON.parse(requests[3]?.body || '{}'), {})
+  assert.deepEqual(JSON.parse(requests[3]?.body || '{}'), { label: 'Security key' })
 
-  const enrollmentVerify = await fetch(`http://127.0.0.1:${applicationPort}/api/osai/passkey/enrollment/verify`, { method: 'POST', headers: { origin: 'https://orbitsystems.ai', authorization: testAuthorization, 'content-type': 'application/json' }, body: JSON.stringify({ credential: {}, label: 'Security key' }) })
+  const enrollmentVerify = await fetch(`http://127.0.0.1:${applicationPort}/api/osai/passkey/enrollment/verify`, { method: 'POST', headers: { origin: 'https://orbitsystems.ai', authorization: testAuthorization, 'content-type': 'application/json' }, body: JSON.stringify({ registration_transaction: testRegistrationTransaction, credential: {} }) })
   assert.equal(enrollmentVerify.status, 200)
   assert.deepEqual(await enrollmentVerify.json(), { status: 'registered' })
+  assert.deepEqual(JSON.parse(requests[4]?.body || '{}'), { registration_transaction: testRegistrationTransaction, credential: {} })
+
+  const missingEnrollmentTransaction = await fetch(`http://127.0.0.1:${applicationPort}/api/osai/passkey/enrollment/verify`, { method: 'POST', headers: { origin: 'https://orbitsystems.ai', authorization: testAuthorization, 'content-type': 'application/json' }, body: JSON.stringify({ credential: {}, label: 'Security key' }) })
+  assert.equal(missingEnrollmentTransaction.status, 400)
+  assert.deepEqual(await missingEnrollmentTransaction.json(), { error: 'INVALID_REQUEST' })
+  assert.equal(requests.length, 5)
 
   const renamed = await fetch(`http://127.0.0.1:${applicationPort}/api/osai/passkey/credentials/safe_ref`, { method: 'PATCH', headers: { origin: 'https://orbitsystems.ai', authorization: testAuthorization, 'content-type': 'application/json' }, body: JSON.stringify({ label: 'Recovery key' }) })
   assert.equal(renamed.status, 200)

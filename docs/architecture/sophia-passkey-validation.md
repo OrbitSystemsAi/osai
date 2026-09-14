@@ -23,7 +23,8 @@ The ID token is retained only in React memory for the current page lifetime. It 
 
 ## Confirmed administrator API schema
 
-- `POST /api/osai/passkey/enrollment/options` accepts an empty JSON object. Sophia derives the administrator display name exclusively from the verified Google identity; the website never submits a name, email, identity ID, or role.
+- `POST /api/osai/passkey/enrollment/options` accepts `{ "label": "<safe device label>" }`. Sophia stores the label with the short-lived registration challenge and returns both an opaque `registration_transaction` and `public_key_options`. The website forwards only those two response fields to the browser. Sophia derives the administrator identity exclusively from the verified Google ID token; the website never submits a name, email, identity ID, or role.
+- `POST /api/osai/passkey/enrollment/verify` accepts `{ "registration_transaction": "<opaque server value>", "credential": {} }`. The label is not accepted at verification time. The browser retains the transaction only for the active in-memory registration ceremony, and the website proxy forwards the transaction and credential without logging or persisting either value.
 - `GET /api/osai/passkey/credentials` returns only `administrator.display_name` and `credentials[]` entries containing `credential_ref`, `label`, `created_at`, and nullable `last_used_at`.
 - The credential-list response does not contain email, identity ID, public-key material, credential ID, or role. The website filters the response again before returning it to the browser.
 
