@@ -39,7 +39,10 @@ function googleIdToken(request: Request) {
 async function requestSophia(path: string, init: RequestInit, authorization?: string) {
   const { baseUrl } = configuration()
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 10_000)
+  // Cloud Run may need more than ten seconds to serve the first request after
+  // scaling from zero. Keep the proxy bounded while allowing that cold start
+  // to finish so a valid administrator sign-in is not reported as a failure.
+  const timeout = setTimeout(() => controller.abort(), 30_000)
   try {
     return await fetch(`${baseUrl}${path}`, {
       ...init,
