@@ -10,9 +10,8 @@ import legalPoliciesData from "./legalPolicies.json";
 
 const PROJECT_TITLE_MAX = 40;
 const PROJECT_DESCRIPTION_MAX = 300;
-type AccountRole = "prospect" | "client" | "member" | "admin";
+type AccountRole = "client" | "member" | "admin";
 const accountRoleLabels: Record<AccountRole, string> = {
-  prospect: "Prospect",
   client: "Client",
   member: "Member",
   admin: "Administrator",
@@ -2673,10 +2672,21 @@ type AdminProfile = {
   display_name: string;
   role: AccountRole;
   status: "pending_approval" | "approved" | "declined" | "revoked";
-  membership_role: "Administrator" | "Prospect" | "Client" | "Site Member" | "Pending Approval" | "Pending Membership" | "Member";
+  membership_role: "Administrator" | "Client" | "Site Member" | "Pending Approval" | "Pending Membership" | "Member";
   membership_status: string;
   project_count: number;
   projects: UserProject[];
+};
+type AdminProspect = {
+  id: string;
+  display_name: string;
+  company_name: string;
+  email: string;
+  phone: string;
+  status: "new" | "contacted" | "qualified" | "closed";
+  notes: string;
+  created_at: string;
+  updated_at: string;
 };
 const isActiveUserProject = (project: UserProject) => activeProjectAccess.has(project.status);
 const isPendingUserProject = (project: UserProject) => pendingProjectAccess.has(project.status);
@@ -2707,7 +2717,89 @@ async function memberRequest(path: string, init?: RequestInit) {
   return data;
 }
 
-function AdminUsersPage({ currentAuthUserId, roleFilter }: { currentAuthUserId: string; roleFilter?: "prospect" | "client" }) {
+function AdminProspectsPage() {
+  const [prospects, setProspects] = useState<AdminProspect[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("Loading prospects…");
+  const [form, setForm] = useState({ displayName: "", companyName: "", email: "", phone: "", notes: "" });
+  const load = async () => {
+    try {
+      const data = await adminRequest("/api/admin/prospects");
+      setProspects(data.prospects);
+      setMessage("");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not load prospects.");
+    }
+  };
+  useEffect(() => { void load(); }, []);
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSaving(true);
+    setMessage("");
+    try {
+      await adminRequest("/api/admin/prospects", { method: "POST", body: JSON.stringify(form) });
+      setForm({ displayName: "", companyName: "", email: "", phone: "", notes: "" });
+      setShowForm(false);
+      await load();
+      setMessage("Prospect added. No account or invitation was created.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not add the prospect.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const visibleProspects = prospects.filter((prospect) => !normalizedQuery || [prospect.display_name, prospect.company_name, prospect.email, prospect.phone, prospect.status, prospect.notes].join(" ").toLowerCase().includes(normalizedQuery));
+  return (
+    <>
+      <PageHead title="Prospects" intro="" />
+      <div className="toolbar admin-project-toolbar prospects-toolbar">
+        <span className="admin-project-toolbar-title">Prospect Directory</span>
+        <div className="admin-project-toolbar-actions">
+          <label className="search">
+            <Search size={18} />
+            <input aria-label="Search prospects" placeholder="Search prospects" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} />
+          </label>
+          <button className="admin-add-project" type="button" aria-expanded={showForm} onClick={() => setShowForm((open) => !open)}>
+            {showForm ? <X /> : <Plus />} {showForm ? "Cancel" : "Add Prospect"}
+          </button>
+        </div>
+      </div>
+      {showForm && (
+        <form className="prospect-form" onSubmit={submit}>
+          <label>Full name <span>Required</span><input required maxLength={120} autoComplete="name" value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} /></label>
+          <label>Company<input maxLength={160} autoComplete="organization" value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} /></label>
+          <label>Email<input type="email" maxLength={254} autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
+          <label>Phone<input type="tel" maxLength={40} autoComplete="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label>
+          <label className="prospect-notes">Notes<textarea maxLength={2000} rows={3} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>
+          <button type="submit" disabled={saving}>{saving ? "Adding…" : "Add Prospect"}</button>
+        </form>
+      )}
+      {message && <p className="profile-message" role="status">{message}</p>}
+      <div className="prospect-tiles" aria-label="Prospects">
+        {visibleProspects.map((prospect, index) => {
+          const initials = prospect.display_name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+          return (
+            <article className="prospect-tile" key={prospect.id}>
+              <div className={`prospect-tile-art prospect-tone-${index % 4}`}><span>{initials || "P"}</span></div>
+              <div className="prospect-tile-copy">
+                <strong>{prospect.display_name}</strong>
+                <small>{prospect.company_name || "Independent prospect"}</small>
+                {prospect.email && <a href={`mailto:${prospect.email}`}>{prospect.email}</a>}
+                {prospect.phone && <a href={`tel:${prospect.phone}`}>{prospect.phone}</a>}
+              </div>
+            </article>
+          );
+        })}
+        {!message && !visibleProspects.length && <p className="project-directory-empty">No prospects{searchQuery ? ` match “${searchQuery}”` : " found"}.</p>}
+      </div>
+    </>
+  );
+}
+
+function AdminUsersPage({ currentAuthUserId, roleFilter }: { currentAuthUserId: string; roleFilter?: "client" }) {
   const identity = { id: currentAuthUserId };
   const [profiles, setProfiles] = useState<AdminProfile[]>([]);
   const [projectOptions, setProjectOptions] = useState<AdminProjectOption[]>([]);
@@ -2778,10 +2870,8 @@ function AdminUsersPage({ currentAuthUserId, roleFilter }: { currentAuthUserId: 
   const roleProfiles = roleFilter ? profiles.filter((profile) => profile.role === roleFilter) : profiles;
   const visibleProfiles = roleProfiles.filter((profile) => !normalizedQuery || [profile.display_name, profile.email, profile.auth_user_id, profile.status, profile.role, profile.membership_role, profile.membership_status, ...profile.projects.flatMap((project) => [project.name, ...project.legalDocuments.map((document) => document.fileName)])].join(" ").toLowerCase().includes(normalizedQuery));
   const collaboratorsFor = (profile: AdminProfile) => profiles.filter((other) => other.auth_user_id !== profile.auth_user_id && other.projects.filter(isActiveUserProject).some((project) => profile.projects.filter(isActiveUserProject).some((assigned) => assigned.id === project.id)));
-  const directoryTitle = roleFilter === "prospect" ? "Prospects" : roleFilter === "client" ? "Clients" : "Users";
-  const directoryIntro = roleFilter === "prospect"
-    ? "Review prospective clients and manage their next access role."
-    : roleFilter === "client"
+  const directoryTitle = roleFilter === "client" ? "Clients" : "Users";
+  const directoryIntro = roleFilter === "client"
       ? "Review active clients, project assignments, and account access."
       : "Review user access, required legal documents, project teams, and administrator rights.";
   return (
@@ -2919,7 +3009,7 @@ function AdminUsersPage({ currentAuthUserId, roleFilter }: { currentAuthUserId: 
                   <ChevronRight aria-hidden="true" />
                 </summary>
                 <div className="project-assignment-menu role-assignment-menu">
-                  {(["prospect", "client", "member", "admin"] as const).map((role) => (
+                  {(["client", "member", "admin"] as const).map((role) => (
                     <button
                       type="button"
                       className={profile.role === role ? "selected" : undefined}
@@ -4747,7 +4837,7 @@ function MemberHub() {
   const [page, setPage] = useState(initial);
   const [navOpen, setNavOpen] = useState(false);
   const [identity, setIdentity] = useState<MemberIdentity>(() => identityFromUser());
-  const [role, setRole] = useState<AccountRole>("prospect");
+  const [role, setRole] = useState<AccountRole>("client");
   useEffect(() => {
     const onPop = () => setPage(pageFromLocation());
     window.addEventListener("popstate", onPop);
@@ -4758,7 +4848,7 @@ function MemberHub() {
     fetch("/api/me").then(async (response) => ({ response, result: await response.json() })).then(({ response, result }) => {
       if (response.ok && result.profile) {
         setIdentity(identityFromUser({ id: result.profile.authUserId, name: result.profile.displayName, email: result.profile.email }));
-        if (["prospect", "client", "member", "admin"].includes(result.profile.role)) setRole(result.profile.role as AccountRole);
+        if (["client", "member", "admin"].includes(result.profile.role)) setRole(result.profile.role as AccountRole);
       }
     }).catch(() => undefined);
   }, [user]);
@@ -4782,7 +4872,7 @@ function MemberHub() {
     profile: <ProfilePage identity={identity} role={role} onSaved={setIdentity} />,
     ...(role === "admin" ? {
       "admin-profile": <ProfilePage identity={identity} role={role} onSaved={setIdentity} />,
-      "admin-prospects": <AdminUsersPage currentAuthUserId={identity.id} roleFilter="prospect" />,
+      "admin-prospects": <AdminProspectsPage />,
       "admin-clients": <AdminUsersPage currentAuthUserId={identity.id} roleFilter="client" />,
       "admin-users": <AdminUsersPage currentAuthUserId={identity.id} />,
       "admin-legal": <AgreementsPage isAdmin />,

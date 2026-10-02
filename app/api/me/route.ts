@@ -5,7 +5,7 @@ import { databaseConfigured } from '../../../src/server/database'
 export const runtime = 'nodejs'
 
 export async function GET(request: Request) {
-  if (!databaseConfigured()) return NextResponse.json({ configured: false, role: 'prospect' })
+  if (!databaseConfigured()) return NextResponse.json({ configured: false, role: 'client' })
   try {
     const profile = await requireProfile(request)
     return NextResponse.json({ configured: true, profile })

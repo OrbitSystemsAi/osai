@@ -45,7 +45,7 @@ Every protected page mutation and API route must:
 4. return data only after authorization succeeds; and
 5. record required audit events against the immutable application profile ID.
 
-Roles are `prospect`, `client`, `member`, and `admin`; roles never come from client-editable Clerk metadata. New application profiles default to `prospect`. Administrators may promote a prospect to `client` or `member`, while the legacy `member` role remains available for existing portfolio-hub users. Admin-only APIs revalidate both the Clerk session and application role on every request.
+Authenticated application roles are `client`, `member`, and `admin`; roles never come from client-editable Clerk metadata. New application profiles default to `client`, while the legacy `member` role remains available for existing portfolio-hub users. A Prospect is instead a private CRM record created by an administrator. Creating a prospect never creates a Clerk identity, sends an invitation, or grants site access. Admin-only APIs revalidate both the Clerk session and application role on every request.
 
 To bootstrap the first administrator, set `OSAI_BOOTSTRAP_ADMIN_USER_IDS` to the immutable Clerk/application identity ID, never an email address. After the profile signs in, administrators can manage subsequent roles through **Users**.
 

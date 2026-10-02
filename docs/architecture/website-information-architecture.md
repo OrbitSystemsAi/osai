@@ -256,7 +256,7 @@ The public logo and navigation remain fixed while a page scrolls. Desktop uses t
 - Audit
 - Sophia passkeys (separate Google-authenticated administrator utility; `/admin/passkeys`)
 
-The authenticated administrator sidebar places **Prospects** and **Clients** immediately after **Dashboard** and before **Projects**. These destinations show role-filtered administrative directories and are never included in prospect, client, or member navigation.
+The authenticated administrator sidebar places **Prospects** and **Clients** immediately after **Dashboard** and before **Projects**. **Prospects** is a private administrator-created CRM directory with no authentication or invitation relationship. **Clients** is an authenticated, role-filtered directory. Neither destination is included in client or member navigation.
 
 ### Protected telephone-action validation
 
