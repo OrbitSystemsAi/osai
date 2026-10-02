@@ -1,0 +1,2 @@
+ALTER TABLE prospects
+  ADD COLUMN IF NOT EXISTS website_url text NOT NULL DEFAULT '';

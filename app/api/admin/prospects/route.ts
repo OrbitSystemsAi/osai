@@ -6,12 +6,22 @@ export const runtime = 'nodejs'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+function validWebsiteUrl(value: string) {
+  if (!value) return true
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 export async function GET(request: Request) {
   try {
     await requireAdmin(request)
     const sql = db()
     const prospects = await sql`
-      SELECT id, display_name, company_name, email, phone, status, notes, created_at, updated_at
+      SELECT id, display_name, company_name, email, phone, website_url, status, notes, created_at, updated_at
       FROM prospects
       ORDER BY created_at DESC
     `
@@ -30,29 +40,34 @@ export async function POST(request: Request) {
       companyName?: string
       email?: string
       phone?: string
+      websiteUrl?: string
       notes?: string
     }
     const displayName = body.displayName?.trim() || ''
     const companyName = body.companyName?.trim() || ''
     const email = body.email?.trim().toLowerCase() || ''
     const phone = body.phone?.trim() || ''
+    const websiteUrl = body.websiteUrl?.trim() || ''
     const notes = body.notes?.trim() || ''
 
     if (!displayName || displayName.length > 120) {
       return NextResponse.json({ error: 'Enter a prospect name of 120 characters or fewer.' }, { status: 400 })
     }
-    if (companyName.length > 160 || email.length > 254 || phone.length > 40 || notes.length > 2000) {
+    if (companyName.length > 160 || email.length > 254 || phone.length > 40 || websiteUrl.length > 2048 || notes.length > 2000) {
       return NextResponse.json({ error: 'One or more prospect fields exceed the allowed length.' }, { status: 400 })
     }
     if (email && !EMAIL_PATTERN.test(email)) {
       return NextResponse.json({ error: 'Enter a valid email address or leave the email blank.' }, { status: 400 })
     }
+    if (!validWebsiteUrl(websiteUrl)) {
+      return NextResponse.json({ error: 'Enter a complete website URL beginning with http:// or https://.' }, { status: 400 })
+    }
 
     const sql = db()
     const rows = await sql`
-      INSERT INTO prospects (display_name, company_name, email, phone, notes, created_by)
-      VALUES (${displayName}, ${companyName}, ${email}, ${phone}, ${notes}, ${actor.authUserId})
-      RETURNING id, display_name, company_name, email, phone, status, notes, created_at, updated_at
+      INSERT INTO prospects (display_name, company_name, email, phone, website_url, notes, created_by)
+      VALUES (${displayName}, ${companyName}, ${email}, ${phone}, ${websiteUrl}, ${notes}, ${actor.authUserId})
+      RETURNING id, display_name, company_name, email, phone, website_url, status, notes, created_at, updated_at
     `
     await sql`
       INSERT INTO audit_events (actor_auth_user_id, action, target_type, target_id, metadata)

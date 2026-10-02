@@ -2683,6 +2683,7 @@ type AdminProspect = {
   company_name: string;
   email: string;
   phone: string;
+  website_url: string;
   status: "new" | "contacted" | "qualified" | "closed";
   notes: string;
   created_at: string;
@@ -2717,13 +2718,13 @@ async function memberRequest(path: string, init?: RequestInit) {
   return data;
 }
 
-function AdminProspectsPage() {
+function AdminProspectsPage({ onOpen }: { onOpen: (prospectId: string) => void }) {
   const [prospects, setProspects] = useState<AdminProspect[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("Loading prospects…");
-  const [form, setForm] = useState({ displayName: "", companyName: "", email: "", phone: "", notes: "" });
+  const [form, setForm] = useState({ displayName: "", companyName: "", email: "", phone: "", websiteUrl: "", notes: "" });
   const load = async () => {
     try {
       const data = await adminRequest("/api/admin/prospects");
@@ -2740,7 +2741,7 @@ function AdminProspectsPage() {
     setMessage("");
     try {
       await adminRequest("/api/admin/prospects", { method: "POST", body: JSON.stringify(form) });
-      setForm({ displayName: "", companyName: "", email: "", phone: "", notes: "" });
+      setForm({ displayName: "", companyName: "", email: "", phone: "", websiteUrl: "", notes: "" });
       setShowForm(false);
       await load();
       setMessage("Prospect added. No account or invitation was created.");
@@ -2751,7 +2752,7 @@ function AdminProspectsPage() {
     }
   };
   const normalizedQuery = searchQuery.trim().toLowerCase();
-  const visibleProspects = prospects.filter((prospect) => !normalizedQuery || [prospect.display_name, prospect.company_name, prospect.email, prospect.phone, prospect.status, prospect.notes].join(" ").toLowerCase().includes(normalizedQuery));
+  const visibleProspects = prospects.filter((prospect) => !normalizedQuery || [prospect.display_name, prospect.company_name, prospect.email, prospect.phone, prospect.website_url, prospect.status, prospect.notes].join(" ").toLowerCase().includes(normalizedQuery));
   return (
     <>
       <PageHead title="Prospects" intro="" />
@@ -2773,6 +2774,7 @@ function AdminProspectsPage() {
           <label>Company<input maxLength={160} autoComplete="organization" value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} /></label>
           <label>Email<input type="email" maxLength={254} autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
           <label>Phone<input type="tel" maxLength={40} autoComplete="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label>
+          <label className="prospect-website">Website URL<input type="url" maxLength={2048} placeholder="https://example.com" autoComplete="url" value={form.websiteUrl} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} /></label>
           <label className="prospect-notes">Notes<textarea maxLength={2000} rows={3} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>
           <button type="submit" disabled={saving}>{saving ? "Adding…" : "Add Prospect"}</button>
         </form>
@@ -2783,18 +2785,74 @@ function AdminProspectsPage() {
           const initials = prospect.display_name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
           return (
             <article className="prospect-tile" key={prospect.id}>
-              <div className={`prospect-tile-art prospect-tone-${index % 4}`}><span>{initials || "P"}</span></div>
-              <div className="prospect-tile-copy">
-                <strong>{prospect.display_name}</strong>
-                <small>{prospect.company_name || "Independent prospect"}</small>
-                {prospect.email && <a href={`mailto:${prospect.email}`}>{prospect.email}</a>}
-                {prospect.phone && <a href={`tel:${prospect.phone}`}>{prospect.phone}</a>}
-              </div>
+              <button type="button" onClick={() => onOpen(prospect.id)} aria-label={`Edit ${prospect.display_name}`}>
+                <div className={`prospect-tile-art prospect-tone-${index % 4}`}><span>{initials || "P"}</span></div>
+                <div className="prospect-tile-copy">
+                  <strong>{prospect.display_name}</strong>
+                  <small>{prospect.company_name || "Independent prospect"}</small>
+                  {prospect.email && <span>{prospect.email}</span>}
+                  {prospect.phone && <span>{prospect.phone}</span>}
+                  {prospect.website_url && <span>{prospect.website_url}</span>}
+                </div>
+              </button>
             </article>
           );
         })}
         {!message && !visibleProspects.length && <p className="project-directory-empty">No prospects{searchQuery ? ` match “${searchQuery}”` : " found"}.</p>}
       </div>
+    </>
+  );
+}
+
+function AdminProspectDetailPage({ prospectId, onBack }: { prospectId: string; onBack: () => void }) {
+  const [prospect, setProspect] = useState<AdminProspect | null>(null);
+  const [form, setForm] = useState({ displayName: "", companyName: "", email: "", phone: "", websiteUrl: "", status: "new", notes: "" });
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("Loading prospect…");
+  useEffect(() => {
+    let active = true;
+    adminRequest(`/api/admin/prospects/${prospectId}`).then(({ prospect: result }) => {
+      if (!active) return;
+      setProspect(result);
+      setForm({ displayName: result.display_name, companyName: result.company_name, email: result.email, phone: result.phone, websiteUrl: result.website_url, status: result.status, notes: result.notes });
+      setMessage("");
+    }).catch((error) => active && setMessage(error instanceof Error ? error.message : "Could not load the prospect."));
+    return () => { active = false; };
+  }, [prospectId]);
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSaving(true);
+    setMessage("");
+    try {
+      const data = await adminRequest(`/api/admin/prospects/${prospectId}`, { method: "PATCH", body: JSON.stringify(form) });
+      setProspect(data.prospect);
+      setMessage("Prospect saved.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not save the prospect.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <>
+      <button className="project-back prospect-back" type="button" onClick={onBack}><ArrowLeft /> Back to Prospects</button>
+      <PageHead title={prospect?.display_name || "Prospect"} intro="Edit this private prospect record. Changes do not create an account or send an invitation." />
+      {message && <p className="profile-message" role="status">{message}</p>}
+      {prospect && (
+        <form className="prospect-detail-form" onSubmit={submit}>
+          <label>Full name <span>Required</span><input required maxLength={120} autoComplete="name" value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} /></label>
+          <label>Company<input maxLength={160} autoComplete="organization" value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} /></label>
+          <label>Email<input type="email" maxLength={254} autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
+          <label>Phone<input type="tel" maxLength={40} autoComplete="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label>
+          <label>Website URL<input type="url" maxLength={2048} placeholder="https://example.com" autoComplete="url" value={form.websiteUrl} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} /></label>
+          <label>Status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}><option value="new">New</option><option value="contacted">Contacted</option><option value="qualified">Qualified</option><option value="closed">Closed</option></select></label>
+          <label className="prospect-detail-notes">Notes<textarea maxLength={2000} rows={8} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>
+          <div className="prospect-detail-actions">
+            <button type="submit" disabled={saving}>{saving ? "Saving…" : "Save Prospect"}</button>
+            {prospect.website_url && <a href={prospect.website_url} target="_blank" rel="noreferrer">Visit website <ArrowRight /></a>}
+          </div>
+        </form>
+      )}
     </>
   );
 }
@@ -4829,17 +4887,25 @@ function AdminHeaderNav({ active, onNavigate }: { active: string; onNavigate: (s
 function MemberHub() {
   const { user } = useUser();
   const { signOut } = useClerk();
-  const pageFromLocation = () => {
+  const locationFromPath = () => {
     const segments = window.location.pathname.split("/").filter(Boolean);
-    return segments[1] === "pulse" && segments[2] === "editor" ? "pulse-editor" : segments[1] || "dashboard";
+    return {
+      page: segments[1] === "pulse" && segments[2] === "editor" ? "pulse-editor" : segments[1] === "admin-prospects" && segments[2] ? "admin-prospect-detail" : segments[1] || "dashboard",
+      prospectId: segments[1] === "admin-prospects" ? segments[2] || "" : "",
+    };
   };
-  const initial = pageFromLocation();
-  const [page, setPage] = useState(initial);
+  const initial = locationFromPath();
+  const [page, setPage] = useState(initial.page);
+  const [prospectId, setProspectId] = useState(initial.prospectId);
   const [navOpen, setNavOpen] = useState(false);
   const [identity, setIdentity] = useState<MemberIdentity>(() => identityFromUser());
   const [role, setRole] = useState<AccountRole>("client");
   useEffect(() => {
-    const onPop = () => setPage(pageFromLocation());
+    const onPop = () => {
+      const location = locationFromPath();
+      setPage(location.page);
+      setProspectId(location.prospectId);
+    };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
@@ -4855,7 +4921,14 @@ function MemberHub() {
   const navigate = (slug: string) => {
     window.history.pushState({}, "", slug === "pulse-editor" ? "/member/pulse/editor" : `/member/${slug}`);
     setPage(slug);
+    setProspectId("");
     setNavOpen(false);
+    window.scrollTo(0, 0);
+  };
+  const openProspect = (id: string) => {
+    window.history.pushState({}, "", `/member/admin-prospects/${id}`);
+    setProspectId(id);
+    setPage("admin-prospect-detail");
     window.scrollTo(0, 0);
   };
   const leave = async () => { await signOut({ redirectUrl: "/" }); };
@@ -4872,7 +4945,8 @@ function MemberHub() {
     profile: <ProfilePage identity={identity} role={role} onSaved={setIdentity} />,
     ...(role === "admin" ? {
       "admin-profile": <ProfilePage identity={identity} role={role} onSaved={setIdentity} />,
-      "admin-prospects": <AdminProspectsPage />,
+      "admin-prospects": <AdminProspectsPage onOpen={openProspect} />,
+      "admin-prospect-detail": prospectId ? <AdminProspectDetailPage prospectId={prospectId} onBack={() => navigate("admin-prospects")} /> : <AdminProspectsPage onOpen={openProspect} />,
       "admin-clients": <AdminUsersPage currentAuthUserId={identity.id} roleFilter="client" />,
       "admin-users": <AdminUsersPage currentAuthUserId={identity.id} />,
       "admin-legal": <AgreementsPage isAdmin />,
@@ -4890,7 +4964,7 @@ function MemberHub() {
   const isAdminPage = role === "admin" && adminNav.some(({ slug }) => slug === page);
   const adminPageTitle = page === "admin-profile" ? "Profile & Security" : adminNav.find(({ slug }) => slug === page)?.label || "Admin";
   const isDashboard = page === "dashboard";
-  const isStructuredPage = ["pulse", "pulse-editor", "beta-programs", "updates", "profile", "notifications", "support", ...adminAudienceNav.map(({ slug }) => slug), ...adminNav.map(({ slug }) => slug)].includes(page);
+  const isStructuredPage = ["pulse", "pulse-editor", "beta-programs", "updates", "profile", "notifications", "support", "admin-prospect-detail", ...adminAudienceNav.map(({ slug }) => slug), ...adminNav.map(({ slug }) => slug)].includes(page);
   const isProjectEdit = page === "projects" && new URLSearchParams(window.location.search).has("adminEdit");
   const isProjectsCatalog = page === "projects" && !window.location.pathname.split("/").filter(Boolean)[2] && !isProjectEdit;
   return (
@@ -4905,7 +4979,7 @@ function MemberHub() {
           {visibleNav.map(({ slug, label, icon: Icon, count }) => (
             <a
               href={`/member/${slug}`}
-              className={page === slug || (slug === "pulse" && page === "pulse-editor") ? "active" : undefined}
+              className={page === slug || (slug === "pulse" && page === "pulse-editor") || (slug === "admin-prospects" && page === "admin-prospect-detail") ? "active" : undefined}
               onClick={(e) => {
                 e.preventDefault();
                 navigate(slug);
