@@ -15,6 +15,8 @@ export async function GET(request: Request) {
         profile.status, profile.updated_at,
         CASE
           WHEN profile.role = 'admin' THEN 'Administrator'
+          WHEN profile.role = 'prospect' THEN 'Prospect'
+          WHEN profile.role = 'client' THEN 'Client'
           WHEN profile.status = 'approved' AND agreement.completed_at IS NULL THEN 'Site Member'
           WHEN profile.status = 'approved' THEN 'Pending Approval'
           WHEN profile.status = 'pending_approval' THEN 'Pending Membership'
@@ -22,6 +24,8 @@ export async function GET(request: Request) {
         END AS membership_role,
         CASE
           WHEN profile.role = 'admin' THEN 'Approved'
+          WHEN profile.role = 'prospect' THEN 'Prospect'
+          WHEN profile.role = 'client' AND profile.status = 'approved' THEN 'Active'
           WHEN profile.status = 'approved' AND agreement.completed_at IS NULL THEN 'Pending MNDA'
           WHEN profile.status = 'approved' THEN 'Pending Approval'
           ELSE initcap(replace(profile.status, '_', ' '))
@@ -75,7 +79,7 @@ export async function PATCH(request: Request) {
     if (!body.authUserId) return NextResponse.json({ error: 'INVALID_PROFILE_UPDATE' }, { status: 400 })
     const sql = db()
     if (body.role !== undefined) {
-      if (!['member', 'admin'].includes(body.role)) return NextResponse.json({ error: 'INVALID_ROLE_UPDATE' }, { status: 400 })
+      if (!['prospect', 'client', 'member', 'admin'].includes(body.role)) return NextResponse.json({ error: 'INVALID_ROLE_UPDATE' }, { status: 400 })
       if (body.authUserId === actor.authUserId && body.role !== 'admin') return NextResponse.json({ error: 'CANNOT_REMOVE_OWN_ADMIN_ROLE' }, { status: 409 })
       const rows = await sql`UPDATE user_profiles SET role = ${body.role}, updated_at = now() WHERE auth_user_id = ${body.authUserId} RETURNING auth_user_id, email, display_name, role, updated_at`
       if (!rows.length) return NextResponse.json({ error: 'PROFILE_NOT_FOUND' }, { status: 404 })

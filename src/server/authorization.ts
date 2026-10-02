@@ -1,7 +1,7 @@
 import { db } from './database'
 import { requireMember } from './docusign'
 
-export type AppRole = 'member' | 'admin'
+export type AppRole = 'prospect' | 'client' | 'member' | 'admin'
 export type AppProfile = { authUserId: string; email: string; displayName: string; role: AppRole }
 
 function bootstrapAdminIds() {
@@ -40,7 +40,7 @@ export async function requireProfile(request: Request): Promise<AppProfile> {
   }
   const rows = await sql`
     INSERT INTO user_profiles (auth_user_id, email, display_name, role)
-    VALUES (${member.id}, ${member.email}, ${member.name}, ${bootstrapAdmin ? 'admin' : 'member'})
+    VALUES (${member.id}, ${member.email}, ${member.name}, ${bootstrapAdmin ? 'admin' : 'prospect'})
     ON CONFLICT (auth_user_id) DO UPDATE SET
       email = EXCLUDED.email,
       display_name = CASE WHEN ${member.hasExplicitName} THEN EXCLUDED.display_name ELSE user_profiles.display_name END,

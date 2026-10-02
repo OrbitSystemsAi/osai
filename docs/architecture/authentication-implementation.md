@@ -2,7 +2,7 @@
 
 ## Provider and site boundary
 
-OSai uses a dedicated Clerk application named `osai-auth` for `orbitsystems.ai`. Neon remains the application database but does not establish browser sessions.
+OSai uses a dedicated Clerk application named `osai-world-auth` for `orbitsystems.ai`. Neon remains the application database but does not establish browser sessions.
 
 This Clerk application is connected only to the Vercel project `osai`. Consulting and future Orbit Systems products use separate Clerk applications. Creating an account on one site does not create an account on, or grant access to, another site.
 
@@ -13,6 +13,10 @@ This Clerk application is connected only to the Vercel project `osai`. Consultin
 - `/member/*` — authenticated member experience
 
 The public account controls hand off to these Clerk-hosted components. Clerk owns password collection, verification, recovery, and session cookies.
+
+Sophia protected-action passkeys are a narrowly scoped exception to the normal Clerk/Neon administrator flow. Their management page uses an approved Google OAuth identity token that Sophia verifies against its configured OAuth audience, verified-email requirement, and backend-only administrator allowlist. This avoids requiring Clerk's paid passkey feature and does not change normal OSai website sign-in.
+
+A Sophia passkey approval does not create a Clerk session, grant a Neon role, or bypass any member, agreement, project, or administrator authorization check. Clerk continues to own ordinary website authentication.
 
 ## Configuration
 
@@ -41,7 +45,7 @@ Every protected page mutation and API route must:
 4. return data only after authorization succeeds; and
 5. record required audit events against the immutable application profile ID.
 
-Roles are `member` and `admin`; roles never come from client-editable Clerk metadata. Admin-only APIs revalidate both the Clerk session and application role on every request.
+Roles are `prospect`, `client`, `member`, and `admin`; roles never come from client-editable Clerk metadata. New application profiles default to `prospect`. Administrators may promote a prospect to `client` or `member`, while the legacy `member` role remains available for existing portfolio-hub users. Admin-only APIs revalidate both the Clerk session and application role on every request.
 
 To bootstrap the first administrator, set `OSAI_BOOTSTRAP_ADMIN_USER_IDS` to the immutable Clerk/application identity ID, never an email address. After the profile signs in, administrators can manage subsequent roles through **Users**.
 
@@ -52,3 +56,5 @@ To bootstrap the first administrator, set `OSAI_BOOTSTRAP_ADMIN_USER_IDS` to the
 - Verify an unauthenticated `/member/*` visit is gated.
 - Verify a migrated email resolves to its existing role and projects.
 - Verify an account created on another Orbit Systems site cannot silently authenticate here.
+- Verify Sophia action approval cannot create a Clerk session or bypass any existing access gate.
+- Verify `/admin/passkeys` accepts only a Google ID token independently approved by Sophia and never treats a Clerk or Neon role as sufficient for protected telephone-action enrollment.

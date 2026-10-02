@@ -25,6 +25,7 @@ flowchart TD
         REQUEST[Request Access]
         INVITE[Accept Invitation]
         SIGNIN[Sign In]
+        VALIDATE[Sophia protected-action validation]
 
         PUBNAV --> HOME
         PUBNAV --> ABOUT
@@ -66,7 +67,8 @@ flowchart TD
 
     REQUEST -. Submit request .-> INVITELANDING
     INVITE -. Create account .-> INVITELANDING
-    SIGNIN --> LOGIN
+        SIGNIN --> LOGIN
+        VALIDATE --> HOME
     LOGIN --> WELCOME
 
     subgraph MEMBER[Authenticated member hub]
@@ -178,6 +180,7 @@ flowchart TD
         FEEDBACKADMIN[Feedback inbox]
         NUDGES[Nudge queue]
         AUDIT[Audit trail]
+        PASSKEYS[Sophia passkey management]
 
         ADMINNAV --> ADMINHOME
         ADMINNAV --> PEOPLE
@@ -189,6 +192,7 @@ flowchart TD
         ADMINNAV --> FEEDBACKADMIN
         ADMINNAV --> NUDGES
         ADMINNAV --> AUDIT
+        ADMINNAV --> PASSKEYS
     end
 
     ACCESSREQUESTS -. Approve requester .-> WELCOME
@@ -239,6 +243,8 @@ The public logo and navigation remain fixed while a page scrolls. Desktop uses t
 ### Admin navigation
 
 - Overview
+- Prospects
+- Clients
 - People
 - Access Requests
 - Agreements
@@ -248,12 +254,31 @@ The public logo and navigation remain fixed while a page scrolls. Desktop uses t
 - Feedback
 - Nudge Queue
 - Audit
+- Sophia passkeys (separate Google-authenticated administrator utility; `/admin/passkeys`)
+
+The authenticated administrator sidebar places **Prospects** and **Clients** immediately after **Dashboard** and before **Projects**. These destinations show role-filtered administrative directories and are never included in prospect, client, or member navigation.
+
+### Protected telephone-action validation
+
+- `/validate` is a focused public utility route reached only when Sophia requests step-up validation for a protected OSai telephone action.
+- It is not part of normal calling, website sign-in, onboarding, or member navigation.
+- It accepts a six-digit active-call code, presents only the safe server-provided action label, invokes passkey authentication after an explicit user action, and displays only generic results.
+- The Sophia backend remains the authorization authority and binds successful validation to the caller, active call, requested action, tenant, expiration, and single-use transaction.
 
 ## Critical conversion paths
 
-1. `Home → Request Access → Verify Email → Complete Account → Pending Approval → Approved → General NDA → Member Dashboard`
+1. `Home → Create Account → Verify Email → Prospect → Client Intake → Client → General NDA or Project Access, when required`
 2. `Project Catalog → Project Overview → Project Access Request → Project Agreement → Protected Project Room`
 3. `Project Room → Beta Invitation → Launch Product → Submit Feedback`
+
+## Application roles
+
+- **Prospect** — the default for every newly created application profile; intended for pre-client onboarding and intake.
+- **Client** — an approved customer relationship that will use the client-facing authenticated experience.
+- **Member** — the existing portfolio-hub role retained for current accounts and project participation.
+- **Administrator** — internal OSai administration; assigned only through server-controlled bootstrap or an authorized administrator action.
+
+Role assignment is application-owned and enforced server-side. Clerk authenticates the person but does not select or grant an OSai role.
 
 ## Access boundary rule
 

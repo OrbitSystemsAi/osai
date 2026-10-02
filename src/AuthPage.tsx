@@ -26,8 +26,8 @@ export default function AuthPage() {
       <a className="back-link" href="/">Back to OSai</a>
       <div className="auth-content clerk-auth-content">
         {signingUp
-          ? <SignUp routing="path" path={signUpPath} signInUrl="/auth/sign-in" forceRedirectUrl="/member/dashboard" />
-          : <SignIn routing="path" path="/auth/sign-in" signUpUrl="/auth/sign-up" forceRedirectUrl="/member/dashboard" />}
+          ? <SignUp routing="path" path={signUpPath} signInUrl="/auth/sign-in" fallbackRedirectUrl="/member/dashboard" />
+          : <SignIn routing="path" path="/auth/sign-in" signUpUrl="/auth/sign-up" fallbackRedirectUrl="/member/dashboard" />}
       </div>
       <footer className="auth-footer"><a href="/privacy">Privacy</a><span /> <a href="/terms">Terms</a></footer>
     </section>

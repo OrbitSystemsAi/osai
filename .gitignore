@@ -19,3 +19,6 @@ vite.config.d.ts
 .idea/
 .vscode/
 .vercel
+
+# clerk configuration (can include secrets)
+/.clerk/

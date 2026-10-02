@@ -10,6 +10,13 @@ import legalPoliciesData from "./legalPolicies.json";
 
 const PROJECT_TITLE_MAX = 40;
 const PROJECT_DESCRIPTION_MAX = 300;
+type AccountRole = "prospect" | "client" | "member" | "admin";
+const accountRoleLabels: Record<AccountRole, string> = {
+  prospect: "Prospect",
+  client: "Client",
+  member: "Member",
+  admin: "Administrator",
+};
 type MemberNavItem = {
   slug: string;
   label: string;
@@ -23,6 +30,10 @@ const memberNav: MemberNavItem[] = [
   { slug: "legal", label: "Legal", icon: FileCheck2 },
   { slug: "beta-programs", label: "Beta Programs", icon: FlaskConical },
   { slug: "updates", label: "Updates", icon: BookOpen },
+];
+const adminAudienceNav: MemberNavItem[] = [
+  { slug: "admin-prospects", label: "Prospects", icon: Target },
+  { slug: "admin-clients", label: "Clients", icon: Users },
 ];
 const sidebarUtilityNav: MemberNavItem[] = [
   { slug: "profile", label: "Profile", icon: User },
@@ -434,12 +445,13 @@ function PolicyBlocks({ blocks }: { blocks: LegalPolicyBlock[] }) {
 }
 
 function PolicyDownloadPage({ policy }: { policy: LegalPolicy }) {
-  const visibleBlocks = policy.blocks.filter((block) => {
-    if (policy.slug === "/terms") return block.type !== "table";
-    if (policy.slug === "/privacy") return block.type !== "table";
+  const firstTableIndex = policy.blocks.findIndex((block) => block.type === "table");
+  const visibleBlocks = policy.blocks.filter((block, index) => {
+    if (policy.slug === "/terms") return index !== firstTableIndex;
+    if (policy.slug === "/privacy") return index !== firstTableIndex;
     if (policy.slug === "/customer-support-policy") {
       return block.type !== "subtitle"
-        && block.type !== "table"
+        && index !== firstTableIndex
         && !(block.type === "paragraph" && block.text.startsWith("PUBLISHING NOTE"));
     }
     return true;
@@ -2659,9 +2671,9 @@ type AdminProfile = {
   auth_user_id: string;
   email: string;
   display_name: string;
-  role: "member" | "admin";
+  role: AccountRole;
   status: "pending_approval" | "approved" | "declined" | "revoked";
-  membership_role: "Administrator" | "Site Member" | "Pending Approval" | "Pending Membership" | "Member";
+  membership_role: "Administrator" | "Prospect" | "Client" | "Site Member" | "Pending Approval" | "Pending Membership" | "Member";
   membership_status: string;
   project_count: number;
   projects: UserProject[];
@@ -2695,7 +2707,7 @@ async function memberRequest(path: string, init?: RequestInit) {
   return data;
 }
 
-function AdminUsersPage({ currentAuthUserId }: { currentAuthUserId: string }) {
+function AdminUsersPage({ currentAuthUserId, roleFilter }: { currentAuthUserId: string; roleFilter?: "prospect" | "client" }) {
   const identity = { id: currentAuthUserId };
   const [profiles, setProfiles] = useState<AdminProfile[]>([]);
   const [projectOptions, setProjectOptions] = useState<AdminProjectOption[]>([]);
@@ -2717,7 +2729,7 @@ function AdminUsersPage({ currentAuthUserId }: { currentAuthUserId: string }) {
   useEffect(() => {
     void load();
   }, []);
-  const changeRole = async (profile: AdminProfile, role: "member" | "admin") => {
+  const changeRole = async (profile: AdminProfile, role: AdminProfile["role"]) => {
     setSavingRoleFor(profile.auth_user_id);
     try {
       await adminRequest("/api/admin/profiles", {
@@ -2763,16 +2775,23 @@ function AdminUsersPage({ currentAuthUserId }: { currentAuthUserId: string }) {
     }
   };
   const normalizedQuery = searchQuery.trim().toLowerCase();
-  const visibleProfiles = profiles.filter((profile) => !normalizedQuery || [profile.display_name, profile.email, profile.auth_user_id, profile.status, profile.role, profile.membership_role, profile.membership_status, ...profile.projects.flatMap((project) => [project.name, ...project.legalDocuments.map((document) => document.fileName)])].join(" ").toLowerCase().includes(normalizedQuery));
+  const roleProfiles = roleFilter ? profiles.filter((profile) => profile.role === roleFilter) : profiles;
+  const visibleProfiles = roleProfiles.filter((profile) => !normalizedQuery || [profile.display_name, profile.email, profile.auth_user_id, profile.status, profile.role, profile.membership_role, profile.membership_status, ...profile.projects.flatMap((project) => [project.name, ...project.legalDocuments.map((document) => document.fileName)])].join(" ").toLowerCase().includes(normalizedQuery));
   const collaboratorsFor = (profile: AdminProfile) => profiles.filter((other) => other.auth_user_id !== profile.auth_user_id && other.projects.filter(isActiveUserProject).some((project) => profile.projects.filter(isActiveUserProject).some((assigned) => assigned.id === project.id)));
+  const directoryTitle = roleFilter === "prospect" ? "Prospects" : roleFilter === "client" ? "Clients" : "Users";
+  const directoryIntro = roleFilter === "prospect"
+    ? "Review prospective clients and manage their next access role."
+    : roleFilter === "client"
+      ? "Review active clients, project assignments, and account access."
+      : "Review user access, required legal documents, project teams, and administrator rights.";
   return (
     <>
-      <PageHead title="Users" intro="Review user access, required legal documents, project teams, and administrator rights." />
+      <PageHead title={directoryTitle} intro={directoryIntro} />
       <div className="toolbar admin-users-toolbar">
-        <span className="admin-project-toolbar-title">User Directory</span>
+        <span className="admin-project-toolbar-title">{directoryTitle} Directory</span>
         <label className="search">
           <Search size={18} />
-          <input aria-label="Search users" placeholder="Search users" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} />
+          <input aria-label={`Search ${directoryTitle.toLowerCase()}`} placeholder={`Search ${directoryTitle.toLowerCase()}`} value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} />
         </label>
       </div>
       {message && (
@@ -2900,7 +2919,7 @@ function AdminUsersPage({ currentAuthUserId }: { currentAuthUserId: string }) {
                   <ChevronRight aria-hidden="true" />
                 </summary>
                 <div className="project-assignment-menu role-assignment-menu">
-                  {(["member", "admin"] as const).map((role) => (
+                  {(["prospect", "client", "member", "admin"] as const).map((role) => (
                     <button
                       type="button"
                       className={profile.role === role ? "selected" : undefined}
@@ -2914,7 +2933,7 @@ function AdminUsersPage({ currentAuthUserId }: { currentAuthUserId: string }) {
                       <span className="role-check" aria-hidden="true">
                         {profile.role === role ? <Check /> : null}
                       </span>
-                      {role === "admin" ? "Administrator" : "Member"}
+                      {accountRoleLabels[role]}
                     </button>
                   ))}
                   <span className="role-menu-divider" />
@@ -2946,7 +2965,7 @@ function AdminUsersPage({ currentAuthUserId }: { currentAuthUserId: string }) {
             </article>
           );
         })}
-        {!message && !visibleProfiles.length && <p className="user-directory-empty">No users match “{searchQuery}”.</p>}
+        {!message && !visibleProfiles.length && <p className="user-directory-empty">No {directoryTitle.toLowerCase()}{searchQuery ? ` match “${searchQuery}”` : " found"}.</p>}
       </div>
     </>
   );
@@ -4025,7 +4044,7 @@ function identityFromUser(user?: { id?: string | null; name?: string | null; ema
   return { id: user?.id || "", name, email: user?.email || "", initials };
 }
 
-function ProfilePage({ identity, role, onSaved }: { identity: MemberIdentity; role: "member" | "admin"; onSaved: (identity: MemberIdentity) => void }) {
+function ProfilePage({ identity, role, onSaved }: { identity: MemberIdentity; role: AccountRole; onSaved: (identity: MemberIdentity) => void }) {
   const { user } = useUser();
   const nameParts = identity.name.split(/\s+/);
   const [firstName, setFirstName] = useState(nameParts[0] || "");
@@ -4338,6 +4357,7 @@ function ProfilePage({ identity, role, onSaved }: { identity: MemberIdentity; ro
               </button>
             </form>
           )}
+          {role === "admin" && <a className="security-row sophia-passkey-link" href="/admin/passkeys"><ShieldCheck /><span><strong>Sophia action passkeys</strong><small>Manage passkeys for protected telephone actions</small></span><ChevronRight /></a>}
           <button className="security-row" type="button" aria-expanded={securityPanel === "notifications"} onClick={() => setSecurityPanel(securityPanel === "notifications" ? null : "notifications")}>
             <BellRing />
             <span>
@@ -4390,7 +4410,7 @@ function ProfilePage({ identity, role, onSaved }: { identity: MemberIdentity; ro
             <ShieldCheck />
             <div>
               <h3 id="clearance-level-title">Clearance Level</h3>
-              <strong>{role === "admin" ? "Administrator" : "Site Member"}</strong>
+              <strong>{role === "member" ? "Site Member" : accountRoleLabels[role]}</strong>
               <p>Your clearance is assigned by OSai and controls access to protected areas.</p>
             </div>
           </section>
@@ -4727,7 +4747,7 @@ function MemberHub() {
   const [page, setPage] = useState(initial);
   const [navOpen, setNavOpen] = useState(false);
   const [identity, setIdentity] = useState<MemberIdentity>(() => identityFromUser());
-  const [role, setRole] = useState<"member" | "admin">("member");
+  const [role, setRole] = useState<AccountRole>("prospect");
   useEffect(() => {
     const onPop = () => setPage(pageFromLocation());
     window.addEventListener("popstate", onPop);
@@ -4738,7 +4758,7 @@ function MemberHub() {
     fetch("/api/me").then(async (response) => ({ response, result: await response.json() })).then(({ response, result }) => {
       if (response.ok && result.profile) {
         setIdentity(identityFromUser({ id: result.profile.authUserId, name: result.profile.displayName, email: result.profile.email }));
-        if (result.profile.role === "admin") setRole("admin");
+        if (["prospect", "client", "member", "admin"].includes(result.profile.role)) setRole(result.profile.role as AccountRole);
       }
     }).catch(() => undefined);
   }, [user]);
@@ -4762,6 +4782,8 @@ function MemberHub() {
     profile: <ProfilePage identity={identity} role={role} onSaved={setIdentity} />,
     ...(role === "admin" ? {
       "admin-profile": <ProfilePage identity={identity} role={role} onSaved={setIdentity} />,
+      "admin-prospects": <AdminUsersPage currentAuthUserId={identity.id} roleFilter="prospect" />,
+      "admin-clients": <AdminUsersPage currentAuthUserId={identity.id} roleFilter="client" />,
       "admin-users": <AdminUsersPage currentAuthUserId={identity.id} />,
       "admin-legal": <AgreementsPage isAdmin />,
       "admin-beta": <BetaPage />,
@@ -4772,11 +4794,13 @@ function MemberHub() {
     } : {}),
   };
   const adminPrimaryNav = memberNav.filter(({ slug }) => !["legal", "beta-programs"].includes(slug));
-  const visibleNav = role === "admin" ? [...adminPrimaryNav, ...sidebarUtilityNav.filter(({ slug }) => slug !== "profile")] : [...memberNav, ...sidebarUtilityNav];
+  const visibleNav = role === "admin"
+    ? [...adminPrimaryNav.slice(0, 2), ...adminAudienceNav, ...adminPrimaryNav.slice(2), ...sidebarUtilityNav.filter(({ slug }) => slug !== "profile")]
+    : [...memberNav, ...sidebarUtilityNav];
   const isAdminPage = role === "admin" && adminNav.some(({ slug }) => slug === page);
   const adminPageTitle = page === "admin-profile" ? "Profile & Security" : adminNav.find(({ slug }) => slug === page)?.label || "Admin";
   const isDashboard = page === "dashboard";
-  const isStructuredPage = ["pulse", "pulse-editor", "beta-programs", "updates", "profile", "notifications", "support", ...adminNav.map(({ slug }) => slug)].includes(page);
+  const isStructuredPage = ["pulse", "pulse-editor", "beta-programs", "updates", "profile", "notifications", "support", ...adminAudienceNav.map(({ slug }) => slug), ...adminNav.map(({ slug }) => slug)].includes(page);
   const isProjectEdit = page === "projects" && new URLSearchParams(window.location.search).has("adminEdit");
   const isProjectsCatalog = page === "projects" && !window.location.pathname.split("/").filter(Boolean)[2] && !isProjectEdit;
   return (
@@ -4809,7 +4833,7 @@ function MemberHub() {
               <span>Admin</span>
             </a>
           )}
-          <a href="/member/support" className={`${page === "support" ? "active " : ""}sidebar-support-link${role === "member" ? " client-support-link" : ""}`} onClick={(event) => { event.preventDefault(); navigate("support"); }}>
+          <a href="/member/support" className={`${page === "support" ? "active " : ""}sidebar-support-link${role !== "admin" ? " client-support-link" : ""}`} onClick={(event) => { event.preventDefault(); navigate("support"); }}>
             <CircleHelp />
             <span>Support</span>
           </a>
@@ -4831,7 +4855,7 @@ function MemberHub() {
             <button className="member-menu" onClick={() => setNavOpen(!navOpen)} aria-label="Open navigation">
               <Menu />
             </button>
-            <span className="topbar-title">{role === "admin" ? "Admin Hub" : "Member Hub"}</span>
+            <span className="topbar-title">{role === "admin" ? "Admin Hub" : role === "member" ? "Member Hub" : `${accountRoleLabels[role]} Hub`}</span>
           </header>
         )}
         <main className={`member-content${isDashboard ? " dashboard-content" : isStructuredPage ? " structured-content" : page === "legal" || page === "admin-legal" ? " agreements-content" : isProjectsCatalog ? " projects-content" : isProjectEdit ? " project-details-content" : ""}`}>

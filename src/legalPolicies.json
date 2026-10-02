@@ -449,16 +449,8 @@
         "text": "Orbit Systems AI, LLC | Effective September 4, 2026"
       },
       {
-        "type": "table",
-        "rows": [
-          [
-            "Plain-language summary. We provide AI-powered digital employee, communications, and telephony services, including provisioned phone numbers. We process information to operate those services, support customers, secure our systems, and process payments. Calls may be recorded or transcribed only when enabled and subject to applicable notice and consent requirements. We do not sell personal information for money."
-          ]
-        ]
-      },
-      {
         "type": "paragraph",
-        "text": "This Privacy Policy explains how Orbit Systems Ai, LLC (\"Orbit,\" \"we,\" \"us,\" or \"our\") collects, uses, discloses, and protects personal information when you visit our websites, communicate with us, purchase or use our services, or interact with an AI-powered digital employee operated by or through Orbit (collectively, the \"Services\")."
+        "text": "This Privacy Policy explains how Orbit Systems AI, LLC (\"Orbit,\" \"we,\" \"us,\" or \"our\") collects, uses, discloses, and protects personal information when you visit our websites, communicate with us, purchase or use our services, or interact with an AI-powered digital employee operated by or through Orbit (collectively, the \"Services\")."
       },
       {
         "type": "paragraph",
@@ -850,13 +842,9 @@
           ],
           [
             "SUPPORT EMAIL support@orbitsystems.ai",
-            "SUPPORT PHONE [INSERT SUPPORT PHONE]"
+            "SUPPORT PHONE (213) 279-7175"
           ]
         ]
-      },
-      {
-        "type": "paragraph",
-        "text": "PUBLISHING NOTE Replace every bracketed field and confirm the refund/cancellation terms match your customer agreements before posting this policy or submitting its URL to Stripe."
       },
       {
         "type": "heading",
@@ -895,24 +883,24 @@
           ],
           [
             "Telephone",
-            "[INSERT SUPPORT PHONE]",
+            "(213) 279-7175",
             "Urgent service-impacting issues and accessibility support"
           ],
           [
             "Support portal",
-            "[INSERT SUPPORT URL]",
+            "https://orbitsystems.ai/member/support",
             "Ticket tracking, attachments, and account-specific requests"
           ],
           [
             "Abuse / security",
-            "[INSERT ABUSE EMAIL]",
+            "support@orbitsystems.ai",
             "Suspected fraud, unlawful calling, compromised credentials, or security incidents"
           ]
         ]
       },
       {
         "type": "paragraph",
-        "text": "Standard support hours: [INSERT DAYS, HOURS, AND TIME ZONE]. Requests received outside standard hours are logged on the next business day unless the customer has contracted for 24/7 or after-hours support."
+        "text": "Standard support hours: Monday through Friday, 10:00 a.m. to 4:00 p.m. Eastern Time. Requests received outside standard hours are logged on the next business day unless the customer has contracted for 24/7 or after-hours support."
       },
       {
         "type": "heading",
@@ -1143,7 +1131,7 @@
       },
       {
         "type": "paragraph",
-        "text": "Orbit uses support communications and diagnostic records to authenticate users, provide and improve support, secure the Services, prevent abuse, meet legal obligations, and document account activity. Handling of personal information is also governed by Orbit's Privacy Policy at [INSERT PRIVACY POLICY URL]. Call recordings or transcripts are accessed only when authorized and reasonably necessary for support, security, quality, or legal purposes."
+        "text": "Orbit uses support communications and diagnostic records to authenticate users, provide and improve support, secure the Services, prevent abuse, meet legal obligations, and document account activity. Handling of personal information is also governed by Orbit's Privacy Policy at https://orbitsystems.ai/terms. Call recordings or transcripts are accessed only when authorized and reasonably necessary for support, security, quality, or legal purposes."
       },
       {
         "type": "heading",
@@ -1152,7 +1140,7 @@
       },
       {
         "type": "paragraph",
-        "text": "Orbit may update this policy as its Services, support practices, provider requirements, or applicable laws change. The current version will be posted at [INSERT CUSTOMER SUPPORT POLICY URL] with its effective date. Material changes will apply prospectively unless immediate changes are needed for security, legal, carrier, or fraud-prevention reasons."
+        "text": "Orbit may update this policy as its Services, support practices, provider requirements, or applicable laws change. The current version will display its effective date. Material changes will apply prospectively unless immediate changes are needed for security, legal, carrier, or fraud-prevention reasons."
       },
       {
         "type": "heading",
@@ -1161,7 +1149,7 @@
       },
       {
         "type": "paragraph",
-        "text": "Orbit Systems AI, LLC | 7901 4th St N STE 300, St. Petersburg, FL 33702 Business: admin@orbitsystems.ai | Support: support@orbitsystems.ai Billing: finance@orbitsystems.ai | Legal notices: legal@orbitsystems.ai Telephone: [INSERT SUPPORT PHONE] | Website: https://www.orbitsystems.ai"
+        "text": "Orbit Systems AI, LLC | 7901 4th St N STE 300, St. Petersburg, FL 33702 Business: admin@orbitsystems.ai | Support: support@orbitsystems.ai Billing: finance@orbitsystems.ai | Legal notices: legal@orbitsystems.ai Telephone: (213) 279-7175 | Website: https://www.orbitsystems.ai"
       }
     ]
   }
