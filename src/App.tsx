@@ -2680,15 +2680,59 @@ type AdminProfile = {
 type AdminProspect = {
   id: string;
   display_name: string;
+  contact_title: string;
   company_name: string;
   email: string;
+  business_email: string;
   phone: string;
+  business_phone: string;
   website_url: string;
-  status: "new" | "contacted" | "qualified" | "closed";
+  status: "new" | "contacted" | "qualified" | "closed" | "discovery" | "qualification" | "solution" | "proposal" | "negotiation" | "won" | "lost";
+  problem_statement: string;
+  desired_outcomes: string;
+  proposed_solution: string;
+  ideas: string;
+  decision_process: string;
+  budget_range: string;
+  target_timeline: string;
+  next_step: string;
   notes: string;
   created_at: string;
   updated_at: string;
 };
+type ProspectFormData = {
+  displayName: string;
+  contactTitle: string;
+  companyName: string;
+  email: string;
+  businessEmail: string;
+  phone: string;
+  businessPhone: string;
+  websiteUrl: string;
+  status: AdminProspect["status"];
+  problemStatement: string;
+  desiredOutcomes: string;
+  proposedSolution: string;
+  ideas: string;
+  decisionProcess: string;
+  budgetRange: string;
+  targetTimeline: string;
+  nextStep: string;
+  notes: string;
+};
+const emptyProspectForm = (): ProspectFormData => ({
+  displayName: "", contactTitle: "", companyName: "", email: "", businessEmail: "", phone: "", businessPhone: "",
+  websiteUrl: "", status: "discovery", problemStatement: "", desiredOutcomes: "", proposedSolution: "", ideas: "",
+  decisionProcess: "", budgetRange: "", targetTimeline: "", nextStep: "", notes: "",
+});
+const prospectFormFromApi = (prospect: AdminProspect): ProspectFormData => ({
+  displayName: prospect.display_name, contactTitle: prospect.contact_title, companyName: prospect.company_name,
+  email: prospect.email, businessEmail: prospect.business_email, phone: prospect.phone, businessPhone: prospect.business_phone,
+  websiteUrl: prospect.website_url, status: prospect.status, problemStatement: prospect.problem_statement,
+  desiredOutcomes: prospect.desired_outcomes, proposedSolution: prospect.proposed_solution, ideas: prospect.ideas,
+  decisionProcess: prospect.decision_process, budgetRange: prospect.budget_range, targetTimeline: prospect.target_timeline,
+  nextStep: prospect.next_step, notes: prospect.notes,
+});
 const isActiveUserProject = (project: UserProject) => activeProjectAccess.has(project.status);
 const isPendingUserProject = (project: UserProject) => pendingProjectAccess.has(project.status);
 async function adminRequest(path: string, init?: RequestInit) {
@@ -2724,7 +2768,7 @@ function AdminProspectsPage({ onOpen }: { onOpen: (prospectId: string) => void }
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("Loading prospects…");
-  const [form, setForm] = useState({ displayName: "", companyName: "", email: "", phone: "", websiteUrl: "", notes: "" });
+  const [form, setForm] = useState<ProspectFormData>(emptyProspectForm);
   const load = async () => {
     try {
       const data = await adminRequest("/api/admin/prospects");
@@ -2741,7 +2785,7 @@ function AdminProspectsPage({ onOpen }: { onOpen: (prospectId: string) => void }
     setMessage("");
     try {
       await adminRequest("/api/admin/prospects", { method: "POST", body: JSON.stringify(form) });
-      setForm({ displayName: "", companyName: "", email: "", phone: "", websiteUrl: "", notes: "" });
+      setForm(emptyProspectForm());
       setShowForm(false);
       await load();
       setMessage("Prospect added. No account or invitation was created.");
@@ -2752,7 +2796,7 @@ function AdminProspectsPage({ onOpen }: { onOpen: (prospectId: string) => void }
     }
   };
   const normalizedQuery = searchQuery.trim().toLowerCase();
-  const visibleProspects = prospects.filter((prospect) => !normalizedQuery || [prospect.display_name, prospect.company_name, prospect.email, prospect.phone, prospect.website_url, prospect.status, prospect.notes].join(" ").toLowerCase().includes(normalizedQuery));
+  const visibleProspects = prospects.filter((prospect) => !normalizedQuery || [prospect.display_name, prospect.contact_title, prospect.company_name, prospect.email, prospect.business_email, prospect.phone, prospect.business_phone, prospect.website_url, prospect.status, prospect.problem_statement, prospect.desired_outcomes, prospect.proposed_solution, prospect.ideas, prospect.next_step, prospect.notes].join(" ").toLowerCase().includes(normalizedQuery));
   return (
     <>
       <PageHead title="Prospects" intro="" />
@@ -2770,13 +2814,40 @@ function AdminProspectsPage({ onOpen }: { onOpen: (prospectId: string) => void }
       </div>
       {showForm && (
         <form className="prospect-form" onSubmit={submit}>
-          <label>Full name <span>Required</span><input required maxLength={120} autoComplete="name" value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} /></label>
-          <label>Company<input maxLength={160} autoComplete="organization" value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} /></label>
-          <label>Email<input type="email" maxLength={254} autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
-          <label>Phone<input type="tel" maxLength={40} autoComplete="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label>
-          <label className="prospect-website">Website URL<input type="url" maxLength={2048} placeholder="https://example.com" autoComplete="url" value={form.websiteUrl} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} /></label>
-          <label className="prospect-notes">Notes<textarea maxLength={2000} rows={3} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>
-          <button type="submit" disabled={saving}>{saving ? "Adding…" : "Add Prospect"}</button>
+          <fieldset>
+            <legend>Contact</legend>
+            <div className="prospect-form-grid">
+              <label>Full name <span>Required</span><input required maxLength={120} autoComplete="name" value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} /></label>
+              <label>Title / role<input maxLength={120} autoComplete="organization-title" value={form.contactTitle} onChange={(event) => setForm({ ...form, contactTitle: event.target.value })} /></label>
+              <label>Contact email<input type="email" maxLength={254} autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
+              <label>Mobile phone<input type="tel" maxLength={40} autoComplete="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Business</legend>
+            <div className="prospect-form-grid">
+              <label>Company<input maxLength={160} autoComplete="organization" value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} /></label>
+              <label>Business email<input type="email" maxLength={254} value={form.businessEmail} onChange={(event) => setForm({ ...form, businessEmail: event.target.value })} /></label>
+              <label>Business phone<input type="tel" maxLength={40} value={form.businessPhone} onChange={(event) => setForm({ ...form, businessPhone: event.target.value })} /></label>
+              <label>Website URL<input type="url" maxLength={2048} placeholder="https://example.com" autoComplete="url" value={form.websiteUrl} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} /></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Sales Funnel &amp; Discovery</legend>
+            <div className="prospect-funnel-stage"><span>Starting stage</span><strong>Discovery</strong></div>
+            <div className="prospect-discovery-grid">
+              <label>Problem to solve<textarea maxLength={4000} rows={4} value={form.problemStatement} onChange={(event) => setForm({ ...form, problemStatement: event.target.value })} /></label>
+              <label>Desired outcomes<textarea maxLength={4000} rows={4} value={form.desiredOutcomes} onChange={(event) => setForm({ ...form, desiredOutcomes: event.target.value })} /></label>
+              <label>Proposed solution<textarea maxLength={4000} rows={4} value={form.proposedSolution} onChange={(event) => setForm({ ...form, proposedSolution: event.target.value })} /></label>
+              <label>Ideas / opportunities<textarea maxLength={4000} rows={4} value={form.ideas} onChange={(event) => setForm({ ...form, ideas: event.target.value })} /></label>
+              <label>Decision process<textarea maxLength={4000} rows={3} value={form.decisionProcess} onChange={(event) => setForm({ ...form, decisionProcess: event.target.value })} /></label>
+              <label>Next step<textarea maxLength={4000} rows={3} value={form.nextStep} onChange={(event) => setForm({ ...form, nextStep: event.target.value })} /></label>
+              <label>Budget range<input maxLength={120} value={form.budgetRange} onChange={(event) => setForm({ ...form, budgetRange: event.target.value })} /></label>
+              <label>Target timeline<input maxLength={120} value={form.targetTimeline} onChange={(event) => setForm({ ...form, targetTimeline: event.target.value })} /></label>
+              <label className="prospect-notes">Additional notes<textarea maxLength={4000} rows={4} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>
+            </div>
+          </fieldset>
+          <div className="prospect-form-actions"><button type="submit" disabled={saving}>{saving ? "Adding…" : "Add Prospect"}</button></div>
         </form>
       )}
       {message && <p className="profile-message" role="status">{message}</p>}
@@ -2806,7 +2877,7 @@ function AdminProspectsPage({ onOpen }: { onOpen: (prospectId: string) => void }
 
 function AdminProspectDetailPage({ prospectId, onBack }: { prospectId: string; onBack: () => void }) {
   const [prospect, setProspect] = useState<AdminProspect | null>(null);
-  const [form, setForm] = useState({ displayName: "", companyName: "", email: "", phone: "", websiteUrl: "", status: "new", notes: "" });
+  const [form, setForm] = useState<ProspectFormData>(emptyProspectForm);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("Loading prospect…");
   useEffect(() => {
@@ -2814,7 +2885,7 @@ function AdminProspectDetailPage({ prospectId, onBack }: { prospectId: string; o
     adminRequest(`/api/admin/prospects/${prospectId}`).then(({ prospect: result }) => {
       if (!active) return;
       setProspect(result);
-      setForm({ displayName: result.display_name, companyName: result.company_name, email: result.email, phone: result.phone, websiteUrl: result.website_url, status: result.status, notes: result.notes });
+      setForm(prospectFormFromApi(result));
       setMessage("");
     }).catch((error) => active && setMessage(error instanceof Error ? error.message : "Could not load the prospect."));
     return () => { active = false; };
@@ -2840,13 +2911,41 @@ function AdminProspectDetailPage({ prospectId, onBack }: { prospectId: string; o
       {message && <p className="profile-message" role="status">{message}</p>}
       {prospect && (
         <form className="prospect-detail-form" onSubmit={submit}>
-          <label>Full name <span>Required</span><input required maxLength={120} autoComplete="name" value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} /></label>
-          <label>Company<input maxLength={160} autoComplete="organization" value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} /></label>
-          <label>Email<input type="email" maxLength={254} autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
-          <label>Phone<input type="tel" maxLength={40} autoComplete="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label>
-          <label>Website URL<input type="url" maxLength={2048} placeholder="https://example.com" autoComplete="url" value={form.websiteUrl} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} /></label>
-          <label>Status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}><option value="new">New</option><option value="contacted">Contacted</option><option value="qualified">Qualified</option><option value="closed">Closed</option></select></label>
-          <label className="prospect-detail-notes">Notes<textarea maxLength={2000} rows={8} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>
+          <fieldset>
+            <legend>Contact</legend>
+            <div className="prospect-form-grid">
+              <label>Full name <span>Required</span><input required maxLength={120} autoComplete="name" value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} /></label>
+              <label>Title / role<input maxLength={120} autoComplete="organization-title" value={form.contactTitle} onChange={(event) => setForm({ ...form, contactTitle: event.target.value })} /></label>
+              <label>Contact email<input type="email" maxLength={254} autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
+              <label>Mobile phone<input type="tel" maxLength={40} autoComplete="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Business</legend>
+            <div className="prospect-form-grid">
+              <label>Company<input maxLength={160} autoComplete="organization" value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} /></label>
+              <label>Business email<input type="email" maxLength={254} value={form.businessEmail} onChange={(event) => setForm({ ...form, businessEmail: event.target.value })} /></label>
+              <label>Business phone<input type="tel" maxLength={40} value={form.businessPhone} onChange={(event) => setForm({ ...form, businessPhone: event.target.value })} /></label>
+              <label>Website URL<input type="url" maxLength={2048} placeholder="https://example.com" autoComplete="url" value={form.websiteUrl} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} /></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Sales Funnel &amp; Discovery</legend>
+            <div className="prospect-form-grid prospect-stage-row">
+              <label>Funnel stage<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as AdminProspect["status"] })}><option value="discovery">Discovery</option><option value="qualification">Qualification</option><option value="solution">Solution</option><option value="proposal">Proposal</option><option value="negotiation">Negotiation</option><option value="won">Won</option><option value="lost">Lost</option>{["new", "contacted", "qualified", "closed"].includes(form.status) && <option value={form.status}>Legacy: {form.status}</option>}</select></label>
+              <label>Budget range<input maxLength={120} value={form.budgetRange} onChange={(event) => setForm({ ...form, budgetRange: event.target.value })} /></label>
+              <label>Target timeline<input maxLength={120} value={form.targetTimeline} onChange={(event) => setForm({ ...form, targetTimeline: event.target.value })} /></label>
+            </div>
+            <div className="prospect-discovery-grid">
+              <label>Problem to solve<textarea maxLength={4000} rows={5} value={form.problemStatement} onChange={(event) => setForm({ ...form, problemStatement: event.target.value })} /></label>
+              <label>Desired outcomes<textarea maxLength={4000} rows={5} value={form.desiredOutcomes} onChange={(event) => setForm({ ...form, desiredOutcomes: event.target.value })} /></label>
+              <label>Proposed solution<textarea maxLength={4000} rows={5} value={form.proposedSolution} onChange={(event) => setForm({ ...form, proposedSolution: event.target.value })} /></label>
+              <label>Ideas / opportunities<textarea maxLength={4000} rows={5} value={form.ideas} onChange={(event) => setForm({ ...form, ideas: event.target.value })} /></label>
+              <label>Decision process<textarea maxLength={4000} rows={4} value={form.decisionProcess} onChange={(event) => setForm({ ...form, decisionProcess: event.target.value })} /></label>
+              <label>Next step<textarea maxLength={4000} rows={4} value={form.nextStep} onChange={(event) => setForm({ ...form, nextStep: event.target.value })} /></label>
+              <label className="prospect-notes">Additional notes<textarea maxLength={4000} rows={5} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>
+            </div>
+          </fieldset>
           <div className="prospect-detail-actions">
             <button type="submit" disabled={saving}>{saving ? "Saving…" : "Save Prospect"}</button>
             {prospect.website_url && <a href={prospect.website_url} target="_blank" rel="noreferrer">Visit website <ArrowRight /></a>}
