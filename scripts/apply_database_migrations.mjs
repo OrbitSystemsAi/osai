@@ -1,8 +1,8 @@
 import { readFile, readdir } from 'node:fs/promises'
 import { neon } from '@neondatabase/serverless'
 
-const databaseUrl = process.env.DATABASE_URL?.trim()
-if (!databaseUrl) throw new Error('DATABASE_URL is required')
+const databaseUrl = process.env.DATABASE_URL_UNPOOLED?.trim() || process.env.DATABASE_URL?.trim()
+if (!databaseUrl) throw new Error('DATABASE_URL_UNPOOLED or DATABASE_URL is required')
 
 const sql = neon(databaseUrl)
 const migrationFiles = (await readdir(new URL('../db/migrations/', import.meta.url)))

@@ -2690,11 +2690,27 @@ type AdminTool = ProspectToolAssignment & {
   canonical_name: string;
   summary: string;
   website_url: string;
+  vendor_name: string;
+  category: string;
+  api_status: "unknown" | "available" | "limited" | "unavailable";
+  api_docs_url: string;
+  api_auth_method: string;
+  api_notes: string;
+  pricing_url: string;
+  support_url: string;
+  security_notes: string;
   is_osai_stack: boolean;
   is_integratable: boolean;
   prospect_count: number;
   active_prospect_count: number;
 };
+type ToolFormData = {
+  name: string; vendorName: string; category: string; websiteUrl: string; summary: string;
+  apiStatus: AdminTool["api_status"]; apiDocsUrl: string; apiAuthMethod: string; apiNotes: string;
+  pricingUrl: string; supportUrl: string; securityNotes: string; isOsaiStack: boolean; isIntegratable: boolean;
+};
+const emptyToolForm = (): ToolFormData => ({ name: "", vendorName: "", category: "", websiteUrl: "", summary: "", apiStatus: "unknown", apiDocsUrl: "", apiAuthMethod: "", apiNotes: "", pricingUrl: "", supportUrl: "", securityNotes: "", isOsaiStack: false, isIntegratable: false });
+const toolFormFromApi = (tool: AdminTool): ToolFormData => ({ name: tool.name, vendorName: tool.vendor_name || "", category: tool.category || "", websiteUrl: tool.website_url || "", summary: tool.summary || "", apiStatus: tool.api_status || "unknown", apiDocsUrl: tool.api_docs_url || "", apiAuthMethod: tool.api_auth_method || "", apiNotes: tool.api_notes || "", pricingUrl: tool.pricing_url || "", supportUrl: tool.support_url || "", securityNotes: tool.security_notes || "", isOsaiStack: tool.is_osai_stack, isIntegratable: tool.is_integratable });
 type AdminProspect = {
   id: string;
   display_name: string;
@@ -3082,6 +3098,25 @@ function AdminProspectDetailPage({ prospectId, onBack }: { prospectId: string; o
   );
 }
 
+function ToolEditorFields({ form, setForm }: { form: ToolFormData; setForm: (form: ToolFormData) => void }) {
+  return <>
+    <label>Tool name <span>Required</span><input required maxLength={120} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
+    <label>Vendor / company<input maxLength={160} placeholder="Company that provides the tool" value={form.vendorName} onChange={(event) => setForm({ ...form, vendorName: event.target.value })} /></label>
+    <label>Category<input maxLength={120} placeholder="CRM, payments, analytics…" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} /></label>
+    <label>Corporate URL<input type="text" inputMode="url" maxLength={2048} placeholder="example.com" value={form.websiteUrl} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} /></label>
+    <label className="tool-summary-field">Summary<textarea rows={3} maxLength={1000} placeholder="Leave blank to auto-populate a summary" value={form.summary} onChange={(event) => setForm({ ...form, summary: event.target.value })} /></label>
+    <label>API availability<select value={form.apiStatus} onChange={(event) => setForm({ ...form, apiStatus: event.target.value as ToolFormData["apiStatus"] })}><option value="unknown">Unknown</option><option value="available">Available</option><option value="limited">Limited / partner access</option><option value="unavailable">Not available</option></select></label>
+    <label>API documentation URL<input type="text" inputMode="url" maxLength={2048} placeholder="developer.example.com/docs" value={form.apiDocsUrl} onChange={(event) => setForm({ ...form, apiDocsUrl: event.target.value })} /></label>
+    <label>API authentication<input maxLength={250} placeholder="OAuth 2.0, API token, unknown…" value={form.apiAuthMethod} onChange={(event) => setForm({ ...form, apiAuthMethod: event.target.value })} /></label>
+    <label>Pricing URL<input type="text" inputMode="url" maxLength={2048} placeholder="example.com/pricing" value={form.pricingUrl} onChange={(event) => setForm({ ...form, pricingUrl: event.target.value })} /></label>
+    <label>Support URL<input type="text" inputMode="url" maxLength={2048} placeholder="support.example.com" value={form.supportUrl} onChange={(event) => setForm({ ...form, supportUrl: event.target.value })} /></label>
+    <label className="tool-summary-field">API / integration notes<textarea rows={4} maxLength={4000} placeholder="Capabilities, limitations, required plan, rate limits, or integration approach. Do not enter API keys or secrets." value={form.apiNotes} onChange={(event) => setForm({ ...form, apiNotes: event.target.value })} /></label>
+    <label className="tool-summary-field">Security / data notes<textarea rows={3} maxLength={4000} placeholder="Data handled, security review notes, or privacy considerations. Do not enter credentials." value={form.securityNotes} onChange={(event) => setForm({ ...form, securityNotes: event.target.value })} /></label>
+    <label className="tool-flag"><input type="checkbox" checked={form.isOsaiStack} onChange={(event) => setForm({ ...form, isOsaiStack: event.target.checked })} /> Used by OSai</label>
+    <label className="tool-flag"><input type="checkbox" checked={form.isIntegratable} onChange={(event) => setForm({ ...form, isIntegratable: event.target.checked })} /> Available for integration</label>
+  </>;
+}
+
 function AdminToolsPage() {
   const [tools, setTools] = useState<AdminTool[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -3089,7 +3124,9 @@ function AdminToolsPage() {
   const [saving, setSaving] = useState(false);
   const [updatingId, setUpdatingId] = useState("");
   const [message, setMessage] = useState("Loading tools…");
-  const [form, setForm] = useState({ name: "", websiteUrl: "", summary: "", isOsaiStack: false, isIntegratable: false });
+  const [form, setForm] = useState<ToolFormData>(emptyToolForm);
+  const [editingId, setEditingId] = useState("");
+  const [editForm, setEditForm] = useState<ToolFormData>(emptyToolForm);
   const load = async () => {
     try { const data = await adminRequest("/api/admin/tools"); setTools(data.tools); setMessage(""); }
     catch (error) { setMessage(error instanceof Error ? error.message : "Could not load tools."); }
@@ -3099,7 +3136,7 @@ function AdminToolsPage() {
     event.preventDefault(); setSaving(true); setMessage("");
     try {
       await adminRequest("/api/admin/tools", { method: "POST", body: JSON.stringify(form) });
-      setForm({ name: "", websiteUrl: "", summary: "", isOsaiStack: false, isIntegratable: false });
+      setForm(emptyToolForm());
       setShowForm(false); await load(); setMessage("Tool added to the shared dictionary.");
     } catch (error) { setMessage(error instanceof Error ? error.message : "Could not add the tool."); }
     finally { setSaving(false); }
@@ -3109,14 +3146,21 @@ function AdminToolsPage() {
   const toggleClassification = async (tool: AdminTool, field: "isOsaiStack" | "isIntegratable") => {
     setUpdatingId(tool.id); setMessage("");
     try {
-      await adminRequest(`/api/admin/tools/${tool.id}`, { method: "PATCH", body: JSON.stringify({
-        name: tool.name, websiteUrl: tool.website_url, summary: tool.summary,
+      await adminRequest(`/api/admin/tools/${tool.id}`, { method: "PATCH", body: JSON.stringify({ ...toolFormFromApi(tool),
         isOsaiStack: field === "isOsaiStack" ? !tool.is_osai_stack : tool.is_osai_stack,
         isIntegratable: field === "isIntegratable" ? !tool.is_integratable : tool.is_integratable,
       }) });
       await load();
     } catch (error) { setMessage(error instanceof Error ? error.message : "Could not update the tool classification."); }
     finally { setUpdatingId(""); }
+  };
+  const saveEdit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault(); setSaving(true); setMessage("");
+    try {
+      await adminRequest(`/api/admin/tools/${editingId}`, { method: "PATCH", body: JSON.stringify(editForm) });
+      setEditingId(""); await load(); setMessage("Tool details updated.");
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Could not update the tool."); }
+    finally { setSaving(false); }
   };
   return <>
     <PageHead title="Tools" intro="Manage the shared OSai tool dictionary and identify stack and integration capabilities." />
@@ -3125,23 +3169,20 @@ function AdminToolsPage() {
       <button className="admin-add-project" type="button" onClick={() => setShowForm((open) => !open)}>{showForm ? <X /> : <Plus />} {showForm ? "Cancel" : "Add Tool"}</button>
     </div></div>
     {showForm && <form className="tool-form" onSubmit={submit}>
-      <label>Tool name <span>Required</span><input required maxLength={120} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
-      <label>Website URL<input type="text" inputMode="url" maxLength={2048} placeholder="example.com" value={form.websiteUrl} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} /></label>
-      <label className="tool-summary-field">Summary<textarea rows={3} maxLength={1000} placeholder="Leave blank to auto-populate a summary" value={form.summary} onChange={(event) => setForm({ ...form, summary: event.target.value })} /></label>
-      <label className="tool-flag"><input type="checkbox" checked={form.isOsaiStack} onChange={(event) => setForm({ ...form, isOsaiStack: event.target.checked })} /> Used by OSai</label>
-      <label className="tool-flag"><input type="checkbox" checked={form.isIntegratable} onChange={(event) => setForm({ ...form, isIntegratable: event.target.checked })} /> Available for integration</label>
+      <ToolEditorFields form={form} setForm={setForm} />
       <button type="submit" disabled={saving}>{saving ? "Adding…" : "Add Tool"}</button>
     </form>}
     {message && <p className="profile-message" role="status">{message}</p>}
     <div className="tool-directory">
       {visibleTools.map((tool) => <article className="tool-directory-row" key={tool.id}>
         <div className="tool-directory-icon"><Wrench aria-hidden="true" /></div>
-        <div><h2>{tool.name}</h2><p>{tool.summary}</p>{tool.website_url && <a href={tool.website_url} target="_blank" rel="noreferrer">Visit website <ArrowRight /></a>}</div>
+        <div><h2>{tool.name}</h2><p>{[tool.vendor_name, tool.category].filter(Boolean).join(" · ") || tool.summary}</p><div className="tool-row-links">{tool.website_url && <a href={tool.website_url} target="_blank" rel="noreferrer">Corporate site <ArrowRight /></a>}{tool.api_docs_url && <a href={tool.api_docs_url} target="_blank" rel="noreferrer">API docs <ArrowRight /></a>}</div></div>
         <div className="tool-badges" aria-label={`${tool.name} classifications`}>
           <button type="button" aria-pressed={tool.is_osai_stack} disabled={updatingId === tool.id} onClick={() => void toggleClassification(tool, "isOsaiStack")}><Layers3 /> OSai stack</button>
           <button type="button" aria-pressed={tool.is_integratable} disabled={updatingId === tool.id} onClick={() => void toggleClassification(tool, "isIntegratable")}><Cable /> Integratable</button>
         </div>
-        <small>{tool.prospect_count} prospect{Number(tool.prospect_count) === 1 ? "" : "s"} · {tool.active_prospect_count} active</small>
+        <div className="tool-row-actions"><small>{tool.prospect_count} prospect{Number(tool.prospect_count) === 1 ? "" : "s"} · {tool.active_prospect_count} active</small><button type="button" onClick={() => { setEditingId(tool.id); setEditForm(toolFormFromApi(tool)); }}><Pencil /> Edit</button></div>
+        {editingId === tool.id && <form className="tool-form tool-edit-form" onSubmit={saveEdit}><ToolEditorFields form={editForm} setForm={setEditForm} /><div className="tool-edit-actions"><button type="button" onClick={() => setEditingId("")}>Cancel</button><button type="submit" disabled={saving}>{saving ? "Saving…" : "Save Tool"}</button></div></form>}
       </article>)}
       {!message && !visibleTools.length && <p className="project-directory-empty">No tools{searchQuery ? ` match “${searchQuery}”` : " found"}.</p>}
     </div>
