@@ -249,6 +249,7 @@ The public logo and navigation remain fixed while a page scrolls. Desktop uses t
 - Access Requests
 - Agreements
 - Projects
+- Tools
 - Content
 - Beta
 - Feedback
@@ -256,7 +257,7 @@ The public logo and navigation remain fixed while a page scrolls. Desktop uses t
 - Audit
 - Sophia passkeys (separate Google-authenticated administrator utility; `/admin/passkeys`)
 
-The authenticated administrator sidebar places **Prospects** and **Clients** immediately after **Dashboard** and before **Projects**. **Prospects** is a private administrator-created CRM directory with no authentication or invitation relationship. **Clients** is an authenticated, role-filtered directory. Neither destination is included in client or member navigation.
+The authenticated administrator sidebar places **Prospects** and **Clients** immediately after **Dashboard** and before **Projects**, with **Tools** immediately after **Projects**. **Prospects** is a private administrator-created CRM directory with no authentication or invitation relationship. **Clients** is an authenticated, role-filtered directory. **Tools** is the shared dictionary used by prospect records to identify active products and platforms, OSai-stack membership, and integration availability. None of these destinations is included in client or member navigation.
 
 ### Protected telephone-action validation
 

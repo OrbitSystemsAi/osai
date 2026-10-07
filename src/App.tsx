@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormE
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import Script from "next/script";
-import { ArrowLeft, ArrowRight, Bell, BellRing, BookOpen, CalendarDays, Check, ChevronRight, CircleHelp, Clock3, FileCheck2, FileText, FlaskConical, FolderKanban, Hourglass, KeyRound, LayoutDashboard, LockKeyhole, Mail, Menu, Activity, DollarSign, ImageIcon, ListTodo, MessageSquareText, Orbit, Pencil, Plus, Search, Send, LogOut, ShieldCheck, Tags, Target, Trash2, TrendingUp, Upload, User, UserCog, Users, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bell, BellRing, BookOpen, CalendarDays, Check, ChevronRight, CircleHelp, Clock3, Cable, FileCheck2, FileText, FlaskConical, FolderKanban, Hourglass, KeyRound, Layers3, LayoutDashboard, LockKeyhole, Mail, Menu, Activity, DollarSign, ImageIcon, ListTodo, MessageSquareText, Orbit, Pencil, Plus, Search, Send, LogOut, ShieldCheck, Tags, Target, Trash2, TrendingUp, Upload, User, UserCog, Users, Wrench, X } from "lucide-react";
 import AuthPage from "./AuthPage";
 import legalPoliciesData from "./legalPolicies.json";
 import { formatUsPhoneInput, normalizeUsPhone, normalizeWebsiteUrl } from "./lib/prospect-contact";
@@ -35,6 +35,7 @@ const adminAudienceNav: MemberNavItem[] = [
   { slug: "admin-prospects", label: "Prospects", icon: Target },
   { slug: "admin-clients", label: "Clients", icon: Users },
 ];
+const adminToolsNavItem: MemberNavItem = { slug: "admin-tools", label: "Tools", icon: Wrench };
 const sidebarUtilityNav: MemberNavItem[] = [
   { slug: "profile", label: "Profile", icon: User },
   { slug: "notifications", label: "Notifications", icon: Bell },
@@ -2678,6 +2679,22 @@ type AdminProfile = {
   project_count: number;
   projects: UserProject[];
 };
+type ProspectToolAssignment = {
+  id?: string;
+  name: string;
+  active: boolean;
+  notes: string;
+};
+type AdminTool = ProspectToolAssignment & {
+  id: string;
+  canonical_name: string;
+  summary: string;
+  website_url: string;
+  is_osai_stack: boolean;
+  is_integratable: boolean;
+  prospect_count: number;
+  active_prospect_count: number;
+};
 type AdminProspect = {
   id: string;
   display_name: string;
@@ -2688,6 +2705,14 @@ type AdminProspect = {
   phone: string;
   business_phone: string;
   website_url: string;
+  industry: string;
+  facebook_url: string;
+  instagram_url: string;
+  linkedin_url: string;
+  x_url: string;
+  youtube_url: string;
+  tiktok_url: string;
+  tools: ProspectToolAssignment[];
   status: "new" | "contacted" | "qualified" | "closed" | "discovery" | "qualification" | "solution" | "proposal" | "negotiation" | "won" | "lost";
   problem_statement: string;
   desired_outcomes: string;
@@ -2710,6 +2735,14 @@ type ProspectFormData = {
   phone: string;
   businessPhone: string;
   websiteUrl: string;
+  industry: string;
+  facebookUrl: string;
+  instagramUrl: string;
+  linkedinUrl: string;
+  xUrl: string;
+  youtubeUrl: string;
+  tiktokUrl: string;
+  tools: ProspectToolAssignment[];
   status: AdminProspect["status"];
   problemStatement: string;
   desiredOutcomes: string;
@@ -2723,13 +2756,16 @@ type ProspectFormData = {
 };
 const emptyProspectForm = (): ProspectFormData => ({
   displayName: "", contactTitle: "", companyName: "", email: "", businessEmail: "", phone: "", businessPhone: "",
-  websiteUrl: "", status: "discovery", problemStatement: "", desiredOutcomes: "", proposedSolution: "", ideas: "",
+  industry: "", websiteUrl: "", facebookUrl: "", instagramUrl: "", linkedinUrl: "", xUrl: "", youtubeUrl: "", tiktokUrl: "", tools: [],
+  status: "discovery", problemStatement: "", desiredOutcomes: "", proposedSolution: "", ideas: "",
   decisionProcess: "", budgetRange: "", targetTimeline: "", nextStep: "", notes: "",
 });
 const prospectFormFromApi = (prospect: AdminProspect): ProspectFormData => ({
   displayName: prospect.display_name, contactTitle: prospect.contact_title, companyName: prospect.company_name,
   email: prospect.email, businessEmail: prospect.business_email, phone: normalizeUsPhone(prospect.phone) ?? prospect.phone, businessPhone: normalizeUsPhone(prospect.business_phone) ?? prospect.business_phone,
-  websiteUrl: prospect.website_url, status: prospect.status, problemStatement: prospect.problem_statement,
+  industry: prospect.industry || "", websiteUrl: prospect.website_url, facebookUrl: prospect.facebook_url || "", instagramUrl: prospect.instagram_url || "",
+  linkedinUrl: prospect.linkedin_url || "", xUrl: prospect.x_url || "", youtubeUrl: prospect.youtube_url || "", tiktokUrl: prospect.tiktok_url || "",
+  tools: prospect.tools || [], status: prospect.status, problemStatement: prospect.problem_statement,
   desiredOutcomes: prospect.desired_outcomes, proposedSolution: prospect.proposed_solution, ideas: prospect.ideas,
   decisionProcess: prospect.decision_process, budgetRange: prospect.budget_range, targetTimeline: prospect.target_timeline,
   nextStep: prospect.next_step, notes: prospect.notes,
@@ -2771,8 +2807,56 @@ async function memberRequest(path: string, init?: RequestInit) {
   return data;
 }
 
+const socialFields = [
+  ["websiteUrl", "Website URL", "example.com or www.example.com"],
+  ["facebookUrl", "Facebook", "facebook.com/company"],
+  ["instagramUrl", "Instagram", "instagram.com/company"],
+  ["linkedinUrl", "LinkedIn", "linkedin.com/company/company"],
+  ["xUrl", "X / Twitter", "x.com/company"],
+  ["youtubeUrl", "YouTube", "youtube.com/@company"],
+  ["tiktokUrl", "TikTok", "tiktok.com/@company"],
+] as const;
+
+function SocialFields({ form, setForm }: { form: ProspectFormData; setForm: (next: ProspectFormData | ((current: ProspectFormData) => ProspectFormData)) => void }) {
+  return (
+    <fieldset>
+      <legend>Social</legend>
+      <div className="prospect-form-grid prospect-social-grid">
+        {socialFields.map(([key, label, placeholder]) => (
+          <label key={key}>{label}<input type="text" inputMode="url" maxLength={2048} placeholder={placeholder} autoComplete={key === "websiteUrl" ? "url" : "off"} value={form[key]} onChange={(event) => setForm({ ...form, [key]: event.target.value })} onBlur={() => { const normalized = normalizeWebsiteUrl(form[key]); if (normalized !== null) setForm((current) => ({ ...current, [key]: normalized })); }} /></label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function ProspectToolsEditor({ value, onChange, dictionary }: { value: ProspectToolAssignment[]; onChange: (tools: ProspectToolAssignment[]) => void; dictionary: AdminTool[] }) {
+  const update = (index: number, next: Partial<ProspectToolAssignment>) => onChange(value.map((tool, itemIndex) => itemIndex === index ? { ...tool, ...next } : tool));
+  return (
+    <fieldset>
+      <legend>Tools</legend>
+      <p className="prospect-fieldset-help">Add products or platforms used by this prospect. New names are added to the shared Tools dictionary.</p>
+      <datalist id="tool-dictionary-options">{dictionary.map((tool) => <option value={tool.name} key={tool.id} />)}</datalist>
+      <div className="prospect-tool-rows">
+        {value.map((tool, index) => (
+          <div className="prospect-tool-row" key={`${tool.id || "new"}-${index}`}>
+            <label>Tool<input list="tool-dictionary-options" maxLength={120} placeholder="Tool name" value={tool.name} onChange={(event) => update(index, { name: event.target.value })} /></label>
+            <label className="prospect-tool-active"><input type="checkbox" checked={tool.active} onChange={(event) => update(index, { active: event.target.checked })} /> Active</label>
+            <label>Notes<input maxLength={1000} placeholder="How this prospect uses the tool" value={tool.notes} onChange={(event) => update(index, { notes: event.target.value })} /></label>
+            <button type="button" aria-label={`Remove ${tool.name || "tool"}`} onClick={() => onChange(value.filter((_, itemIndex) => itemIndex !== index))}><Trash2 /></button>
+          </div>
+        ))}
+      </div>
+      <button className="prospect-add-tool" type="button" onClick={() => onChange([...value, { name: "", active: true, notes: "" }])}><Plus /> Add Tool</button>
+    </fieldset>
+  );
+}
+
+const cleanProspectForm = (form: ProspectFormData) => ({ ...form, tools: form.tools.filter((tool) => tool.name.trim()) });
+
 function AdminProspectsPage({ onOpen }: { onOpen: (prospectId: string) => void }) {
   const [prospects, setProspects] = useState<AdminProspect[]>([]);
+  const [toolDictionary, setToolDictionary] = useState<AdminTool[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -2780,8 +2864,9 @@ function AdminProspectsPage({ onOpen }: { onOpen: (prospectId: string) => void }
   const [form, setForm] = useState<ProspectFormData>(emptyProspectForm);
   const load = async () => {
     try {
-      const data = await adminRequest("/api/admin/prospects");
+      const [data, toolsData] = await Promise.all([adminRequest("/api/admin/prospects"), adminRequest("/api/admin/tools")]);
       setProspects(data.prospects);
+      setToolDictionary(toolsData.tools);
       setMessage("");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not load prospects.");
@@ -2793,7 +2878,7 @@ function AdminProspectsPage({ onOpen }: { onOpen: (prospectId: string) => void }
     setSaving(true);
     setMessage("");
     try {
-      await adminRequest("/api/admin/prospects", { method: "POST", body: JSON.stringify(form) });
+      await adminRequest("/api/admin/prospects", { method: "POST", body: JSON.stringify(cleanProspectForm(form)) });
       setForm(emptyProspectForm());
       setShowForm(false);
       await load();
@@ -2805,7 +2890,7 @@ function AdminProspectsPage({ onOpen }: { onOpen: (prospectId: string) => void }
     }
   };
   const normalizedQuery = searchQuery.trim().toLowerCase();
-  const visibleProspects = prospects.filter((prospect) => !normalizedQuery || [prospect.display_name, prospect.contact_title, prospect.company_name, prospect.email, prospect.business_email, prospect.phone, prospect.business_phone, prospect.website_url, prospect.status, prospect.problem_statement, prospect.desired_outcomes, prospect.proposed_solution, prospect.ideas, prospect.next_step, prospect.notes].join(" ").toLowerCase().includes(normalizedQuery));
+  const visibleProspects = prospects.filter((prospect) => !normalizedQuery || [prospect.display_name, prospect.contact_title, prospect.company_name, prospect.industry, prospect.email, prospect.business_email, prospect.phone, prospect.business_phone, prospect.website_url, prospect.facebook_url, prospect.instagram_url, prospect.linkedin_url, prospect.x_url, prospect.youtube_url, prospect.tiktok_url, prospect.status, prospect.problem_statement, prospect.desired_outcomes, prospect.proposed_solution, prospect.ideas, prospect.next_step, prospect.notes].join(" ").toLowerCase().includes(normalizedQuery));
   return (
     <>
       <PageHead title="Prospects" intro="" />
@@ -2836,11 +2921,13 @@ function AdminProspectsPage({ onOpen }: { onOpen: (prospectId: string) => void }
             <legend>Business</legend>
             <div className="prospect-form-grid">
               <label>Company<input maxLength={160} autoComplete="organization" value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} /></label>
+              <label>Industry<input maxLength={160} value={form.industry} onChange={(event) => setForm({ ...form, industry: event.target.value })} /></label>
               <label>Business email<input type="email" maxLength={254} placeholder="contact@company.com" autoComplete="work email" value={form.businessEmail} onChange={(event) => setForm({ ...form, businessEmail: event.target.value })} /></label>
               <label>Business phone<input {...phoneInputProps} autoComplete="work tel" value={form.businessPhone} onChange={(event) => setForm({ ...form, businessPhone: formatUsPhoneInput(event.target.value) })} /></label>
-              <label>Website URL<input type="text" inputMode="url" maxLength={2048} placeholder="example.com or www.example.com" autoComplete="url" value={form.websiteUrl} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} onBlur={() => { const normalized = normalizeWebsiteUrl(form.websiteUrl); if (normalized !== null) setForm((current) => ({ ...current, websiteUrl: normalized })); }} /></label>
             </div>
           </fieldset>
+          <SocialFields form={form} setForm={setForm} />
+          <ProspectToolsEditor value={form.tools} onChange={(tools) => setForm({ ...form, tools })} dictionary={toolDictionary} />
           <fieldset>
             <legend>Sales Funnel &amp; Discovery</legend>
             <div className="prospect-funnel-stage"><span>Starting stage</span><strong>Discovery</strong></div>
@@ -2886,6 +2973,7 @@ function AdminProspectsPage({ onOpen }: { onOpen: (prospectId: string) => void }
 
 function AdminProspectDetailPage({ prospectId, onBack }: { prospectId: string; onBack: () => void }) {
   const [prospect, setProspect] = useState<AdminProspect | null>(null);
+  const [toolDictionary, setToolDictionary] = useState<AdminTool[]>([]);
   const [form, setForm] = useState<ProspectFormData>(emptyProspectForm);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -2893,9 +2981,10 @@ function AdminProspectDetailPage({ prospectId, onBack }: { prospectId: string; o
   const [message, setMessage] = useState("Loading prospect…");
   useEffect(() => {
     let active = true;
-    adminRequest(`/api/admin/prospects/${prospectId}`).then(({ prospect: result }) => {
+    Promise.all([adminRequest(`/api/admin/prospects/${prospectId}`), adminRequest("/api/admin/tools")]).then(([{ prospect: result }, toolsData]) => {
       if (!active) return;
       setProspect(result);
+      setToolDictionary(toolsData.tools);
       setForm(prospectFormFromApi(result));
       setMessage("");
     }).catch((error) => active && setMessage(error instanceof Error ? error.message : "Could not load the prospect."));
@@ -2906,7 +2995,7 @@ function AdminProspectDetailPage({ prospectId, onBack }: { prospectId: string; o
     setSaving(true);
     setMessage("");
     try {
-      const data = await adminRequest(`/api/admin/prospects/${prospectId}`, { method: "PATCH", body: JSON.stringify(form) });
+      const data = await adminRequest(`/api/admin/prospects/${prospectId}`, { method: "PATCH", body: JSON.stringify(cleanProspectForm(form)) });
       setProspect(data.prospect);
       setForm(prospectFormFromApi(data.prospect));
       setMessage("Prospect saved.");
@@ -2948,11 +3037,13 @@ function AdminProspectDetailPage({ prospectId, onBack }: { prospectId: string; o
             <legend>Business</legend>
             <div className="prospect-form-grid">
               <label>Company<input maxLength={160} autoComplete="organization" value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} /></label>
+              <label>Industry<input maxLength={160} value={form.industry} onChange={(event) => setForm({ ...form, industry: event.target.value })} /></label>
               <label>Business email<input type="email" maxLength={254} placeholder="contact@company.com" autoComplete="work email" value={form.businessEmail} onChange={(event) => setForm({ ...form, businessEmail: event.target.value })} /></label>
               <label>Business phone<input {...phoneInputProps} autoComplete="work tel" value={form.businessPhone} onChange={(event) => setForm({ ...form, businessPhone: formatUsPhoneInput(event.target.value) })} /></label>
-              <label>Website URL<input type="text" inputMode="url" maxLength={2048} placeholder="example.com or www.example.com" autoComplete="url" value={form.websiteUrl} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} onBlur={() => { const normalized = normalizeWebsiteUrl(form.websiteUrl); if (normalized !== null) setForm((current) => ({ ...current, websiteUrl: normalized })); }} /></label>
             </div>
           </fieldset>
+          <SocialFields form={form} setForm={setForm} />
+          <ProspectToolsEditor value={form.tools} onChange={(tools) => setForm({ ...form, tools })} dictionary={toolDictionary} />
           <fieldset>
             <legend>Sales Funnel &amp; Discovery</legend>
             <div className="prospect-form-grid prospect-stage-row">
@@ -2989,6 +3080,72 @@ function AdminProspectDetailPage({ prospectId, onBack }: { prospectId: string; o
       )}
     </>
   );
+}
+
+function AdminToolsPage() {
+  const [tools, setTools] = useState<AdminTool[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [updatingId, setUpdatingId] = useState("");
+  const [message, setMessage] = useState("Loading tools…");
+  const [form, setForm] = useState({ name: "", websiteUrl: "", summary: "", isOsaiStack: false, isIntegratable: false });
+  const load = async () => {
+    try { const data = await adminRequest("/api/admin/tools"); setTools(data.tools); setMessage(""); }
+    catch (error) { setMessage(error instanceof Error ? error.message : "Could not load tools."); }
+  };
+  useEffect(() => { void load(); }, []);
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault(); setSaving(true); setMessage("");
+    try {
+      await adminRequest("/api/admin/tools", { method: "POST", body: JSON.stringify(form) });
+      setForm({ name: "", websiteUrl: "", summary: "", isOsaiStack: false, isIntegratable: false });
+      setShowForm(false); await load(); setMessage("Tool added to the shared dictionary.");
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Could not add the tool."); }
+    finally { setSaving(false); }
+  };
+  const query = searchQuery.trim().toLowerCase();
+  const visibleTools = tools.filter((tool) => !query || [tool.name, tool.summary, tool.website_url].join(" ").toLowerCase().includes(query));
+  const toggleClassification = async (tool: AdminTool, field: "isOsaiStack" | "isIntegratable") => {
+    setUpdatingId(tool.id); setMessage("");
+    try {
+      await adminRequest(`/api/admin/tools/${tool.id}`, { method: "PATCH", body: JSON.stringify({
+        name: tool.name, websiteUrl: tool.website_url, summary: tool.summary,
+        isOsaiStack: field === "isOsaiStack" ? !tool.is_osai_stack : tool.is_osai_stack,
+        isIntegratable: field === "isIntegratable" ? !tool.is_integratable : tool.is_integratable,
+      }) });
+      await load();
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Could not update the tool classification."); }
+    finally { setUpdatingId(""); }
+  };
+  return <>
+    <PageHead title="Tools" intro="Manage the shared OSai tool dictionary and identify stack and integration capabilities." />
+    <div className="toolbar admin-project-toolbar prospects-toolbar"><span className="admin-project-toolbar-title">Tool Dictionary</span><div className="admin-project-toolbar-actions">
+      <label className="search"><Search size={18} /><input aria-label="Search tools" placeholder="Search tools" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} /></label>
+      <button className="admin-add-project" type="button" onClick={() => setShowForm((open) => !open)}>{showForm ? <X /> : <Plus />} {showForm ? "Cancel" : "Add Tool"}</button>
+    </div></div>
+    {showForm && <form className="tool-form" onSubmit={submit}>
+      <label>Tool name <span>Required</span><input required maxLength={120} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
+      <label>Website URL<input type="text" inputMode="url" maxLength={2048} placeholder="example.com" value={form.websiteUrl} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} /></label>
+      <label className="tool-summary-field">Summary<textarea rows={3} maxLength={1000} placeholder="Leave blank to auto-populate a summary" value={form.summary} onChange={(event) => setForm({ ...form, summary: event.target.value })} /></label>
+      <label className="tool-flag"><input type="checkbox" checked={form.isOsaiStack} onChange={(event) => setForm({ ...form, isOsaiStack: event.target.checked })} /> Used by OSai</label>
+      <label className="tool-flag"><input type="checkbox" checked={form.isIntegratable} onChange={(event) => setForm({ ...form, isIntegratable: event.target.checked })} /> Available for integration</label>
+      <button type="submit" disabled={saving}>{saving ? "Adding…" : "Add Tool"}</button>
+    </form>}
+    {message && <p className="profile-message" role="status">{message}</p>}
+    <div className="tool-directory">
+      {visibleTools.map((tool) => <article className="tool-directory-row" key={tool.id}>
+        <div className="tool-directory-icon"><Wrench aria-hidden="true" /></div>
+        <div><h2>{tool.name}</h2><p>{tool.summary}</p>{tool.website_url && <a href={tool.website_url} target="_blank" rel="noreferrer">Visit website <ArrowRight /></a>}</div>
+        <div className="tool-badges" aria-label={`${tool.name} classifications`}>
+          <button type="button" aria-pressed={tool.is_osai_stack} disabled={updatingId === tool.id} onClick={() => void toggleClassification(tool, "isOsaiStack")}><Layers3 /> OSai stack</button>
+          <button type="button" aria-pressed={tool.is_integratable} disabled={updatingId === tool.id} onClick={() => void toggleClassification(tool, "isIntegratable")}><Cable /> Integratable</button>
+        </div>
+        <small>{tool.prospect_count} prospect{Number(tool.prospect_count) === 1 ? "" : "s"} · {tool.active_prospect_count} active</small>
+      </article>)}
+      {!message && !visibleTools.length && <p className="project-directory-empty">No tools{searchQuery ? ` match “${searchQuery}”` : " found"}.</p>}
+    </div>
+  </>;
 }
 
 function AdminUsersPage({ currentAuthUserId, roleFilter }: { currentAuthUserId: string; roleFilter?: "client" }) {
@@ -5082,6 +5239,7 @@ function MemberHub() {
       "admin-prospects": <AdminProspectsPage onOpen={openProspect} />,
       "admin-prospect-detail": prospectId ? <AdminProspectDetailPage prospectId={prospectId} onBack={() => navigate("admin-prospects")} /> : <AdminProspectsPage onOpen={openProspect} />,
       "admin-clients": <AdminUsersPage currentAuthUserId={identity.id} roleFilter="client" />,
+      "admin-tools": <AdminToolsPage />,
       "admin-users": <AdminUsersPage currentAuthUserId={identity.id} />,
       "admin-legal": <AgreementsPage isAdmin />,
       "admin-beta": <BetaPage />,
@@ -5093,12 +5251,12 @@ function MemberHub() {
   };
   const adminPrimaryNav = memberNav.filter(({ slug }) => !["legal", "beta-programs"].includes(slug));
   const visibleNav = role === "admin"
-    ? [...adminPrimaryNav.slice(0, 2), ...adminAudienceNav, ...adminPrimaryNav.slice(2), ...sidebarUtilityNav.filter(({ slug }) => slug !== "profile")]
+    ? [...adminPrimaryNav.slice(0, 2), ...adminAudienceNav, ...adminPrimaryNav.slice(2, 3), adminToolsNavItem, ...adminPrimaryNav.slice(3), ...sidebarUtilityNav.filter(({ slug }) => slug !== "profile")]
     : [...memberNav, ...sidebarUtilityNav];
   const isAdminPage = role === "admin" && adminNav.some(({ slug }) => slug === page);
   const adminPageTitle = page === "admin-profile" ? "Profile & Security" : adminNav.find(({ slug }) => slug === page)?.label || "Admin";
   const isDashboard = page === "dashboard";
-  const isStructuredPage = ["pulse", "pulse-editor", "beta-programs", "updates", "profile", "notifications", "support", "admin-prospect-detail", ...adminAudienceNav.map(({ slug }) => slug), ...adminNav.map(({ slug }) => slug)].includes(page);
+  const isStructuredPage = ["pulse", "pulse-editor", "beta-programs", "updates", "profile", "notifications", "support", "admin-prospect-detail", "admin-tools", ...adminAudienceNav.map(({ slug }) => slug), ...adminNav.map(({ slug }) => slug)].includes(page);
   const isProjectEdit = page === "projects" && new URLSearchParams(window.location.search).has("adminEdit");
   const isProjectsCatalog = page === "projects" && !window.location.pathname.split("/").filter(Boolean)[2] && !isProjectEdit;
   return (
