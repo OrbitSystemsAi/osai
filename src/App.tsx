@@ -7,6 +7,7 @@ import Script from "next/script";
 import { ArrowLeft, ArrowRight, Bell, BellRing, BookOpen, CalendarDays, Check, ChevronRight, CircleHelp, Clock3, FileCheck2, FileText, FlaskConical, FolderKanban, Hourglass, KeyRound, LayoutDashboard, LockKeyhole, Mail, Menu, Activity, DollarSign, ImageIcon, ListTodo, MessageSquareText, Orbit, Pencil, Plus, Search, Send, LogOut, ShieldCheck, Tags, Target, Trash2, TrendingUp, Upload, User, UserCog, Users, X } from "lucide-react";
 import AuthPage from "./AuthPage";
 import legalPoliciesData from "./legalPolicies.json";
+import { formatUsPhoneInput, normalizeUsPhone, normalizeWebsiteUrl } from "./lib/prospect-contact";
 
 const PROJECT_TITLE_MAX = 40;
 const PROJECT_DESCRIPTION_MAX = 300;
@@ -2727,12 +2728,20 @@ const emptyProspectForm = (): ProspectFormData => ({
 });
 const prospectFormFromApi = (prospect: AdminProspect): ProspectFormData => ({
   displayName: prospect.display_name, contactTitle: prospect.contact_title, companyName: prospect.company_name,
-  email: prospect.email, businessEmail: prospect.business_email, phone: prospect.phone, businessPhone: prospect.business_phone,
+  email: prospect.email, businessEmail: prospect.business_email, phone: normalizeUsPhone(prospect.phone) ?? prospect.phone, businessPhone: normalizeUsPhone(prospect.business_phone) ?? prospect.business_phone,
   websiteUrl: prospect.website_url, status: prospect.status, problemStatement: prospect.problem_statement,
   desiredOutcomes: prospect.desired_outcomes, proposedSolution: prospect.proposed_solution, ideas: prospect.ideas,
   decisionProcess: prospect.decision_process, budgetRange: prospect.budget_range, targetTimeline: prospect.target_timeline,
   nextStep: prospect.next_step, notes: prospect.notes,
 });
+const phoneInputProps = {
+  type: "tel",
+  inputMode: "tel" as const,
+  maxLength: 14,
+  placeholder: "(386) 555-1212",
+  pattern: "\\(\\d{3}\\) \\d{3}-\\d{4}",
+  title: "Enter a 10-digit US phone number.",
+};
 const isActiveUserProject = (project: UserProject) => activeProjectAccess.has(project.status);
 const isPendingUserProject = (project: UserProject) => pendingProjectAccess.has(project.status);
 async function adminRequest(path: string, init?: RequestInit) {
@@ -2819,17 +2828,17 @@ function AdminProspectsPage({ onOpen }: { onOpen: (prospectId: string) => void }
             <div className="prospect-form-grid">
               <label>Full name <span>Required</span><input required maxLength={120} autoComplete="name" value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} /></label>
               <label>Title / role<input maxLength={120} autoComplete="organization-title" value={form.contactTitle} onChange={(event) => setForm({ ...form, contactTitle: event.target.value })} /></label>
-              <label>Contact email<input type="email" maxLength={254} autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
-              <label>Mobile phone<input type="tel" maxLength={40} autoComplete="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label>
+              <label>Contact email<input type="email" maxLength={254} placeholder="name@example.com" autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
+              <label>Mobile phone<input {...phoneInputProps} autoComplete="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: formatUsPhoneInput(event.target.value) })} /></label>
             </div>
           </fieldset>
           <fieldset>
             <legend>Business</legend>
             <div className="prospect-form-grid">
               <label>Company<input maxLength={160} autoComplete="organization" value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} /></label>
-              <label>Business email<input type="email" maxLength={254} value={form.businessEmail} onChange={(event) => setForm({ ...form, businessEmail: event.target.value })} /></label>
-              <label>Business phone<input type="tel" maxLength={40} value={form.businessPhone} onChange={(event) => setForm({ ...form, businessPhone: event.target.value })} /></label>
-              <label>Website URL<input type="url" maxLength={2048} placeholder="https://example.com" autoComplete="url" value={form.websiteUrl} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} /></label>
+              <label>Business email<input type="email" maxLength={254} placeholder="contact@company.com" autoComplete="work email" value={form.businessEmail} onChange={(event) => setForm({ ...form, businessEmail: event.target.value })} /></label>
+              <label>Business phone<input {...phoneInputProps} autoComplete="work tel" value={form.businessPhone} onChange={(event) => setForm({ ...form, businessPhone: formatUsPhoneInput(event.target.value) })} /></label>
+              <label>Website URL<input type="text" inputMode="url" maxLength={2048} placeholder="example.com or www.example.com" autoComplete="url" value={form.websiteUrl} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} onBlur={() => { const normalized = normalizeWebsiteUrl(form.websiteUrl); if (normalized !== null) setForm((current) => ({ ...current, websiteUrl: normalized })); }} /></label>
             </div>
           </fieldset>
           <fieldset>
@@ -2879,6 +2888,8 @@ function AdminProspectDetailPage({ prospectId, onBack }: { prospectId: string; o
   const [prospect, setProspect] = useState<AdminProspect | null>(null);
   const [form, setForm] = useState<ProspectFormData>(emptyProspectForm);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [message, setMessage] = useState("Loading prospect…");
   useEffect(() => {
     let active = true;
@@ -2897,11 +2908,24 @@ function AdminProspectDetailPage({ prospectId, onBack }: { prospectId: string; o
     try {
       const data = await adminRequest(`/api/admin/prospects/${prospectId}`, { method: "PATCH", body: JSON.stringify(form) });
       setProspect(data.prospect);
+      setForm(prospectFormFromApi(data.prospect));
       setMessage("Prospect saved.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not save the prospect.");
     } finally {
       setSaving(false);
+    }
+  };
+  const deleteProspect = async () => {
+    setDeleting(true);
+    setMessage("");
+    try {
+      await adminRequest(`/api/admin/prospects/${prospectId}`, { method: "DELETE" });
+      onBack();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not delete the prospect.");
+      setDeleting(false);
+      setConfirmDelete(false);
     }
   };
   return (
@@ -2916,17 +2940,17 @@ function AdminProspectDetailPage({ prospectId, onBack }: { prospectId: string; o
             <div className="prospect-form-grid">
               <label>Full name <span>Required</span><input required maxLength={120} autoComplete="name" value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} /></label>
               <label>Title / role<input maxLength={120} autoComplete="organization-title" value={form.contactTitle} onChange={(event) => setForm({ ...form, contactTitle: event.target.value })} /></label>
-              <label>Contact email<input type="email" maxLength={254} autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
-              <label>Mobile phone<input type="tel" maxLength={40} autoComplete="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label>
+              <label>Contact email<input type="email" maxLength={254} placeholder="name@example.com" autoComplete="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label>
+              <label>Mobile phone<input {...phoneInputProps} autoComplete="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: formatUsPhoneInput(event.target.value) })} /></label>
             </div>
           </fieldset>
           <fieldset>
             <legend>Business</legend>
             <div className="prospect-form-grid">
               <label>Company<input maxLength={160} autoComplete="organization" value={form.companyName} onChange={(event) => setForm({ ...form, companyName: event.target.value })} /></label>
-              <label>Business email<input type="email" maxLength={254} value={form.businessEmail} onChange={(event) => setForm({ ...form, businessEmail: event.target.value })} /></label>
-              <label>Business phone<input type="tel" maxLength={40} value={form.businessPhone} onChange={(event) => setForm({ ...form, businessPhone: event.target.value })} /></label>
-              <label>Website URL<input type="url" maxLength={2048} placeholder="https://example.com" autoComplete="url" value={form.websiteUrl} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} /></label>
+              <label>Business email<input type="email" maxLength={254} placeholder="contact@company.com" autoComplete="work email" value={form.businessEmail} onChange={(event) => setForm({ ...form, businessEmail: event.target.value })} /></label>
+              <label>Business phone<input {...phoneInputProps} autoComplete="work tel" value={form.businessPhone} onChange={(event) => setForm({ ...form, businessPhone: formatUsPhoneInput(event.target.value) })} /></label>
+              <label>Website URL<input type="text" inputMode="url" maxLength={2048} placeholder="example.com or www.example.com" autoComplete="url" value={form.websiteUrl} onChange={(event) => setForm({ ...form, websiteUrl: event.target.value })} onBlur={() => { const normalized = normalizeWebsiteUrl(form.websiteUrl); if (normalized !== null) setForm((current) => ({ ...current, websiteUrl: normalized })); }} /></label>
             </div>
           </fieldset>
           <fieldset>
@@ -2949,6 +2973,17 @@ function AdminProspectDetailPage({ prospectId, onBack }: { prospectId: string; o
           <div className="prospect-detail-actions">
             <button type="submit" disabled={saving}>{saving ? "Saving…" : "Save Prospect"}</button>
             {prospect.website_url && <a href={prospect.website_url} target="_blank" rel="noreferrer">Visit website <ArrowRight /></a>}
+            <div className="prospect-delete-actions">
+              {confirmDelete ? (
+                <>
+                  <span>This permanently deletes {prospect.display_name}.</span>
+                  <button type="button" onClick={() => setConfirmDelete(false)} disabled={deleting}>Cancel</button>
+                  <button className="prospect-confirm-delete" type="button" onClick={() => void deleteProspect()} disabled={deleting}>{deleting ? "Deleting…" : "Confirm delete"}</button>
+                </>
+              ) : (
+                <button className="prospect-delete" type="button" onClick={() => setConfirmDelete(true)}><Trash2 /> Delete Prospect</button>
+              )}
+            </div>
           </div>
         </form>
       )}

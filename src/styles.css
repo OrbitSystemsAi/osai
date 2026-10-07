@@ -211,6 +211,9 @@ body.modal-open { overflow:hidden; }
 @media(max-width:780px){.prospect-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.prospect-form,.prospect-detail-form{grid-template-columns:1fr}.prospect-form .prospect-website,.prospect-form .prospect-notes,.prospect-detail-notes,.prospect-detail-actions{grid-column:auto}.prospects-toolbar{align-items:stretch}.prospects-toolbar .admin-project-toolbar-actions{align-items:stretch;flex-direction:column}.prospect-tiles{grid-template-columns:1fr}.prospect-tile-art{aspect-ratio:16/9}}
 
+.prospect-delete-actions{display:flex;align-items:center;gap:10px;margin-left:auto}.prospect-delete-actions>span{color:#8b2d24;font-size:10px;font-weight:700}.prospect-delete-actions>button{min-height:36px;padding:0 12px;border:1px solid #b7c3ca;background:#fff;color:#10283c;font:700 10px Manrope,sans-serif;cursor:pointer}.prospect-delete-actions>button:disabled{cursor:wait;opacity:.6}.prospect-delete-actions .prospect-delete{display:inline-flex;align-items:center;gap:7px;border-color:#b3473d;color:#8b2d24}.prospect-delete-actions .prospect-delete svg{width:15px}.prospect-delete-actions .prospect-confirm-delete{border-color:#8b2d24;background:#8b2d24;color:#fff}
+@media(max-width:520px){.prospect-detail-actions,.prospect-delete-actions{align-items:stretch;flex-direction:column}.prospect-delete-actions{margin-left:0}}
+
 /* Prospect contact, business, and sales-discovery editor sections. */
 .prospect-form,.prospect-detail-form{display:grid;grid-template-columns:1fr;gap:24px;padding:24px;background:#f3f7f8}
 .prospect-form{margin:22px 0}.prospect-detail-form{border-top:3px solid #071d3a}

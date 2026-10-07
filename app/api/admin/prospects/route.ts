@@ -1,20 +1,11 @@
 import { NextResponse } from 'next/server'
 import { apiError, requireAdmin } from '../../../../src/server/authorization'
 import { db } from '../../../../src/server/database'
+import { normalizeProspectContactRecord, normalizeUsPhone, normalizeWebsiteUrl } from '../../../../src/lib/prospect-contact'
 
 export const runtime = 'nodejs'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-function validWebsiteUrl(value: string) {
-  if (!value) return true
-  try {
-    const url = new URL(value)
-    return url.protocol === 'http:' || url.protocol === 'https:'
-  } catch {
-    return false
-  }
-}
 
 export async function GET(request: Request) {
   try {
@@ -27,7 +18,7 @@ export async function GET(request: Request) {
       FROM prospects
       ORDER BY created_at DESC
     `
-    return NextResponse.json({ prospects })
+    return NextResponse.json({ prospects: prospects.map(prospect => normalizeProspectContactRecord(prospect as typeof prospect & { phone: string; business_phone: string; website_url: string })) })
   } catch (error) {
     const result = apiError(error, 'PROSPECTS_FAILED')
     return NextResponse.json({ error: result.message }, { status: result.status })
@@ -61,9 +52,9 @@ export async function POST(request: Request) {
     const companyName = body.companyName?.trim() || ''
     const email = body.email?.trim().toLowerCase() || ''
     const businessEmail = body.businessEmail?.trim().toLowerCase() || ''
-    const phone = body.phone?.trim() || ''
-    const businessPhone = body.businessPhone?.trim() || ''
-    const websiteUrl = body.websiteUrl?.trim() || ''
+    const phone = normalizeUsPhone(body.phone || '')
+    const businessPhone = normalizeUsPhone(body.businessPhone || '')
+    const websiteUrl = normalizeWebsiteUrl(body.websiteUrl || '')
     const problemStatement = body.problemStatement?.trim() || ''
     const desiredOutcomes = body.desiredOutcomes?.trim() || ''
     const proposedSolution = body.proposedSolution?.trim() || ''
@@ -78,7 +69,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Enter a prospect name of 120 characters or fewer.' }, { status: 400 })
     }
     const discoveryFields = [problemStatement, desiredOutcomes, proposedSolution, ideas, decisionProcess, nextStep, notes]
-    if (contactTitle.length > 120 || companyName.length > 160 || email.length > 254 || businessEmail.length > 254 || phone.length > 40 || businessPhone.length > 40 || websiteUrl.length > 2048 || budgetRange.length > 120 || targetTimeline.length > 120 || discoveryFields.some(value => value.length > 4000)) {
+    if (contactTitle.length > 120 || companyName.length > 160 || email.length > 254 || businessEmail.length > 254 || (websiteUrl?.length || 0) > 2048 || budgetRange.length > 120 || targetTimeline.length > 120 || discoveryFields.some(value => value.length > 4000)) {
       return NextResponse.json({ error: 'One or more prospect fields exceed the allowed length.' }, { status: 400 })
     }
     if (email && !EMAIL_PATTERN.test(email)) {
@@ -87,8 +78,11 @@ export async function POST(request: Request) {
     if (businessEmail && !EMAIL_PATTERN.test(businessEmail)) {
       return NextResponse.json({ error: 'Enter a valid business email address or leave it blank.' }, { status: 400 })
     }
-    if (!validWebsiteUrl(websiteUrl)) {
-      return NextResponse.json({ error: 'Enter a complete website URL beginning with http:// or https://.' }, { status: 400 })
+    if (phone === null || businessPhone === null) {
+      return NextResponse.json({ error: 'Enter each phone number with a 10-digit US number or leave it blank.' }, { status: 400 })
+    }
+    if (websiteUrl === null) {
+      return NextResponse.json({ error: 'Enter a valid website such as example.com or www.example.com.' }, { status: 400 })
     }
 
     const sql = db()
